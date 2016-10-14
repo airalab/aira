@@ -1,6 +1,6 @@
-{-# LANGUAGE FlexibleInstances    #-}
-{-# LANGUAGE TemplateHaskell      #-}
-{-# LANGUAGE TypeFamilies         #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE TemplateHaskell    #-}
+{-# LANGUAGE TypeFamilies       #-}
 module Database where
 
 import Control.Monad.State (get, put, modify)
@@ -14,11 +14,10 @@ import Data.Acid
 type EventName    = Text
 type ContractName = Text
 type ContractAbi  = Text
-type Address      = Text
 type NotifyID     = Int
 
 data UserDB = UserDB
-  { event    :: IntMap (EventName, Address)
+  { event    :: IntMap (EventName, Text)
   , contract :: IntMap (ContractName, ContractAbi)
   } deriving Show
 

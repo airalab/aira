@@ -1,10 +1,10 @@
 pragma solidity ^0.4.2;
 
-import 'contracts/OwnedRegistrar.sol';
+import 'contracts/AiraRegistrarService.sol';
 
 library CreatorOwnedRegistrar {
-    function create() returns (OwnedRegistrar)
-    { return new OwnedRegistrar(); }
+    function create() returns (AiraRegistrarService)
+    { return new AiraRegistrarService(); }
 
     function version() constant returns (string)
     { return "v0.4.9 (84e7c7f9)"; }

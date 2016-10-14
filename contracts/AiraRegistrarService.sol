@@ -7,7 +7,7 @@ pragma solidity ^0.4.2;
 import "common/Mortal.sol";
 import "./Registrar.sol";
 
-contract OwnedRegistrar is Registrar, Mortal {
+contract AiraRegistrarService is Registrar, Mortal {
 	struct Record {
 		address addr;
 		address subRegistrar;

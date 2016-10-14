@@ -1,30 +1,52 @@
 pragma solidity ^0.4.2;
 import 'token/TokenEther.sol';
 
-contract AiraWallet is TokenEther {
+contract AiraEtherFunds is TokenEther {
+    function AiraEtherFunds(string _name, string _symbol, uint _limit, uint _fee)
+        TokenEther(_name, _symbol)
+    {
+        limit = _limit;
+        fee   = _fee;
+    }
+    
+    /**
+     * @dev Event spawned when activation request received
+     */
     event ActivationRequest(address indexed sender, bytes32 indexed code);
 
     // Balance limit
     uint public limit;
-
+    
     function setLimit(uint _limit) onlyOwner
     { limit = _limit; }
 
-    function AiraWallet(string _name, string _symbol, uint _limit)
-        TokenEther(_name, _symbol)
-    { limit  = _limit; }
+    // Account activation fee
+    uint public fee;
     
+    function setFee(uint _fee) onlyOwner
+    { fee = _fee; }
+
     /**
      * @dev Refill balance and activate it by code
      * @param _code is activation code
      */
     function activate(bytes32 _code) {
+        var value = msg.value;
+ 
+        // Get a fee
+        if (fee > 0) {
+            balanceOf[owner] += fee;
+            value            -= fee;
+        }
+
         // Refund over limit
-        var refund = msg.value > limit ? msg.value - limit : 0;
-        if (refund > 0) if (!msg.sender.send(refund)) throw;
+        if (limit > 0) {
+            var refund = value > limit ? value - limit : 0;
+            if (refund > 0) if (!msg.sender.send(refund)) throw;
+            value -= refund;
+        }
 
         // Refill account balance
-        var value = msg.value - refund;
         balanceOf[msg.sender] += value;
         totalSupply           += value;
 
@@ -36,7 +58,7 @@ contract AiraWallet is TokenEther {
      * @dev This is the way to refill your token balance by ethers
      */
     function refill() payable returns (bool) {
-        // Refund over limit
+        // Throw when over limit
         if (balanceOf[msg.sender] + msg.value > limit) throw;
 
         // Refill
@@ -50,7 +72,7 @@ contract AiraWallet is TokenEther {
      *      a synonym for refill()
      */
     function () payable {
-        // Refund over limit
+        // Throw when over limit
         if (balanceOf[msg.sender] + msg.value > limit) throw;
 
         // Refill

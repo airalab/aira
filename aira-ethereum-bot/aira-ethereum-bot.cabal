@@ -1,8 +1,8 @@
-name:                AiraWalletBot
+name:                aira-ethereum-bot
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Aira Ethereum helper bot 
 description:         Please see README.md
-homepage:            https://github.com/airalab/AiraWalletBot#readme
+homepage:            https://github.com/airalab/aira#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Alexander Krupenkin
@@ -12,16 +12,21 @@ category:            Web
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable AiraWalletBot
+executable aira-ethereum-bot
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base  >= 4.7 && <5
                      , data-default-class
+                     , lens-family-th
                      , telegram-bot
+                     , telegram-api
+                     , lens-family
                      , acid-state
                      , containers
                      , safecopy
+                     , random
+                     , time 
                      , web3
                      , text
                      , mtl
@@ -30,4 +35,4 @@ executable AiraWalletBot
 
 source-repository head
   type:     git
-  location: https://github.com/airalab/AiraWalletBot
+  location: https://github.com/airalab/aira

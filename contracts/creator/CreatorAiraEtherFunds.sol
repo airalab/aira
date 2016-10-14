@@ -1,10 +1,10 @@
 pragma solidity ^0.4.2;
 
-import 'contracts/AiraWallet.sol';
+import 'contracts/AiraEtherFunds.sol';
 
-library CreatorAiraWallet {
-    function create(string _name, string _symbol, uint256 _limit) returns (AiraWallet)
-    { return new AiraWallet(_name, _symbol, _limit); }
+library CreatorAiraEtherFunds {
+    function create(string _name, string _symbol, uint256 _fee, uint256 _limit) returns (AiraEtherFunds)
+    { return new AiraEtherFunds(_name, _symbol, _fee, _limit); }
 
     function version() constant returns (string)
     { return "v0.4.9 (84e7c7f9)"; }
