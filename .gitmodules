@@ -1,6 +1,6 @@
 [submodule "web3"]
 	path = web3
-	url = git@github.com:akru/web3.git
+	url = https://github.com/akru/web3.git
 [submodule "telegram-bot"]
 	path = telegram-bot
-	url = git@github.com:akru/telegram-bot.git
+	url = https://github.com/akru/telegram-bot.git
