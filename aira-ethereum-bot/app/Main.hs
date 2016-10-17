@@ -19,6 +19,7 @@ helpMessage = T.unlines
     , "/transfer - money transfer to Telegram account"
 --    , "/event - append event listener"
 --    , "/event_off - remove event listener"
+    , "/delete - remove account address"
     , "/cancel - stop command execution"
     , "/help or any text - show this message" ]
 
@@ -35,6 +36,7 @@ main = do
             , ("/start", Story.start codedb)
             , ("/send", Story.send)
             , ("/transfer", Story.transfer)
+            , ("/delete", Story.delete)
 --            , ("/event", Story.event db)
 --            , ("/event_off", Story.eventOff db)
             ]

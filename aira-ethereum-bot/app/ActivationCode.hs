@@ -80,8 +80,8 @@ getTime code = times `views` M.lookup code <$> ask
 
 $(makeAcidic ''ActivationCode ['newCode, 'deleteCode, 'getCode, 'getChat, 'getTime])
 
-newAccount :: Text -> Address -> Web3 Text
-newAccount name address = eth_sendTransaction (regCall $ Just regData)
+setAccount :: Text -> Address -> Web3 Text
+setAccount name address = eth_sendTransaction (regCall $ Just regData)
   where regCall = Call (Just bot_address) reg_address Nothing Nothing Nothing
         regData = "0x213b9eb8" <> paddedInt 64 <> paddedAddr (toText address) <> text2data name
 
@@ -95,7 +95,7 @@ activationFilter =
 
 handleActivation :: AcidState ActivationCode -> Change -> Bot ()
 handleActivation db (Change {changeTopics = topics}) = do
-    let Right address = fromText (topics !! 1)
+    let Right address = fromText (T.drop 26 $ topics !! 1)
         code = unhex (T.take (codeLength * 2) $ T.drop 2 $ topics !! 2)
     mbChat <- liftIO $ query db (GetChat code)
     case mbChat of
@@ -105,7 +105,7 @@ handleActivation db (Change {changeTopics = topics}) = do
                 Just name = chat_username chat
             liftIO $ do
                 update db (DeleteCode code)
-                runWeb3 $ newAccount name address
+                runWeb3 $ setAccount (T.toLower name) address
             sendMessageBot chat $
                 toMessage $ T.unlines [ "A good news, " <> first_name <> "!"
                                       , "Activation code received, unlocking..."
@@ -130,7 +130,7 @@ genActivationCode db chat = do
         Just code -> return code
         Nothing   -> do
             g <- newStdGen
-            let seed = (codeRange !!) <$> randomRs (0, length codeRange) g
+            let seed = (codeRange !!) <$> randomRs (0, length codeRange - 1) g
                 code = pack (take codeLength seed)
             time <- getCurrentTime
             update db (NewCode code chat time)

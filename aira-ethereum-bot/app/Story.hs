@@ -4,6 +4,7 @@ import Control.Monad.Error.Class (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
 import Data.Text.Read (hexadecimal)
+import Control.Applicative ((<|>))
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
@@ -14,6 +15,9 @@ import Constants
 
 etherscan_tx :: Text -> Text
 etherscan_tx tx = "[" <> tx <> "](https://testnet.etherscan.io/tx/" <> tx <> ")"
+
+etherscan_addr :: Text -> Text
+etherscan_addr a = "[" <> a <> "](https://testnet.etherscan.io/address/" <> a <> ")"
 
 toWei :: Double -> Integer
 toWei = round . (* 10^18)
@@ -52,7 +56,7 @@ getAddress name = do res <- eth_call (regCall regData) "pending"
                          Right a -> a
                          Left e -> zero
   where regCall = Call Nothing reg_address Nothing Nothing Nothing . Just
-        regData = "0x511b1df9" <> paddedInt 32 <> text2data name
+        regData = "0x511b1df9" <> paddedInt 32 <> text2data (T.toLower name)
 
 getBalance :: Address -> Web3 Integer
 getBalance address = do res <- eth_call (airaCall airaData) "pending"
@@ -62,78 +66,98 @@ getBalance address = do res <- eth_call (airaCall airaData) "pending"
   where airaCall = Call Nothing aira_address Nothing Nothing Nothing . Just
         airaData = "0x70a08231" <> paddedAddr (toText address)
 
-withAddress :: Story -> (Address -> Story) -> Story
-withAddress storyNoAddress storyAddress c = do
-    let Just name = chat_username c
+withUsername :: BotMessage -> (Text -> Story) -> Story
+withUsername msg story c =
+    case chat_username c of
+        Just name -> story name c
+        Nothing -> return msg
+
+withAddress :: Story -> (Address -> Story) -> Text -> Story
+withAddress storyNoAddress storyAddress name c = do
     Right address <- liftIO (runWeb3 $ getAddress name)
     if address == zero
     then storyNoAddress c
     else storyAddress address c
 
-helloAgain :: Text -> Address -> BotMessage
-helloAgain name addr = toMessage $ T.unlines
-  [ "Hello, " <> name <> ", again!"
-  , "You already registered with `" <> toText addr <> "`." ]
+getName :: Chat -> Text
+getName c = name
+  where Just name = chat_first_name c <|> chat_username c
 
-hello :: Text -> Text -> BotMessage
-hello name code = toMessage $ T.unlines
-  [ "Hello, " <> name <> "!"
-  , "Your activation code is `" <> code <> "`"
-  , "please activate account through Ethereum."
-  , "**AiraEtherFunds:** `" <> aira_address <> "`" ]
+helloAgain :: Chat -> Address -> BotMessage
+helloAgain c addr = toMessage $ T.unlines
+  [ "Hello, " <> getName c <> ", again!"
+  , "I known you as " <> etherscan_addr (toText addr) <> "." ]
+
+hello :: Chat -> Text -> BotMessage
+hello c code = toMessage $ T.unlines
+  [ "Hello, " <> getName c <> "!"
+  , "Your Ethereum address activation code is `" <> code <> "`"
+  , "call `activate` of **AiraEtherFunds** at " <> etherscan_addr aira_address ]
 
 start :: AcidState ActivationCode -> Story
-start db = withAddress genCode $ \address c -> do
-    let Just name = chat_first_name c
-     in return (helloAgain name address)
+start db = withUsername noName $ withAddress genCode $
+    \address c -> return (helloAgain c address)
   where genCode c = do code <- liftIO (genActivationCode db c)
-                       let Just name = chat_first_name c
-                        in return (hello name code)
+                       return (hello c code)
 
-noReg :: Story
-noReg _ = do
-    return $ toMessage ("You are not registered now!" :: Text)
+noRegStory :: Story
+noRegStory _ = return noReg
 
 about :: Story
-about = withAddress noReg $ \address c -> do
-    let Just name = chat_first_name c
+about = withUsername noName $ withAddress noRegStory $ \address c -> do
     Right balance <- liftIO (runWeb3 $ getBalance address)
     return $ toMessage $ T.unlines
-        [ "Hello, " <> name <> "!"
-        , "Your address: `" <> toText address <> "`"
-        , "Total balance: " <> pack (show (fromWei balance)) <> " `ether`"
+        [ "Hello, " <> getName c <> "!"
+        , "Your address: " <> etherscan_addr (toText address)
+        , "Total balance: " <> pack (show (fromWei balance)) <> " `ETH`"
         ]
 
 transfer :: Story
-transfer = withAddress noReg $ \address c -> do
-    TelegramAddress destination <- question "Recipient user name:"
+transfer = withUsername noName $ withAddress noRegStory $ \address c -> do
+    TelegramAddress destination <- question "Recipient username:"
     amount <- question "Amount of `ether` you want to send:"
-    res <- liftIO $ runWeb3 $ do
-        let sendCall = Call (Just bot_address) aira_address Nothing Nothing Nothing . Just
-            sendData = "0x6d2cb794"
-                <> paddedAddr (toText address)
-                <> paddedAddr (toText destination)
-                <> paddedInt (toWei amount)
-        eth_sendTransaction (sendCall sendData)
+    if amount > 0 then do
+        res <- liftIO $ runWeb3 $ do
+            let sendCall = Call (Just bot_address) aira_address Nothing Nothing Nothing . Just
+                sendData = "0x6d2cb794"
+                    <> paddedAddr (toText address)
+                    <> paddedAddr (toText destination)
+                    <> paddedInt (toWei amount)
+            eth_sendTransaction (sendCall sendData)
 
-    return $ toMessage $ case res of
-        Left e   -> pack (show e)
-        Right tx -> "Transfer success with transaction "
-                 <> etherscan_tx tx
+        return $ toMessage $ case res of
+            Left e   -> pack (show e)
+            Right tx -> "Transfer success with transaction "
+                    <> etherscan_tx tx
+    else return $ toMessage ("I can't transfer zero tokens!" :: Text)
 
 send :: Story
-send = withAddress noReg $ \address c -> do
+send = withUsername noName $ withAddress noRegStory $ \address c -> do
     destination <- question "Recipient Ethereum address:"
     amount <- question "Amount of `ether` you want to send:"
-    res <- liftIO $ runWeb3 $ do
-        let sendCall = Call (Just bot_address) aira_address Nothing Nothing Nothing . Just
-            sendData = "0xe1efda6d"
-                <> paddedAddr (toText address)
-                <> paddedAddr (toText destination)
-                <> paddedInt (toWei amount)
-        eth_sendTransaction (sendCall sendData)
+    if amount > 0 then do
+        res <- liftIO $ runWeb3 $ do
+            let sendCall = Call (Just bot_address) aira_address Nothing Nothing Nothing . Just
+                sendData = "0xe1efda6d"
+                    <> paddedAddr (toText address)
+                    <> paddedAddr (toText destination)
+                    <> paddedInt (toWei amount)
+            eth_sendTransaction (sendCall sendData)
 
-    return $ toMessage $ case res of
-        Left e   -> pack (show e)
-        Right tx -> "Send success with transaction "
-                 <> etherscan_tx tx
+        return $ toMessage $ case res of
+            Left e   -> pack (show e)
+            Right tx -> "Send success with transaction "
+                    <> etherscan_tx tx
+    else return $ toMessage ("I can't send zero tokens!" :: Text)
+
+delete :: Story
+delete = withUsername noName $ \name c -> do
+    res <- question $ T.unlines [ "Do you want to delete account address?"
+                                , "Send me 'Do as I say!' to confirm." ]
+    case res :: Text of
+        "Do as I say!" -> do
+            r <- liftIO (runWeb3 $ setAccount (T.toLower name) zero)
+            return . toMessage $ case r of
+                Right _ -> "Account deleted"
+                Left e -> pack $ show e
+        _ -> return (toMessage ("No confirmation given" :: Text))

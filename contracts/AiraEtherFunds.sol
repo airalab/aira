@@ -14,6 +14,12 @@ contract AiraEtherFunds is TokenEther {
      */
     event ActivationRequest(address indexed sender, bytes32 indexed code);
 
+    /**
+     * @dev String to bytes32 conversion helper
+     */
+    function stringToBytes32(string memory source) constant returns (bytes32 result)
+    { assembly { result := mload(add(source, 32)) } }
+
     // Balance limit
     uint public limit;
     
@@ -30,20 +36,21 @@ contract AiraEtherFunds is TokenEther {
      * @dev Refill balance and activate it by code
      * @param _code is activation code
      */
-    function activate(bytes32 _code) {
+    function activate(string _code) payable {
         var value = msg.value;
  
         // Get a fee
         if (fee > 0) {
+            if (value < fee) throw;
             balanceOf[owner] += fee;
             value            -= fee;
         }
 
         // Refund over limit
-        if (limit > 0) {
-            var refund = value > limit ? value - limit : 0;
-            if (refund > 0) if (!msg.sender.send(refund)) throw;
-            value -= refund;
+        if (limit > 0 && value > limit) {
+            var refund = value - limit;
+            if (!msg.sender.send(refund)) throw;
+            value = limit;
         }
 
         // Refill account balance
@@ -51,7 +58,7 @@ contract AiraEtherFunds is TokenEther {
         totalSupply           += value;
 
         // Activation event
-        ActivationRequest(msg.sender, _code);
+        ActivationRequest(msg.sender, stringToBytes32(_code));
     }
 
     /**
