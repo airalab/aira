@@ -14,10 +14,10 @@ import Data.Acid
 import Constants
 
 etherscan_tx :: Text -> Text
-etherscan_tx tx = "[" <> tx <> "](https://testnet.etherscan.io/tx/" <> tx <> ")"
+etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
 
 etherscan_addr :: Text -> Text
-etherscan_addr a = "[" <> a <> "](https://testnet.etherscan.io/address/" <> a <> ")"
+etherscan_addr a = "[" <> a <> "](https://etherscan.io/address/" <> a <> ")"
 
 toWei :: Double -> Integer
 toWei = round . (* 10^18)
@@ -151,11 +151,12 @@ send = withUsername noName $ withAddress noRegStory $ \address c -> do
     else return $ toMessage ("I can't send zero tokens!" :: Text)
 
 unregister :: Story
-unregister = withUsername noName $ \name c -> do
+unregister = withUsername noName $ withAddress noRegStory $ \_ c -> do
     res <- question $ T.unlines [ "Do you want to delete account address?"
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
         "Do as I say!" -> do
+            let Just name = chat_username c
             r <- liftIO (runWeb3 $ setAccount (T.toLower name) zero)
             return . toMessage $ case r of
                 Right _ -> "Account deleted"

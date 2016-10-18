@@ -5,13 +5,13 @@ import qualified Data.Text as T
 import Data.Text (Text)
 
 bot_address :: Text
-bot_address = "0xb27a2b2b3fe4f2e4bb36d9c03fb8d504c98d8ecb"
+bot_address = "0xce7acbd1f75c03aaa4f6ad4099f2edd51a1b4309"
 
 reg_address :: Text
-reg_address = "0x1565D3a7a41Ea865f457cC6404A52E43E103eDf5"
+reg_address = ""
 
 aira_address :: Text
-aira_address = "0x6EB7e72d7d251ab81b20366949fDbF9F939636C8"
+aira_address = ""
 
 noName :: BotMessage
 noName = toMessage $ T.unlines
@@ -22,4 +22,3 @@ noName = toMessage $ T.unlines
 
 noReg :: BotMessage
 noReg = toMessage ("You are not registered now!" :: Text)
-

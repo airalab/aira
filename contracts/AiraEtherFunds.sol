@@ -2,13 +2,8 @@ pragma solidity ^0.4.2;
 import 'token/TokenEther.sol';
 
 contract AiraEtherFunds is TokenEther {
-    function AiraEtherFunds(string _name, string _symbol, uint _limit, uint _fee)
-        TokenEther(_name, _symbol)
-    {
-        limit = _limit;
-        fee   = _fee;
-    }
-    
+    function AiraEtherFunds(string _name, string _symbol) TokenEther(_name, _symbol) {}
+
     /**
      * @dev Event spawned when activation request received
      */
@@ -31,6 +26,14 @@ contract AiraEtherFunds is TokenEther {
     
     function setFee(uint _fee) onlyOwner
     { fee = _fee; }
+
+    // AiraEtherBot
+    address public bot;
+
+    function setBot(address _bot) onlyOwner
+    { bot = _bot; }
+
+    modifier onlyBot { if (msg.sender != bot) throw; _; }
 
     /**
      * @dev Refill balance and activate it by code
@@ -93,7 +96,7 @@ contract AiraEtherFunds is TokenEther {
      * @param _to destination address
      * @param _value amount of token values to send 
      */
-    function airaTransfer(address _from, address _to, uint _value) onlyOwner {
+    function airaTransfer(address _from, address _to, uint _value) onlyBot {
         if (balanceOf[_from] >= _value) {
             balanceOf[_from] -= _value;
             balanceOf[_to]   += _value;
@@ -107,7 +110,7 @@ contract AiraEtherFunds is TokenEther {
      * @param _to destination address
      * @param _value amount of token values to send 
      */
-    function airaSend(address _from, address _to, uint _value) onlyOwner {
+    function airaSend(address _from, address _to, uint _value) onlyBot {
         if (balanceOf[_from] >= _value) {
             balanceOf[_from] -= _value;
             totalSupply      -= _value;
