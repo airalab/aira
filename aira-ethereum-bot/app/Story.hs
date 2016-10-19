@@ -150,8 +150,8 @@ send = withUsername noName $ withAddress noRegStory $ \address c -> do
                     <> etherscan_tx tx
     else return $ toMessage ("I can't send zero tokens!" :: Text)
 
-delete :: Story
-delete = withUsername noName $ \name c -> do
+unregister :: Story
+unregister = withUsername noName $ \name c -> do
     res <- question $ T.unlines [ "Do you want to delete account address?"
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
