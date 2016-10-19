@@ -17,6 +17,11 @@ const config = {
     new webpack.NoErrorsPlugin(),
     new ExtractTextPlugin('bundle.css')
   ],
+  resolve: {
+    alias: {
+      shared: path.join(__dirname, 'src', 'shared')
+    }
+  },
   module: {
       preLoaders: [
         {
@@ -49,19 +54,21 @@ const config = {
   }
 }
 
+var ETH_NET = process.env.ETH_NET || 'test'
 if (process.env.NODE_ENV === 'production') {
     config.plugins.push(
         new webpack.optimize.UglifyJsPlugin({
             compress: { warnings: false }
         })
-    )
+    );
     config.plugins.push(
         new webpack.DefinePlugin({
             'process.env': {
                 NODE_ENV: JSON.stringify('production')
-            }
+            },
+            'TEST_NET': (ETH_NET !== 'main') ? true : false
         })
-    )
+    );
 } else {
     config.devtool = 'source-map'
     config.entry.push(
@@ -69,6 +76,11 @@ if (process.env.NODE_ENV === 'production') {
     );
     config.plugins.push(
         new webpack.HotModuleReplacementPlugin()
+    );
+    config.plugins.push(
+        new webpack.DefinePlugin({
+            'TEST_NET': (ETH_NET !== 'main') ? true : false
+        })
     );
 }
 

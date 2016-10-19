@@ -13,6 +13,12 @@
     "comma-dangle": 0,
     "prefer-template": 0
   },
+  "settings": {
+    "import/parser": "babel-eslint",
+    "import/resolver": {
+      "webpack": { "config": "webpack.config.js" }
+    }
+  },
   "parserOptions": {
     "ecmaVersion": 6,
     "ecmaFeatures": {
@@ -28,6 +34,7 @@
   },
   "globals": {
     "Web3": true,
-    "web3": true
+    "web3": true,
+    "TEST_NET": true
   }
 }
