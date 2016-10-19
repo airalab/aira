@@ -16,11 +16,19 @@ contract BuilderAiraEtherFunds is Builder {
      * @dev _symbol is token symbol
      * @return address new contract
      */
-    function create(string _name, string _symbol) returns (address) {
+    function create(string _name, string _symbol) payable returns (address) {
         var inst = CreatorAiraEtherFunds.create(_name, _symbol);
         Owned(inst).delegate(msg.sender);
+        getContractsOf[msg.sender].push(inst);
+
+        if (buildingCostWei > 0 && beneficiary != 0) {
+            if (   msg.value < buildingCostWei
+               || !msg.sender.send(msg.value - buildingCostWei)
+               || !beneficiary.send(buildingCostWei)
+               ) throw;
+        }
         
-        deal(inst);
+        Builded(msg.sender, inst);
         return inst;
     }
 }
