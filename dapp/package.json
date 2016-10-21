@@ -4,8 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development node server.js",
-    "build": "cross-env NODE_ENV=production webpack",
+    "start": "cross-env NODE_ENV=development ETH_NET=test node server.js",
+    "build": "cross-env NODE_ENV=production ETH_NET=main webpack",
+    "build:test": "cross-env NODE_ENV=production ETH_NET=test webpack",
     "lint": "eslint .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -37,6 +38,7 @@
     "css-loader": "^0.23.1",
     "eslint": "^3.5.0",
     "eslint-config-airbnb": "^11.1.0",
+    "eslint-import-resolver-webpack": "^0.6.0",
     "eslint-loader": "^1.5.0",
     "eslint-plugin-import": "^1.14.0",
     "eslint-plugin-jsx-a11y": "^2.2.1",
