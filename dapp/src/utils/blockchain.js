@@ -16,18 +16,22 @@ export default class Blockchain {
     const self = this
     this.web3.eth.filter('latest').watch((e, hash) => {
       if (!e) {
-        const blockInfo = self.web3.eth.getBlock(hash);
-        _.forEach(self.subscribes, (item) => {
-          if (_.isFunction(item)) {
-            item(blockInfo)
-          } else if (_.findIndex(blockInfo.transactions, i => i === item.tx) >= 0) {
-            const transaction = self.web3.eth.getTransaction(item.tx)
-            if (transaction) {
-              item.cb(transaction)
-              self.removeSubscribeTx(item.tx)
-            }
+        self.web3.eth.getBlock(hash, false, (err, blockInfo) => {
+          if (!_.isEmpty(blockInfo)) {
+            _.forEach(self.subscribes, (item) => {
+              if (_.isFunction(item)) {
+                item(blockInfo)
+              } else if (_.findIndex(blockInfo.transactions, i => i === item.tx) >= 0) {
+                self.web3.eth.getTransaction(item.tx, (transaction) => {
+                  if (transaction) {
+                    item.cb(transaction)
+                    self.removeSubscribeTx(item.tx)
+                  }
+                })
+              }
+            })
           }
-        })
+        });
       }
     });
   }

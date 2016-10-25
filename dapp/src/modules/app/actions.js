@@ -1,7 +1,7 @@
 import { startSubmit, stopSubmit, reset } from 'redux-form';
 import { FLASH_MESSAGE, SET_BALANCE, SET_APPROVED } from './actionTypes'
 import { ADDRESS, ADDRESS_BOT } from '../../config/config'
-import { loadAbiByName, getContract, blockchain, tx, getWeb3, transfer, coinbase } from '../../utils/web3'
+import { loadAbiByName, getContract, blockchain, getWeb3, transfer, coinbase } from '../../utils/web3'
 
 export function flashMessage(message) {
   return {
@@ -15,14 +15,20 @@ export function load() {
     loadAbiByName('AiraEtherFunds')
       .then((abi) => {
         const contract = getContract(abi, ADDRESS);
-        dispatch({
-          type: SET_BALANCE,
-          payload: getWeb3().fromWei(contract.balanceOf(coinbase()), 'ether')
-        })
-        dispatch({
-          type: SET_APPROVED,
-          payload: getWeb3().fromWei(contract.allowance(coinbase(), ADDRESS_BOT), 'ether')
-        })
+        contract.call('balanceOf', [coinbase()])
+          .then((result) => {
+            dispatch({
+              type: SET_BALANCE,
+              payload: getWeb3().fromWei(result, 'ether')
+            })
+            return contract.call('allowance', [coinbase(), ADDRESS_BOT])
+          })
+          .then((result) => {
+            dispatch({
+              type: SET_APPROVED,
+              payload: getWeb3().fromWei(result, 'ether')
+            })
+          })
       })
   }
 }
@@ -31,7 +37,7 @@ function run(dispatch, address, abiName, action, values, txArgs = {}) {
   return loadAbiByName(abiName)
     .then((abi) => {
       const contract = getContract(abi, address);
-      return tx(contract, action, values, txArgs)
+      return contract.send(action, values, txArgs)
     })
     .then((txId) => {
       dispatch(flashMessage('txId: ' + txId))
@@ -75,9 +81,11 @@ export function submitApprove(form) {
 export function submitSend(form) {
   return (dispatch) => {
     dispatch(startSubmit('FormSend'));
-    const txId = transfer(coinbase(), ADDRESS, form.value);
-    dispatch(flashMessage('txId: ' + txId));
-    blockchain.subscribeTx(txId)
+    transfer(coinbase(), ADDRESS, form.value)
+      .then((txId) => {
+        dispatch(flashMessage('txId: ' + txId));
+        return blockchain.subscribeTx(txId)
+      })
       .then(transaction => transaction.blockNumber)
       .then((blockNumber) => {
         dispatch(stopSubmit('FormSend'))
