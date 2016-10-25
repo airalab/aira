@@ -1,10 +1,13 @@
 module Story where
 
 import Control.Monad.Error.Class (throwError)
+import Data.Text.Lazy.Builder (toLazyText)
+import Data.Text.Lazy.Builder.RealFloat
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
 import Data.Text.Read (hexadecimal)
 import Control.Applicative ((<|>))
+import Data.Text.Lazy (toStrict)
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
@@ -24,6 +27,9 @@ toWei = round . (* 10^18)
 
 fromWei :: Integer -> Double
 fromWei = (/ 10^18) . fromIntegral
+
+floatToText :: RealFloat a => a -> Text
+floatToText = toStrict . toLazyText . formatRealFloat Fixed Nothing
 
 newtype TelegramAddress = TelegramAddress Address
   deriving Show
@@ -109,7 +115,7 @@ about = withUsername noName $ withAddress noRegStory $ \address c -> do
     return $ toMessage $ T.unlines
         [ "Hello, " <> getName c <> "!"
         , "Your address: " <> etherscan_addr (toText address)
-        , "Total balance: " <> pack (show (fromWei balance)) <> " `ETH`"
+        , "Total balance: " <> floatToText (fromWei balance) <> " `ETH`"
         ]
 
 transfer :: Story
