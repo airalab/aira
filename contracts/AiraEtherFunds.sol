@@ -9,12 +9,6 @@ contract AiraEtherFunds is TokenEther {
      */
     event ActivationRequest(address indexed sender, bytes32 indexed code);
 
-    /**
-     * @dev String to bytes32 conversion helper
-     */
-    function stringToBytes32(string memory source) constant returns (bytes32 result)
-    { assembly { result := mload(add(source, 32)) } }
-
     // Balance limit
     uint public limit;
     
@@ -28,12 +22,18 @@ contract AiraEtherFunds is TokenEther {
     { fee = _fee; }
 
     // AiraEtherBot
-    address public bot;
+    address public ethBot;
 
-    function setBot(address _bot) onlyOwner
-    { bot = _bot; }
+    function setEthBot(address _eth_bot) onlyOwner
+    { ethBot = _eth_bot; }
 
-    modifier onlyBot { if (msg.sender != bot) throw; _; }
+    // AiraSecureBot
+    address public secureBot;
+
+    function setSecureBot(address _secure_bot) onlyOwner
+    { secureBot = _secure_bot; }
+
+    modifier onlySecureBot { if (msg.sender != secureBot) throw; _; }
 
     /**
      * @dev Refill balance and activate it by code
@@ -65,6 +65,12 @@ contract AiraEtherFunds is TokenEther {
     }
 
     /**
+     * @dev String to bytes32 conversion helper
+     */
+    function stringToBytes32(string memory source) constant returns (bytes32 result)
+    { assembly { result := mload(add(source, 32)) } }
+
+    /**
      * @dev This is the way to refill your token balance by ethers
      */
     function refill() payable returns (bool) {
@@ -91,31 +97,34 @@ contract AiraEtherFunds is TokenEther {
     }
 
     /**
-     * @dev Internal transfer for AIRA
+     * @dev Outgoing transfer (send) with allowance
      * @param _from source address
      * @param _to destination address
      * @param _value amount of token values to send 
      */
-    function airaTransfer(address _from, address _to, uint _value) onlyBot {
-        if (balanceOf[_from] >= _value) {
-            balanceOf[_from] -= _value;
-            balanceOf[_to]   += _value;
-            Transfer(_from, _to, _value);
+    function sendFrom(address _from, address _to, uint _value) {
+        var avail = allowance[_from][msg.sender]
+                  > balanceOf[_from] ? balanceOf[_from]
+                                     : allowance[_from][msg.sender];
+        if (avail >= _value) {
+            allowance[_from][msg.sender] -= _value;
+            balanceOf[_from]             -= _value;
+            totalSupply                  -= _value;
+            if (!_to.send(_value)) throw;
         }
     }
 
     /**
-     * @dev Outgoing transfer for AIRA
-     * @param _from source address
-     * @param _to destination address
-     * @param _value amount of token values to send 
+     * @dev Increase approved token values for AiraEthBot
+     * @param _client is a client address
+     * @param _value is amount of tokens
      */
-    function airaSend(address _from, address _to, uint _value) onlyBot {
-        if (balanceOf[_from] >= _value) {
-            balanceOf[_from] -= _value;
-            totalSupply      -= _value;
-            Transfer(_from, _to, _value);
-            if (!_to.send(_value)) throw;
-        }
-    }
+    function secureApprove(address _client, uint _value) onlySecureBot
+    { allowance[_client][ethBot] += _value; }
+
+    /**
+     * @dev Close allowance for AiraEthBot
+     */
+    function secureUnapprove(address _client) onlySecureBot
+    { allowance[_client][ethBot] = 0; }
 }
