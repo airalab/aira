@@ -1,5 +1,24 @@
 {-# LANGUAGE FlexibleContexts #-}
-module Aira.Bot.Ethereum.Story where
+-- |
+-- Module      :  Aira.Bot.Ethereum.Story
+-- Copyright   :  Alexander Krupenkin 2016
+-- License     :  BSD3
+--
+-- Maintainer  :  mail@akru.me
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- Aira Ethereum bot stories.
+--
+module Aira.Bot.Ethereum.Story (
+    unregister
+  , transfer
+  , balance
+  , secure
+  , start
+  , about
+  , send
+  ) where
 
 import Control.Monad.Error.Class (throwError)
 import Data.Text.Lazy.Builder (toLazyText)
@@ -143,3 +162,14 @@ unregister = withUsername noName
                          Right _ -> "Account deleted"
                          Left e -> pack $ show e
                   _ -> return (toMessage ("No confirmation given" :: Text))
+
+balance :: Story
+balance = withUsername noName
+        $ withAddress noRegStory
+        $ \address c -> do Right amount <- liftIO $ runWeb3 (getBalance address)
+                           return (toMessage $ "Avail: " <> floatToText amount)
+
+secure :: Story
+secure _ = return . toMessage $ T.unlines
+-- TODO: Fill text description
+    [ "@AiraSecureBot" ]

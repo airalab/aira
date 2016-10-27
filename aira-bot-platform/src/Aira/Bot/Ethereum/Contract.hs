@@ -1,3 +1,14 @@
+-- |
+-- Module      :  Aira.Bot.Ethereum.Contract
+-- Copyright   :  Alexander Krupenkin 2016
+-- License     :  BSD3
+--
+-- Maintainer  :  mail@akru.me
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- Aira Ethereum bot contract API.
+--
 module Aira.Bot.Ethereum.Contract (
     transferFrom
   , getBalance

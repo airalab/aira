@@ -16,6 +16,8 @@ helpMessage = T.unlines
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
+    , "/balance - get avail balance"
+    , "/secure - get information about security bot"
 --    , "/event - append event listener"
 --    , "/event_off - remove event listener"
     , "/unregister - remove account address"
@@ -34,6 +36,8 @@ main = do
             [ ("/me", Story.about)
             , ("/start", Story.start codedb)
             , ("/send", Story.send)
+            , ("/secure", Story.secure)
+            , ("/balance", Story.balance)
             , ("/transfer", Story.transfer)
             , ("/unregister", Story.unregister)
 --            , ("/event", Story.event db)
