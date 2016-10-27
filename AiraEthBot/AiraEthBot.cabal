@@ -1,0 +1,29 @@
+name:                AiraEthBot
+version:             0.2.0.0
+synopsis:            Aira Ethereum helper bot
+description:         Please see README.md
+homepage:            https://github.com/airalab/aira#readme
+license:             BSD3
+license-file:        LICENSE
+author:              Alexander Krupenkin
+maintainer:          mail@akru.me
+copyright:           2016 Alexander Krupenkin 
+category:            Web
+build-type:          Simple
+cabal-version:       >=1.10
+
+executable AiraEthBot
+  hs-source-dirs:      app
+  main-is:             Main.hs
+  build-depends:       base  >= 4.7 && <5
+                     , data-default-class
+                     , aira-bot-platform
+                     , telegram-bot
+                     , acid-state
+                     , text
+  default-extensions:  OverloadedStrings
+  default-language:    Haskell2010
+
+source-repository head
+  type:     git
+  location: https://github.com/airalab/aira

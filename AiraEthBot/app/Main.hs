@@ -1,14 +1,13 @@
 {-# LANGUAGE OverloadedLists #-}
 module Main where
 
+import qualified Aira.Bot.Ethereum.Story as Story
+import Aira.Bot.Activation (listenCode)
 import Data.Acid (openLocalState)
-import qualified Data.Text as T
-import qualified Story as Story
 import Data.Default.Class (def)
+import qualified Data.Text as T
 import Web.Telegram.Bot
 import Data.Text (Text)
-import ActivationCode
-import Database
 
 helpMessage :: Text
 helpMessage = T.unlines
@@ -30,7 +29,7 @@ main = do
     codedb <- openLocalState def
     -- Run bot
     runBot config $ do
-        activationCodeBot codedb
+        listenCode codedb
         storyBot helpMessage $
             [ ("/me", Story.about)
             , ("/start", Story.start codedb)
