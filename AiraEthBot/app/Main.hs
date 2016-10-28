@@ -2,6 +2,7 @@
 module Main where
 
 import qualified Aira.Bot.Ethereum.Story as Story
+import qualified Aira.Bot.Story as CommonStory
 import Aira.Bot.Activation (listenCode)
 import Data.Acid (openLocalState)
 import Data.Default.Class (def)
@@ -33,13 +34,13 @@ main = do
     runBot config $ do
         listenCode codedb
         storyBot helpMessage $
-            [ ("/me", Story.about)
-            , ("/start", Story.start codedb)
+            [ ("/me", CommonStory.about)
+            , ("/start", CommonStory.start codedb)
             , ("/send", Story.send)
             , ("/secure", Story.secure)
             , ("/balance", Story.balance)
             , ("/transfer", Story.transfer)
-            , ("/unregister", Story.unregister)
+            , ("/unregister", CommonStory.unregister)
 --            , ("/event", Story.event db)
 --            , ("/event_off", Story.eventOff db)
             ]

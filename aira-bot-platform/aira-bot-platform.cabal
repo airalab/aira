@@ -15,9 +15,11 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Aira.Registrar
+                     , Aira.Bot.Story
+                     , Aira.Bot.Contract
                      , Aira.Bot.Activation
                      , Aira.Bot.Ethereum.Story
-                     , Aira.Bot.Ethereum.Contract
+                     , Aira.Bot.Security.Story
   build-depends:       base  >= 4.7 && <5
                      , data-default-class
                      , lens-family-th
