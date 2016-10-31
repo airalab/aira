@@ -40,12 +40,13 @@ transfer = withUsername noName
          $ \address c -> do
             AccountAddress destination <- question "Recipient username:"
             amount <- question "Amount of `ether` you want to send:"
-            if amount > 0 then do
-                res <- liftIO $ runWeb3 (transferFrom address destination amount)
-                return $ toMessage $ case res of
-                    Left e   -> pack (show e)
-                    Right tx -> "Transfer success with transaction " <> etherscan_tx tx
-            else return $ toMessage ("I can't transfer zero tokens!" :: Text)
+            res <- liftIO $ runWeb3 $
+                withFee address amount $
+                    transferFrom address destination amount
+            return $ toMessage $ case res of
+                Left (UserFail e) -> pack e
+                Right tx -> "Success transaction " <> etherscan_tx tx
+                Left _   -> "Internal error occured!"
 
 send :: Story
 send = withUsername noName
@@ -53,12 +54,13 @@ send = withUsername noName
      $ \address c -> do
         destination <- question "Recipient Ethereum address:"
         amount <- question "Amount of `ether` you want to send:"
-        if amount > 0 then do
-            res <- liftIO $ runWeb3 (sendFrom address destination amount)
-            return $ toMessage $ case res of
-                Left e   -> pack (show e)
-                Right tx -> "Send success with transaction " <> etherscan_tx tx
-        else return $ toMessage ("I can't send zero tokens!" :: Text)
+        res <- liftIO $ runWeb3 $
+            withFee address amount $
+                    sendFrom address destination amount
+        return $ toMessage $ case res of
+            Left (UserFail e) -> pack e
+            Right tx -> "Success transaction " <> etherscan_tx tx
+            Left _   -> "Internal error occured!"
 
 balance :: Story
 balance = withUsername noName

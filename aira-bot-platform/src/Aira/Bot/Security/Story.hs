@@ -40,19 +40,25 @@ approve = withUsername noName
         $ withAddress noRegStory
         $ \address c -> do
             amount <- question "Amount of approved tokens:"
-            res <- liftIO $ runWeb3 (secureApprove address amount)
-            case res of
-                Right tx -> return (toMessage $ "Success transaction " <> etherscan_tx tx)
-                Left e -> return (toMessage $ pack (show e))
+            res <- liftIO $ runWeb3 $
+                withFee address 0 $
+                    secureApprove address amount
+            return $ toMessage $ case res of
+                Left (UserFail e) -> pack e
+                Right tx -> "Success transaction " <> etherscan_tx tx
+                Left _   -> "Internal error occured!"
 
 unapprove :: Story
 unapprove = withUsername noName
           $ withAddress noRegStory
           $ \address c -> do
-            res <- liftIO $ runWeb3 (secureUnapprove address)
-            case res of
-                Right tx -> return (toMessage $ "Success transaction " <> etherscan_tx tx)
-                Left e -> return (toMessage $ pack (show e))
+            res <- liftIO $ runWeb3 $
+                withFee address 0 $
+                    secureUnapprove address
+            return $ toMessage $ case res of
+                Left (UserFail e) -> pack e
+                Right tx -> "Success transaction " <> etherscan_tx tx
+                Left _   -> "Internal error occured!"
 
 watch :: AcidState WatchTx -> Story
 watch db = withUsername noName

@@ -14,9 +14,10 @@ module Aira.Bot.Story (
     AccountAddress(..)
   , etherscan_addr
   , etherscan_tx
-  , withUsername
   , floatToText
+  , withUsername
   , withAddress
+  , withFee
   , unregister
   , noRegStory
   , noName
@@ -41,6 +42,18 @@ import Data.Acid
 import Aira.Bot.Activation
 import Aira.Bot.Contract
 import Aira.Registrar
+
+fee = 0.1
+
+withFee :: Address -> Double -> Web3 Text -> Web3 Text
+withFee address amount fun = do
+    beneficiary <- resolve "AiraEth.bot"
+    balance     <- getBalance address
+    if amount + fee > balance
+    then
+        throwError $ UserFail "Allowed balance is too low for this operation!"
+    else
+        sendFrom address beneficiary fee >> fun
 
 etherscan_tx :: Text -> Text
 etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
