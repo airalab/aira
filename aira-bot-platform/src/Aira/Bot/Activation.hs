@@ -116,7 +116,7 @@ handleActivation db (Change {changeTopics = topics}) = do
                 Just name = chat_username chat
             liftIO $ do
                 update db (DeleteCode code)
-                runWeb3 $ setAddress ("account-" <> T.toLower name) address
+                runWeb3 $ setAddress (T.toLower name <> ".account") address
             sendMessageBot chat $
                 toMessage $ T.unlines [ "A good news, " <> first_name <> "!"
                                       , "Activation code received, unlocking..."
@@ -152,4 +152,4 @@ genCode db chat = do
 
 -- | Take address by account name
 accountAddress :: Text -> Web3 Address
-accountAddress name = resolve ("account-" <> T.toLower name)
+accountAddress name = resolve (T.toLower name <> ".account")

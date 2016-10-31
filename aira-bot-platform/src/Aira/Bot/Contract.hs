@@ -26,8 +26,8 @@ import Aira.Registrar
 
 transferFrom :: Address -> Address -> Double -> Web3 Text
 transferFrom from dest amount = do
-    airaEtherFunds <- resolve "contract-AiraEtherFunds"
-    self           <- resolve "account-airaethbot"
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    self           <- resolve "AiraEth.bot"
     let aira_address = "0x" <> toText airaEtherFunds
         self_address = "0x" <> toText self
         tranCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
@@ -38,8 +38,8 @@ transferFrom from dest amount = do
 
 sendFrom :: Address -> Address -> Double -> Web3 Text
 sendFrom from dest amount = do
-    airaEtherFunds <- resolve "contract-AiraEtherFunds"
-    self           <- resolve "account-airaethbot"
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    self           <- resolve "AiraEth.bot"
     let aira_address = "0x" <> toText airaEtherFunds
         self_address = "0x" <> toText self
         sendCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
@@ -50,8 +50,8 @@ sendFrom from dest amount = do
 
 getBalance :: Address -> Web3 Double
 getBalance address = do
-    airaEtherFunds <- resolve "contract-AiraEtherFunds"
-    self           <- resolve "account-airaethbot"
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    self           <- resolve "AiraEth.bot"
     let aira_address = "0x" <> toText airaEtherFunds
         self_address = "0x" <> toText self
         airaCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
@@ -63,8 +63,8 @@ getBalance address = do
 
 secureApprove :: Address -> Double -> Web3 Text
 secureApprove address amount = do
-    airaEtherFunds <- resolve "contract-AiraEtherFunds"
-    self           <- resolve "account-airasecurebot"
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    self           <- resolve "AiraSecure.bot"
     let aira_address = "0x" <> toText airaEtherFunds
         self_address = "0x" <> toText self
         sendCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
@@ -74,8 +74,8 @@ secureApprove address amount = do
 
 secureUnapprove :: Address -> Web3 Text
 secureUnapprove address = do
-    airaEtherFunds <- resolve "contract-AiraEtherFunds"
-    self           <- resolve "account-airasecurebot"
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    self           <- resolve "AiraSecure.bot"
     let aira_address = "0x" <> toText airaEtherFunds
         self_address = "0x" <> toText self
         sendCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
