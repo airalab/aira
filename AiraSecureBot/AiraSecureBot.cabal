@@ -19,6 +19,7 @@ executable AiraSecureBot
                      , data-default-class
                      , aira-bot-platform
                      , telegram-bot
+                     , acid-state
                      , text
   default-extensions:  OverloadedStrings
   default-language:    Haskell2010

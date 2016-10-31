@@ -12,6 +12,8 @@
 module Aira.Bot.Security.Story (
     approve
   , unapprove
+  , watch
+  , unwatch
   ) where
 
 import Control.Monad.Error.Class (throwError)
@@ -27,9 +29,11 @@ import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
 
+import Aira.Bot.Security.Watch
 import Aira.Bot.Activation
 import Aira.Bot.Contract
 import Aira.Bot.Story
+import Data.Acid
 
 approve :: Story
 approve = withUsername noName
@@ -49,3 +53,35 @@ unapprove = withUsername noName
             case res of
                 Right tx -> return (toMessage $ "Success transaction " <> etherscan_tx tx)
                 Left e -> return (toMessage $ pack (show e))
+
+watch :: AcidState WatchTx -> Story
+watch db = withUsername noName
+          $ withAddress noRegStory
+          $ \address c -> do
+            res <- select "Do you want to watch incoming transactions of"
+                          [["self", "another"]]
+            case res :: Text of
+                "self" -> do
+                    liftIO $ update db (WatchRecipient address c)
+                    return $ toMessage ("Your address added to watch list." :: Text)
+                _ -> do
+                    recipient <- question "Recipient address for watching:"
+                    liftIO $ update db (WatchRecipient recipient c)
+                    return $ toMessage $ "Address " <> toText recipient
+                                        <> " added to watch list."
+
+unwatch :: AcidState WatchTx -> Story
+unwatch db = withUsername noName
+          $ withAddress noRegStory
+          $ \address c -> do
+            res <- select "Do you want to drop watcher of"
+                          [["self", "another"]]
+            case res :: Text of
+                "self" -> do
+                    liftIO $ update db (UnwatchRecipient address)
+                    return $ toMessage ("Your address deleted from watch list." :: Text)
+                _ -> do
+                    recipient <- question "Drop listener for address:"
+                    liftIO $ update db (UnwatchRecipient recipient)
+                    return $ toMessage $ "Address " <> toText recipient
+                                        <> " deleted from watch list."

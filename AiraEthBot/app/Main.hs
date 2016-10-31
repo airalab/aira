@@ -19,8 +19,6 @@ helpMessage = T.unlines
     , "/transfer - money transfer to Telegram account"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
---    , "/event - append event listener"
---    , "/event_off - remove event listener"
     , "/unregister - remove account address"
     , "/cancel - stop command execution"
     , "/help or any text - show this message" ]
@@ -28,7 +26,6 @@ helpMessage = T.unlines
 main :: IO ()
 main = do
     -- Open database
--- db <- openLocalState def
     codedb <- openLocalState def
     -- Run bot
     runBot config $ do
@@ -41,8 +38,6 @@ main = do
             , ("/balance", Story.balance)
             , ("/transfer", Story.transfer)
             , ("/unregister", CommonStory.unregister)
---            , ("/event", Story.event db)
---            , ("/event_off", Story.eventOff db)
             ]
   where config = defaultConfig
             { token = Token "bot..." }

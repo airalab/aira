@@ -19,14 +19,14 @@ import Data.Text as T
 
 -- | Constant registrar contract address
 registrar_address :: Text
-registrar_address = "0x7A5dA0C039e718F0cFea12B0Bb210A5Ed6219921"
+registrar_address = "0xE5322B2b1A512Ba8DbAe458E7f0eF38C743C93b9"
 
 -- | Register new address with name by @AiraRegistrar@ service
 setAddress :: Text -> Address -> Web3 Text
 setAddress name address = do
-    owner <- eth_call ownerCall "latest"
+    owner <- T.drop 26 <$> eth_call ownerCall "latest"
     eth_sendTransaction $ regCall owner (Just regData)
-  where regCall o = Call (Just o) registrar_address Nothing Nothing Nothing
+  where regCall o = Call (Just $ "0x" <> o) registrar_address Nothing Nothing Nothing
         regData   = "0x213b9eb8" <> paddedInt 64 <> paddedAddr (toText address) <> text2data name
         ownerCall = Call Nothing registrar_address Nothing Nothing Nothing (Just "0x8da5cb5b")
 
