@@ -43,7 +43,7 @@ import Aira.Bot.Activation
 import Aira.Bot.Contract
 import Aira.Registrar
 
-fee = 0.1
+fee = 0.01
 
 withFee :: Address -> Double -> Web3 Text -> Web3 Text
 withFee address amount fun = do
