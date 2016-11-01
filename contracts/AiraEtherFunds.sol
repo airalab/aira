@@ -1,8 +1,12 @@
 pragma solidity ^0.4.2;
 import 'token/TokenEther.sol';
+import './AiraRegistrarService.sol';
 
 contract AiraEtherFunds is TokenEther {
-    function AiraEtherFunds(string _name, string _symbol) TokenEther(_name, _symbol) {}
+    function AiraEtherFunds(address _bot_reg, string _name, string _symbol)
+            TokenEther(_name, _symbol) {
+        reg = AiraRegistrarService(_bot_reg);
+    }
 
     /**
      * @dev Event spawned when activation request received
@@ -20,20 +24,6 @@ contract AiraEtherFunds is TokenEther {
     
     function setFee(uint _fee) onlyOwner
     { fee = _fee; }
-
-    // AiraEtherBot
-    address public ethBot;
-
-    function setEthBot(address _eth_bot) onlyOwner
-    { ethBot = _eth_bot; }
-
-    // AiraSecureBot
-    address public secureBot;
-
-    function setSecureBot(address _secure_bot) onlyOwner
-    { secureBot = _secure_bot; }
-
-    modifier onlySecureBot { if (msg.sender != secureBot) throw; _; }
 
     /**
      * @dev Refill balance and activate it by code
@@ -84,6 +74,20 @@ contract AiraEtherFunds is TokenEther {
     }
 
     /**
+     * @dev This is the way to refill token balance by ethers
+     * @param _dest is destination address
+     */
+    function refill(address _dest) payable returns (bool) {
+        // Throw when over limit
+        if (balanceOf[_dest] + msg.value > limit) throw;
+
+        // Refill
+        balanceOf[_dest] += msg.value;
+        totalSupply      += msg.value;
+        return true;
+    }
+
+    /**
      * @dev This method is called when money sended to contract address,
      *      a synonym for refill()
      */
@@ -114,17 +118,26 @@ contract AiraEtherFunds is TokenEther {
         }
     }
 
+    AiraRegistrarService reg;
+    modifier onlySecure { if (msg.sender != reg.addr("AiraSecure")) throw; _; }
+
     /**
      * @dev Increase approved token values for AiraEthBot
      * @param _client is a client address
      * @param _value is amount of tokens
      */
-    function secureApprove(address _client, uint _value) onlySecureBot
-    { allowance[_client][ethBot] += _value; }
+    function secureApprove(address _client, uint _value) onlySecure {
+        var ethBot = reg.addr("AiraEth");
+        if (ethBot != 0)
+            allowance[_client][ethBot] += _value;
+    }
 
     /**
      * @dev Close allowance for AiraEthBot
      */
-    function secureUnapprove(address _client) onlySecureBot
-    { allowance[_client][ethBot] = 0; }
+    function secureUnapprove(address _client) onlySecure {
+        var ethBot = reg.addr("AiraEth");
+        if (ethBot != 0)
+            allowance[_client][ethBot] = 0;
+    }
 }
