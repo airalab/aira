@@ -127,7 +127,7 @@ listenCode :: AcidState ActivationCode -> Bot ()
 listenCode db = do
     forkBot $ do
         Right actFilterId <- liftIO $ runWeb3 $
-            resolve "contract-AiraEtherFunds" >>= eth_newFilter . activationFilter
+            resolve "AiraEtherFunds.contract" >>= eth_newFilter . activationFilter
         let loop = do
              Right upd <- liftIO $ runWeb3 (eth_getFilterChanges actFilterId)
              mapM_ (handleActivation db) upd
