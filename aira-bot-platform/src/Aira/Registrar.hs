@@ -25,7 +25,10 @@ import Data.Text (Text)
 -- | Constant registrar contract address
 root_registrar_address :: Address
 root_registrar_address = address
-  where Right address = fromText "0x1942fAB8D465a9aDd99962a7e8e93b50f7FCa2D3"
+-- Mainnet ROOT
+  where Right address = fromText "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
+-- Testnet ROOT
+--  where Right address = fromText "0x1942fAB8D465a9aDd99962a7e8e93b50f7FCa2D3"
 
 type DomainName = Text
 

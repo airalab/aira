@@ -118,7 +118,7 @@ contract AiraEtherFunds is TokenEther {
         }
     }
 
-    AiraRegistrarService reg;
+    AiraRegistrarService public reg;
     modifier onlySecure { if (msg.sender != reg.addr("AiraSecure")) throw; _; }
 
     /**
