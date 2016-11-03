@@ -15,6 +15,7 @@
 module Aira.Bot.Activation (
     ActivationCode
   , accountAddress
+  , accountDelete
   , listenCode
   , genCode
   ) where
@@ -153,3 +154,7 @@ genCode db chat = do
 -- | Take address by account name
 accountAddress :: Text -> Web3 Address
 accountAddress name = resolve (T.toLower name <> ".account")
+
+-- Take name and remove record from registrar
+accountDelete :: Text -> Web3 Text
+accountDelete name = setAddress (T.toLower name <> ".account") zero

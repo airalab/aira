@@ -148,7 +148,7 @@ unregister = withUsername noName
                case res :: Text of
                   "Do as I say!" -> do
                      let Just name = chat_username c
-                     r <- liftIO (runWeb3 $ setAddress (T.toLower name) zero)
+                     r <- liftIO $ runWeb3 (accountDelete name)
                      return . toMessage $ case r of
                          Right _ -> "Account deleted"
                          Left e -> pack $ show e
