@@ -1,3 +1,3 @@
 export default {
-  AiraEtherFunds: '0xb35838Dd4dF7d18ad3d61b09d4463D86500d873a'
+  AiraEtherFunds: '0xa3ce9fa0f6b6649e40bc5146082661d5f0ed5d7a'
 }
