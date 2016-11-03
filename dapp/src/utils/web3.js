@@ -1,4 +1,4 @@
-import { Promise } from 'es6-promise'
+import Promise from 'bluebird'
 import _ from 'lodash'
 import axios from 'axios'
 import Blockchain from './blockchain'

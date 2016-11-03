@@ -1,4 +1,4 @@
-import { Promise } from 'es6-promise'
+import Promise from 'bluebird'
 import _ from 'lodash'
 
 export default class Blockchain {
@@ -22,7 +22,7 @@ export default class Blockchain {
               if (_.isFunction(item)) {
                 item(blockInfo)
               } else if (_.findIndex(blockInfo.transactions, i => i === item.tx) >= 0) {
-                self.web3.eth.getTransaction(item.tx, (transaction) => {
+                self.web3.eth.getTransaction(item.tx, (errTx, transaction) => {
                   if (transaction) {
                     item.cb(transaction)
                     self.removeSubscribeTx(item.tx)

@@ -1,4 +1,5 @@
 import { startSubmit, stopSubmit, reset } from 'redux-form';
+import _ from 'lodash';
 import { FLASH_MESSAGE, SET_BALANCE, SET_APPROVED } from './actionTypes'
 import { ADDRESS, ADDRESS_BOT } from '../../config/config'
 import { loadAbiByName, getContract, blockchain, getWeb3, transfer, coinbase } from '../../utils/web3'
@@ -19,14 +20,14 @@ export function load() {
           .then((result) => {
             dispatch({
               type: SET_BALANCE,
-              payload: getWeb3().fromWei(result, 'ether')
+              payload: _.toNumber(getWeb3().fromWei(result, 'ether'))
             })
             return contract.call('allowance', [coinbase(), ADDRESS_BOT])
           })
           .then((result) => {
             dispatch({
               type: SET_APPROVED,
-              payload: getWeb3().fromWei(result, 'ether')
+              payload: _.toNumber(getWeb3().fromWei(result, 'ether'))
             })
           })
       })
