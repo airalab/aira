@@ -3,8 +3,8 @@ pragma solidity ^0.4.2;
 import 'contracts/AiraEtherFunds.sol';
 
 library CreatorAiraEtherFunds {
-    function create(string _name, string _symbol) returns (AiraEtherFunds)
-    { return new AiraEtherFunds(_name, _symbol); }
+    function create(address _bot_reg, string _name, string _symbol) returns (AiraEtherFunds)
+    { return new AiraEtherFunds(_bot_reg, _name, _symbol); }
 
     function version() constant returns (string)
     { return "v0.4.9 (84e7c7f9)"; }

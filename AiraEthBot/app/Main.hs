@@ -1,14 +1,14 @@
 {-# LANGUAGE OverloadedLists #-}
 module Main where
 
+import qualified Aira.Bot.Ethereum.Story as Story
+import qualified Aira.Bot.Story as CommonStory
+import Aira.Bot.Activation (listenCode)
 import Data.Acid (openLocalState)
-import qualified Data.Text as T
-import qualified Story as Story
 import Data.Default.Class (def)
+import qualified Data.Text as T
 import Web.Telegram.Bot
 import Data.Text (Text)
-import ActivationCode
-import Database
 
 helpMessage :: Text
 helpMessage = T.unlines
@@ -17,8 +17,8 @@ helpMessage = T.unlines
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
---    , "/event - append event listener"
---    , "/event_off - remove event listener"
+    , "/balance - get avail balance"
+    , "/secure - get information about security bot"
     , "/unregister - remove account address"
     , "/cancel - stop command execution"
     , "/help or any text - show this message" ]
@@ -26,19 +26,18 @@ helpMessage = T.unlines
 main :: IO ()
 main = do
     -- Open database
--- db <- openLocalState def
     codedb <- openLocalState def
     -- Run bot
     runBot config $ do
-        activationCodeBot codedb
+        listenCode codedb
         storyBot helpMessage $
-            [ ("/me", Story.about)
-            , ("/start", Story.start codedb)
+            [ ("/me", CommonStory.about)
+            , ("/start", CommonStory.start codedb)
             , ("/send", Story.send)
+            , ("/secure", Story.secure)
+            , ("/balance", Story.balance)
             , ("/transfer", Story.transfer)
-            , ("/unregister", Story.unregister)
---            , ("/event", Story.event db)
---            , ("/event_off", Story.eventOff db)
+            , ("/unregister", CommonStory.unregister)
             ]
   where config = defaultConfig
             { token = Token "bot..." }

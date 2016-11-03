@@ -1,6 +1,6 @@
-name:                aira-ethereum-bot
-version:             0.1.0.0
-synopsis:            Aira Ethereum helper bot 
+name:                aira-bot-platform
+version:             0.2.1.0
+synopsis:            Aira helper bot platform 
 description:         Please see README.md
 homepage:            https://github.com/airalab/aira#readme
 license:             BSD3
@@ -8,14 +8,19 @@ license-file:        LICENSE
 author:              Alexander Krupenkin
 maintainer:          mail@akru.me
 copyright:           Alexander Krupenkin
-category:            Web
+category:            Aira
 build-type:          Simple
 cabal-version:       >=1.10
 
-executable aira-ethereum-bot
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
+library
+  hs-source-dirs:      src
+  exposed-modules:     Aira.Registrar
+                     , Aira.Bot.Story
+                     , Aira.Bot.Contract
+                     , Aira.Bot.Activation
+                     , Aira.Bot.Ethereum.Story
+                     , Aira.Bot.Security.Story
+                     , Aira.Bot.Security.Watch
   build-depends:       base  >= 4.7 && <5
                      , data-default-class
                      , lens-family-th

@@ -12,12 +12,13 @@ import 'builder/Builder.sol';
 contract BuilderAiraEtherFunds is Builder {
     /**
      * @dev Run script creation contract
+     * @dev _bot_reg is a registrar of bots
      * @dev _name is token name
      * @dev _symbol is token symbol
      * @return address new contract
      */
-    function create(string _name, string _symbol) payable returns (address) {
-        var inst = CreatorAiraEtherFunds.create(_name, _symbol);
+    function create(address _bot_reg, string _name, string _symbol) payable returns (address) {
+        var inst = CreatorAiraEtherFunds.create(_bot_reg, _name, _symbol);
         Owned(inst).delegate(msg.sender);
         getContractsOf[msg.sender].push(inst);
 

@@ -4,7 +4,6 @@ resolver: lts-7.5
 # User packages to be built.
 packages:
 - '.'
-- '../aira-bot-platform'
 - '../telegram-bot'
 - '../web3'
 

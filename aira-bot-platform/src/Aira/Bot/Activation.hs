@@ -1,7 +1,23 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE TemplateHaskell    #-}
 {-# LANGUAGE TypeFamilies       #-}
-module ActivationCode where
+-- |
+-- Module      :  Aira.Bot.Activation
+-- Copyright   :  Alexander Krupenkin 2016
+-- License     :  BSD3
+--
+-- Maintainer  :  mail@akru.me
+-- Stability   :  experimental
+-- Portability :  portable
+--
+-- Aira code based account activation service.
+--
+module Aira.Bot.Activation (
+    ActivationCode
+  , accountAddress
+  , listenCode
+  , genCode
+  ) where
 
 import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage)
 import Web.Telegram.API.Bot (Chat(..), ChatType(..))
@@ -17,11 +33,11 @@ import qualified Data.Map as M
 import Data.Text (Text, pack)
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
+import Aira.Registrar
 import Data.Map (Map)
 import System.Random
 import Data.SafeCopy
 import Data.Acid
-import Constants
 
 import Lens.Family2.State
 import Lens.Family2.TH
@@ -80,14 +96,9 @@ getTime code = times `views` M.lookup code <$> ask
 
 $(makeAcidic ''ActivationCode ['newCode, 'deleteCode, 'getCode, 'getChat, 'getTime])
 
-setAccount :: Text -> Address -> Web3 Text
-setAccount name address = eth_sendTransaction (regCall $ Just regData)
-  where regCall = Call (Just bot_address) reg_address Nothing Nothing Nothing
-        regData = "0x213b9eb8" <> paddedInt 64 <> paddedAddr (toText address) <> text2data name
-
-activationFilter :: Filter
-activationFilter =
-    Filter (Just aira_address)
+activationFilter :: Address -> Filter
+activationFilter emitter =
+    Filter (Just ("0x" <> A.toText emitter))
            (Just [ Just "0x87283f0fd3af976c1c41e7d549d4b95f8f812b475d4b68fa8e1db59db0391c94"
                  , Nothing])
            Nothing
@@ -105,16 +116,18 @@ handleActivation db (Change {changeTopics = topics}) = do
                 Just name = chat_username chat
             liftIO $ do
                 update db (DeleteCode code)
-                runWeb3 $ setAccount (T.toLower name) address
+                runWeb3 $ setAddress (T.toLower name <> ".account") address
             sendMessageBot chat $
                 toMessage $ T.unlines [ "A good news, " <> first_name <> "!"
                                       , "Activation code received, unlocking..."
                                       , "Wait a bit to give you a power. /me" ]
 
-activationCodeBot :: AcidState ActivationCode -> Bot ()
-activationCodeBot db = do
+-- | Listening events from AiraEtherFunds and try to activate account
+listenCode :: AcidState ActivationCode -> Bot ()
+listenCode db = do
     forkBot $ do
-        Right actFilterId <- liftIO $ runWeb3 (eth_newFilter activationFilter)
+        Right actFilterId <- liftIO $ runWeb3 $
+            resolve "AiraEtherFunds.contract" >>= eth_newFilter . activationFilter
         let loop = do
              Right upd <- liftIO $ runWeb3 (eth_getFilterChanges actFilterId)
              mapM_ (handleActivation db) upd
@@ -123,8 +136,9 @@ activationCodeBot db = do
          in loop
     return ()
 
-genActivationCode :: AcidState ActivationCode -> Chat -> IO Text
-genActivationCode db chat = do
+-- | Make activation code for account or return already exist
+genCode :: AcidState ActivationCode -> Chat -> IO Text
+genCode db chat = do
     mbCode <- query db (GetCode chat)
     case mbCode of
         Just code -> return code
@@ -135,3 +149,7 @@ genActivationCode db chat = do
             time <- getCurrentTime
             update db (NewCode code chat time)
             return code
+
+-- | Take address by account name
+accountAddress :: Text -> Web3 Address
+accountAddress name = resolve (T.toLower name <> ".account")
