@@ -14,6 +14,8 @@ module Aira.Bot.Contract (
   , secureApprove
   , transferFrom
   , getBalance
+  , ethBalance
+  , balanceOf
   , sendFrom
   ) where
 
@@ -56,6 +58,24 @@ getBalance address = do
         self_address = "0x" <> toText self
         airaCall = Call (Just self_address) aira_address Nothing Nothing Nothing . Just
         airaData = "0xf8b2cb4f" <> paddedAddr (toText address)
+    res <- eth_call (airaCall airaData) "latest"
+    return $ case hexadecimal res of
+        Right (x, _) -> fromWei x
+        Left e       -> 0
+
+ethBalance :: Address -> Web3 Double
+ethBalance address = do
+    res <- eth_getBalance ("0x" <> toText address) "latest"
+    return $ case hexadecimal res of
+        Right (x, _) -> fromWei x
+        Left e       -> 0
+
+balanceOf :: Address -> Web3 Double
+balanceOf address = do
+    airaEtherFunds <- resolve "AiraEtherFunds.contract"
+    let aira_address = "0x" <> toText airaEtherFunds
+        airaCall = Call Nothing aira_address Nothing Nothing Nothing . Just
+        airaData = "0x70a08231" <> paddedAddr (toText address)
     res <- eth_call (airaCall airaData) "latest"
     return $ case hexadecimal res of
         Right (x, _) -> fromWei x

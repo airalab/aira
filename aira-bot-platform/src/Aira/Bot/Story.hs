@@ -133,11 +133,17 @@ about :: Story
 about = withUsername noName
       $ withAddress noRegStory
       $ \address c -> do
-          Right balance <- liftIO (runWeb3 $ getBalance address)
+          let balance = (,,) <$> getBalance address
+                             <*> balanceOf address
+                             <*> ethBalance address
+          Right (x, y, z) <- liftIO (runWeb3 balance)
           return $ toMessage $ T.unlines
             [ "Hello, " <> getName c <> "!"
             , "Your address: " <> etherscan_addr (toText address)
-            , "Total balance: " <> floatToText balance <> " `ETH`" ]
+            , "Balance: " <> floatToText x <> " `ETH` approved / "
+                          <> floatToText y <> " `ETH` on contract / "
+                          <> floatToText z <> " `ETH` on account"
+            ]
 
 unregister :: Story
 unregister = withUsername noName
