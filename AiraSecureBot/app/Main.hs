@@ -39,5 +39,3 @@ main = do
             , ("/watch", Story.watch db)
             , ("/unwatch", Story.unwatch db)
             ]
-  where config = defaultConfig
-            { token = Token "bot..." }
