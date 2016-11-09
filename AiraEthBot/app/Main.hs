@@ -4,6 +4,7 @@ module Main where
 import qualified Aira.Bot.Ethereum.Story as Story
 import qualified Aira.Bot.Story as CommonStory
 import Aira.Bot.Activation (listenCode)
+import Data.Yaml (decodeFileEither)
 import Data.Acid (openLocalState)
 import Data.Default.Class (def)
 import qualified Data.Text as T
@@ -25,6 +26,8 @@ helpMessage = T.unlines
 
 main :: IO ()
 main = do
+    -- Load config
+    Right config <- decodeFileEither "config.yaml"
     -- Open database
     codedb <- openLocalState def
     -- Run bot
@@ -39,5 +42,3 @@ main = do
             , ("/transfer", Story.transfer)
             , ("/unregister", CommonStory.unregister)
             ]
-  where config = defaultConfig
-            { token = Token "bot..." }
