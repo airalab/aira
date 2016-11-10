@@ -1,6 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 module Main where
 
+import qualified Aira.Bot.Factory.Story as Factory
 import qualified Aira.Bot.Ethereum.Story as Story
 import qualified Aira.Bot.Story as CommonStory
 import Aira.Bot.Activation (listenCode)
@@ -18,6 +19,7 @@ helpMessage = T.unlines
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
+    , "/create - create new contract by Factory"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
     , "/unregister - remove account address"
@@ -38,6 +40,7 @@ main = do
             , ("/start", CommonStory.start codedb)
             , ("/send", Story.send)
             , ("/secure", Story.secure)
+            , ("/create", Factory.create)
             , ("/balance", Story.balance)
             , ("/transfer", Story.transfer)
             , ("/unregister", CommonStory.unregister)

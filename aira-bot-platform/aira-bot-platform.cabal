@@ -1,5 +1,5 @@
 name:                aira-bot-platform
-version:             0.2.3.0
+version:             0.2.4.0
 synopsis:            Aira helper bot platform 
 description:         Please see README.md
 homepage:            https://github.com/airalab/aira#readme
@@ -21,6 +21,8 @@ library
                      , Aira.Bot.Ethereum.Story
                      , Aira.Bot.Security.Story
                      , Aira.Bot.Security.Watch
+                     , Aira.Bot.Factory.Story
+                     , Aira.Bot.Factory.Contract
   build-depends:       base  >= 4.7 && <5
                      , data-default-class
                      , lens-family-th
