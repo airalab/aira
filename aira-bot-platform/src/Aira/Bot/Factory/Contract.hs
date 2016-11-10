@@ -34,8 +34,8 @@ createToken contract client name symbol decimals total = do
     let builder_address = "0x" <> toText builder
         self_address    = "0x" <> toText self
         createCall = Call (Just self_address) builder_address Nothing Nothing Nothing . Just
-        encodedName     = paddedText name
-        encodedSymbol   = paddedText symbol
+        encodedName     = text2data name
+        encodedSymbol   = text2data symbol
         createData = "0x106c5511" <> paddedAddr (toText client)
                                   <> paddedInt 160
                                   <> paddedInt (160 + (T.length encodedName `div` 2))
