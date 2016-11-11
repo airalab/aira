@@ -3,10 +3,9 @@ import FormApprove from '../../containers/formApprove'
 
 const Approve = props => (
   <div>
-    <h1>Approve @AiraEthBot for send ETH via Telegram</h1>
+    <h1>Approve @AiraEthBot for /create via Telegram</h1>
     <p>You have ETH on Aira ether funds contract: {props.balance} ETH</p>
-    <p>@AiraEthBot approved: {props.approved} ETH</p>
-    <FormApprove />
+    <FormApprove approved={props.approved} />
   </div>
 )
 

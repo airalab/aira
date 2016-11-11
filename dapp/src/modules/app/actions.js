@@ -1,7 +1,7 @@
 import { startSubmit, stopSubmit, reset } from 'redux-form';
 import _ from 'lodash';
 import { FLASH_MESSAGE, SET_BALANCE, SET_APPROVED } from './actionTypes'
-import { ADDRESS, ADDRESS_BOT } from '../../config/config'
+import { ADDRESS } from '../../config/config'
 import { loadAbiByName, getContract, blockchain, getWeb3, transfer, coinbase } from '../../utils/web3'
 
 export function flashMessage(message) {
@@ -22,8 +22,17 @@ export function load() {
               type: SET_BALANCE,
               payload: _.toNumber(getWeb3().fromWei(result, 'ether'))
             })
-            return contract.call('allowance', [coinbase(), ADDRESS_BOT])
           })
+      })
+  }
+}
+
+export function getApprovedByAddress(address) {
+  return (dispatch) => {
+    loadAbiByName('AiraEtherFunds')
+      .then((abi) => {
+        const contract = getContract(abi, ADDRESS);
+        contract.call('allowance', [coinbase(), address])
           .then((result) => {
             dispatch({
               type: SET_APPROVED,
@@ -66,7 +75,7 @@ export function submitIdentify(form) {
 export function submitApprove(form) {
   return (dispatch) => {
     dispatch(startSubmit('FormApprove'));
-    run(dispatch, ADDRESS, 'AiraEtherFunds', 'approve', [ADDRESS_BOT, getWeb3().toWei(form.value, 'ether')])
+    run(dispatch, ADDRESS, 'AiraEtherFunds', 'approve', [form.address, getWeb3().toWei(form.value, 'ether')])
       .then((blockNumber) => {
         dispatch(stopSubmit('FormApprove'))
         dispatch(reset('FormApprove'))
