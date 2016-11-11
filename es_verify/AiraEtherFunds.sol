@@ -177,9 +177,77 @@ contract TokenEther is Token {
         balanceOf[msg.sender] += msg.value;
         totalSupply           += msg.value;
     }
+    
+    /**
+     * @dev By security issues token that holds ethers can not be killed
+     */
+    function kill() onlyOwner { throw; }
 }
+
+
+//sol Registrar
+// Simple global registrar.
+// @authors:
+//   Gav Wood <g@ethdev.com>
+
+contract Registrar {
+	event Changed(string indexed name);
+
+	function owner(string _name) constant returns (address o_owner);
+	function addr(string _name) constant returns (address o_address);
+	function subRegistrar(string _name) constant returns (address o_subRegistrar);
+	function content(string _name) constant returns (bytes32 o_content);
+}
+
+//sol OwnedRegistrar
+// Global registrar with single authoritative owner.
+// @authors:
+//   Gav Wood <g@ethdev.com>
+
+contract AiraRegistrarService is Registrar, Mortal {
+	struct Record {
+		address addr;
+		address subRegistrar;
+		bytes32 content;
+	}
+	
+    function owner(string _name) constant returns (address o_owner)
+    { return 0; }
+
+	function disown(string _name) onlyOwner {
+		delete m_toRecord[_name];
+		Changed(_name);
+	}
+
+	function setAddr(string _name, address _a) onlyOwner {
+		m_toRecord[_name].addr = _a;
+		Changed(_name);
+	}
+	function setSubRegistrar(string _name, address _registrar) onlyOwner {
+		m_toRecord[_name].subRegistrar = _registrar;
+		Changed(_name);
+	}
+	function setContent(string _name, bytes32 _content) onlyOwner {
+		m_toRecord[_name].content = _content;
+		Changed(_name);
+	}
+	function record(string _name) constant returns (address o_addr, address o_subRegistrar, bytes32 o_content) {
+		o_addr = m_toRecord[_name].addr;
+		o_subRegistrar = m_toRecord[_name].subRegistrar;
+		o_content = m_toRecord[_name].content;
+	}
+	function addr(string _name) constant returns (address) { return m_toRecord[_name].addr; }
+	function subRegistrar(string _name) constant returns (address) { return m_toRecord[_name].subRegistrar; }
+	function content(string _name) constant returns (bytes32) { return m_toRecord[_name].content; }
+
+	mapping (string => Record) m_toRecord;
+}
+
 contract AiraEtherFunds is TokenEther {
-    function AiraEtherFunds(string _name, string _symbol) TokenEther(_name, _symbol) {}
+    function AiraEtherFunds(address _bot_reg, string _name, string _symbol)
+            TokenEther(_name, _symbol) {
+        reg = AiraRegistrarService(_bot_reg);
+    }
 
     /**
      * @dev Event spawned when activation request received
@@ -197,20 +265,6 @@ contract AiraEtherFunds is TokenEther {
     
     function setFee(uint _fee) onlyOwner
     { fee = _fee; }
-
-    // AiraEtherBot
-    address public ethBot;
-
-    function setEthBot(address _eth_bot) onlyOwner
-    { ethBot = _eth_bot; }
-
-    // AiraSecureBot
-    address public secureBot;
-
-    function setSecureBot(address _secure_bot) onlyOwner
-    { secureBot = _secure_bot; }
-
-    modifier onlySecureBot { if (msg.sender != secureBot) throw; _; }
 
     /**
      * @dev Refill balance and activate it by code
@@ -261,6 +315,20 @@ contract AiraEtherFunds is TokenEther {
     }
 
     /**
+     * @dev This is the way to refill token balance by ethers
+     * @param _dest is destination address
+     */
+    function refill(address _dest) payable returns (bool) {
+        // Throw when over limit
+        if (balanceOf[_dest] + msg.value > limit) throw;
+
+        // Refill
+        balanceOf[_dest] += msg.value;
+        totalSupply      += msg.value;
+        return true;
+    }
+
+    /**
      * @dev This method is called when money sended to contract address,
      *      a synonym for refill()
      */
@@ -291,17 +359,27 @@ contract AiraEtherFunds is TokenEther {
         }
     }
 
+    AiraRegistrarService public reg;
+    modifier onlySecure { if (msg.sender != reg.addr("AiraSecure")) throw; _; }
+
     /**
      * @dev Increase approved token values for AiraEthBot
      * @param _client is a client address
      * @param _value is amount of tokens
      */
-    function secureApprove(address _client, uint _value) onlySecureBot
-    { allowance[_client][ethBot] += _value; }
+    function secureApprove(address _client, uint _value) onlySecure {
+        var ethBot = reg.addr("AiraEth");
+        if (ethBot != 0)
+            allowance[_client][ethBot] += _value;
+    }
 
     /**
      * @dev Close allowance for AiraEthBot
      */
-    function secureUnapprove(address _client) onlySecureBot
-    { allowance[_client][ethBot] = 0; }
+    function secureUnapprove(address _client) onlySecure {
+        var ethBot = reg.addr("AiraEth");
+        if (ethBot != 0)
+            allowance[_client][ethBot] = 0;
+    }
 }
+

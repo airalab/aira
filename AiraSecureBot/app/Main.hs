@@ -4,6 +4,7 @@ module Main where
 import qualified Aira.Bot.Security.Story as Story
 import qualified Aira.Bot.Story as CommonStory
 import Aira.Bot.Security.Watch (listenBlocks)
+import Data.Yaml (decodeFileEither)
 import qualified Data.Text as T
 import Data.Default.Class (def)
 import Web.Telegram.Bot
@@ -24,6 +25,9 @@ helpMessage = T.unlines
 
 main :: IO ()
 main = do
+    -- Load config
+    Right config <- decodeFileEither "config.yaml"
+    -- Open database
     db <- openLocalState def
     -- Run bot
     runBot config $ do
@@ -35,5 +39,3 @@ main = do
             , ("/watch", Story.watch db)
             , ("/unwatch", Story.unwatch db)
             ]
-  where config = defaultConfig
-            { token = Token "bot..." }

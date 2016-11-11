@@ -156,7 +156,8 @@ unregister = withUsername noName
                      let Just name = chat_username c
                      r <- liftIO $ runWeb3 (accountDelete name)
                      return . toMessage $ case r of
-                         Right _ -> "Account deleted"
+                         Right tx -> "Account will be deleted on the next few block." <>
+                                     "Transaction " <> etherscan_tx tx
                          Left e -> pack $ show e
                   _ -> return (toMessage ("No confirmation given" :: Text))
 
