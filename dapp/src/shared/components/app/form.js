@@ -8,7 +8,9 @@ const Form = (props) => {
     error,
     submitting,
     labels,
-    placeholders
+    placeholders,
+    selects,
+    onChangeSelect
   } = props
 
   return (
@@ -18,14 +20,31 @@ const Form = (props) => {
         return (
           <div key={index} className="form-group">
             <span className="control-label">{labels[index]}</span>
-            <div>
-              <input
-                type="text"
+            {_.has(selects, name) ?
+              <select
                 className="form-control"
-                placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
                 {...field}
-              />
-            </div>
+                value={field.value || ''}
+                onChange={
+                  (e) => {
+                    onChangeSelect(e.target.value)
+                    field.onChange(e)
+                  }
+                }
+              >
+                {selects[name].map((item, i) =>
+                  <option key={i} value={item.value}>{item.name}</option>)}
+              </select>
+              :
+              <div>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
+                  {...field}
+                />
+              </div>
+            }
             {field.touched && field.error ? field.error : ''}
           </div>
         )
