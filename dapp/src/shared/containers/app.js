@@ -3,6 +3,7 @@ import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
 import { getWeb3, isAccounts } from '../../utils/web3'
 
+import RequiredMist from '../components/app/requiredMist'
 import Footer from '../components/app/footer'
 import Notification from '../components/app/notification'
 import { flashMessage } from '../../modules/app/actions';
@@ -18,7 +19,7 @@ const App = (props) => {
       content = <p>select account</p>
     }
   } else {
-    content = <p><a href="https://github.com/ethereum/mist/releases">required mist</a></p>
+    content = <RequiredMist />
   }
 
   return (<div>
