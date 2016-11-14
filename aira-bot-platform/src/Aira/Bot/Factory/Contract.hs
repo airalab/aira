@@ -33,7 +33,7 @@ createToken contract client name symbol decimals total = do
     self    <- resolve "AiraEth.bot"
     let builder_address = "0x" <> toText builder
         self_address    = "0x" <> toText self
-        createCall = Call (Just self_address) builder_address Nothing Nothing (Just "0x0x16345785d8a0000") . Just
+        createCall = Call (Just self_address) builder_address Nothing Nothing (Just "0x16345785d8a0000") . Just
         encodedName     = text2data name
         encodedSymbol   = text2data symbol
         createData = "0xb604ad72" <> paddedInt 160
