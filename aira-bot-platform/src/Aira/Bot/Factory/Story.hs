@@ -45,8 +45,8 @@ create = withUsername noName
            decimal <- question "Count of numbers after point (for integral set 0):"
            total <- question "Amount of tokens on your balance after creation:"
            let contract = case target :: Text of
-                    "Standart token" -> "Builder2Token.contract"
-                    _                -> "Builder2TokenEmission.contract"
+                    "Standart token" -> "BuilderToken.contract"
+                    _                -> "BuilderTokenEmission.contract"
            res <- liftIO $ runWeb3 $
                withFee address factoryFee 0 $
                    createToken contract address name symbol decimal total
