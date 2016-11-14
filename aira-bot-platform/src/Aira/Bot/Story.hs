@@ -12,6 +12,7 @@
 --
 module Aira.Bot.Story (
     AccountAddress(..)
+  , operationalFee
   , etherscan_addr
   , etherscan_tx
   , floatToText
@@ -43,13 +44,14 @@ import Aira.Bot.Activation
 import Aira.Bot.Contract
 import Aira.Registrar
 
-fee = 0.01
+operationalFee :: Double
+operationalFee = 0.02
 
-withFee :: Address -> Double -> Web3 Text -> Web3 Text
-withFee address amount fun = do
+withFee :: Address -> Double -> Double -> Web3 Text -> Web3 Text
+withFee address fee value fun = do
     beneficiary <- resolve "AiraEth.bot"
     balance     <- getBalance address
-    if amount + fee > balance
+    if fee + value > balance
     then
         throwError $ UserFail "Allowed balance is too low for this operation!"
     else

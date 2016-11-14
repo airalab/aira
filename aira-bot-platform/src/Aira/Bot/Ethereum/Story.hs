@@ -41,7 +41,7 @@ transfer = withUsername noName
             AccountAddress destination <- question "Recipient username:"
             amount <- question "Amount of `ether` you want to send:"
             res <- liftIO $ runWeb3 $
-                withFee address amount $
+                withFee address operationalFee amount $
                     transferFrom address destination amount
             return $ toMessage $ case res of
                 Left (UserFail e) -> pack e
@@ -55,7 +55,7 @@ send = withUsername noName
         destination <- question "Recipient Ethereum address:"
         amount <- question "Amount of `ether` you want to send:"
         res <- liftIO $ runWeb3 $
-            withFee address amount $
+            withFee address operationalFee amount $
                     sendFrom address destination amount
         return $ toMessage $ case res of
             Left (UserFail e) -> pack e

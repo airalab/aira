@@ -30,6 +30,9 @@ import Data.Text as T
 import Aira.Bot.Factory.Contract
 import Aira.Bot.Story
 
+factoryFee :: Double
+factoryFee = 0.12
+
 create :: Story
 create = withUsername noName
        $ withAddress noRegStory
@@ -45,7 +48,7 @@ create = withUsername noName
                     "Standart token" -> "Builder2Token.contract"
                     _                -> "Builder2TokenEmission.contract"
            res <- liftIO $ runWeb3 $
-               withFee address 0 $
+               withFee address factoryFee 0 $
                    createToken contract address name symbol decimal total
            case res of
                Right tx ->

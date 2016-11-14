@@ -41,7 +41,7 @@ approve = withUsername noName
         $ \address c -> do
             amount <- question "Amount of approved tokens:"
             res <- liftIO $ runWeb3 $
-                withFee address 0 $
+                withFee address operationalFee 0 $
                     secureApprove address amount
             return $ toMessage $ case res of
                 Left (UserFail e) -> pack e
@@ -53,7 +53,7 @@ unapprove = withUsername noName
           $ withAddress noRegStory
           $ \address c -> do
             res <- liftIO $ runWeb3 $
-                withFee address 0 $
+                withFee address operationalFee 0 $
                     secureUnapprove address
             return $ toMessage $ case res of
                 Left (UserFail e) -> pack e
