@@ -16,12 +16,10 @@ module Aira.Bot.Story (
   , etherscan_addr
   , etherscan_tx
   , floatToText
-  , withUsername
   , withAddress
   , withFee
   , unregister
   , noRegStory
-  , noName
   , start
   , about
   ) where
@@ -91,12 +89,13 @@ withUsername msg story c =
         Just name -> story name c
         Nothing -> return msg
 
-withAddress :: Story -> (Address -> Story) -> Text -> Story
-withAddress storyNoAddress storyAddress name c = do
-    Right address <- liftIO (runWeb3 $ accountAddress name)
-    if address == zero
-    then storyNoAddress c
-    else storyAddress address c
+withAddress :: Story -> (Address -> Story) -> Story
+withAddress storyNoAddress storyAddress =
+    withUsername noName $ \name c -> do
+        Right address <- liftIO (runWeb3 $ accountAddress name)
+        if address == zero
+        then storyNoAddress c
+        else storyAddress address c
 
 getName :: Chat -> Text
 getName c = name
@@ -123,8 +122,7 @@ hello c code = toMessage $ T.unlines
   , "call `activate` of **AiraEtherFunds**" ]
 
 start :: AcidState ActivationCode -> Story
-start db = withUsername noName
-         $ withAddress noAddress (\x -> return . helloAgain x)
+start db = withAddress noAddress (\x -> return . helloAgain x)
   where noAddress c = do code <- liftIO (genCode db c)
                          return (hello c code)
 
@@ -132,36 +130,32 @@ noRegStory :: Story
 noRegStory _ = return noReg
 
 about :: Story
-about = withUsername noName
-      $ withAddress noRegStory
-      $ \address c -> do
-          let balance = (,,) <$> getBalance address
-                             <*> balanceOf address
-                             <*> ethBalance address
-          Right (x, y, z) <- liftIO (runWeb3 balance)
-          return $ toMessage $ T.unlines
-            [ "Hello, " <> getName c <> "!"
-            , "Your address: " <> etherscan_addr (toText address)
-            , "Balance: " <> floatToText x <> " `ETH` approved / "
-                          <> floatToText y <> " `ETH` on contract / "
-                          <> floatToText z <> " `ETH` on account"
-            ]
+about = withAddress noRegStory $ \address c -> do
+    let balance = (,,) <$> getBalance address
+                       <*> balanceOf address
+                       <*> ethBalance address
+    Right (x, y, z) <- liftIO (runWeb3 balance)
+    return $ toMessage $ T.unlines
+        [ "Hello, " <> getName c <> "!"
+        , "Your address: " <> etherscan_addr (toText address)
+        , "Aira balance: " <> floatToText x <> " `ETH` approved / "
+                           <> floatToText y <> " `ETH` on contract / "
+                           <> floatToText z <> " `ETH` on account"
+        ]
 
 unregister :: Story
-unregister = withUsername noName
-           $ withAddress noRegStory
-           $ \_ c -> do
-               res <- question $ T.unlines [ "Do you want to delete account address?"
-                                           , "Send me 'Do as I say!' to confirm." ]
-               case res :: Text of
-                  "Do as I say!" -> do
-                     let Just name = chat_username c
-                     r <- liftIO $ runWeb3 (accountDelete name)
-                     return . toMessage $ case r of
-                         Right tx -> "Account will be deleted on the next few block." <>
-                                     "Transaction " <> etherscan_tx tx
-                         Left e -> pack $ show e
-                  _ -> return (toMessage ("No confirmation given" :: Text))
+unregister = withAddress noRegStory $ \_ c -> do
+    res <- question $ T.unlines [ "Do you want to delete account address?"
+                                , "Send me 'Do as I say!' to confirm." ]
+    case res :: Text of
+        "Do as I say!" -> do
+            let Just name = chat_username c
+            r <- liftIO $ runWeb3 (accountDelete name)
+            return . toMessage $ case r of
+                Right tx -> "Account will be deleted on the next few block." <>
+                            "Transaction " <> etherscan_tx tx
+                Left e -> pack $ show e
+        _ -> return (toMessage ("No confirmation given" :: Text))
 
 secure :: Story
 secure _ = return . toMessage $ T.unlines

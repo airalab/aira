@@ -35,38 +35,33 @@ import Aira.Bot.Contract
 import Aira.Bot.Story
 
 transfer :: Story
-transfer = withUsername noName
-         $ withAddress noRegStory
-         $ \address c -> do
-            AccountAddress destination <- question "Recipient username:"
-            amount <- question "Amount of `ether` you want to send:"
-            res <- liftIO $ runWeb3 $
-                withFee address operationalFee amount $
-                    transferFrom address destination amount
-            return $ toMessage $ case res of
-                Left (UserFail e) -> pack e
-                Right tx -> "Success transaction " <> etherscan_tx tx
-                Left _   -> "Internal error occured!"
+transfer = withAddress noRegStory $ \address c -> do
+    AccountAddress destination <- question "Recipient username:"
+    amount <- question "Amount of `ether` you want to send:"
+    res <- liftIO $ runWeb3 $
+        withFee address operationalFee amount $
+            transferFrom address destination amount
+    return $ toMessage $ case res of
+        Left (UserFail e) -> pack e
+        Right tx -> "Success transaction " <> etherscan_tx tx
+        Left _   -> "Internal error occured!"
 
 send :: Story
-send = withUsername noName
-     $ withAddress noRegStory
-     $ \address c -> do
-        destination <- question "Recipient Ethereum address:"
-        amount <- question "Amount of `ether` you want to send:"
-        res <- liftIO $ runWeb3 $
-            withFee address operationalFee amount $
-                    sendFrom address destination amount
-        return $ toMessage $ case res of
-            Left (UserFail e) -> pack e
-            Right tx -> "Success transaction " <> etherscan_tx tx
-            Left _   -> "Internal error occured!"
+send = withAddress noRegStory $ \address c -> do
+    destination <- question "Recipient Ethereum address:"
+    amount <- question "Amount of `ether` you want to send:"
+    res <- liftIO $ runWeb3 $
+        withFee address operationalFee amount $
+            sendFrom address destination amount
+    return $ toMessage $ case res of
+        Left (UserFail e) -> pack e
+        Right tx -> "Success transaction " <> etherscan_tx tx
+        Left _   -> "Internal error occured!"
 
 balance :: Story
-balance = withUsername noName
-        $ withAddress noRegStory
-        $ \address c -> do Right amount <- liftIO $ runWeb3 (getBalance address)
-                           return (toMessage $ "Avail: " <> floatToText amount)
+balance = withAddress noRegStory $ \address c -> do
+    Right amount <- liftIO $ runWeb3 (getBalance address)
+    return (toMessage $ "Avail: " <> floatToText amount)
 
 secure :: Story
 secure _ = return . toMessage $ T.unlines
