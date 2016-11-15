@@ -39,17 +39,33 @@ create = withUsername noName
        $ \address _ -> do
            target <- select "What do you want to create?"
                      [ ["Standart token"]
-                     , ["Token with emission"] ]
+                     , ["Token with emission"]
+                     , ["Token holds Ether"] ]
+
            name    <- question "Token name (e.g. Ethereum):"
            symbol  <- question "Token symbol (e.g. ETH):"
-           decimal <- question "Count of numbers after point (for integral set 0):"
-           total <- question "Amount of tokens on your balance after creation:"
-           let contract = case target :: Text of
-                    "Standart token" -> "BuilderToken.contract"
-                    _                -> "BuilderTokenEmission.contract"
-           res <- liftIO $ runWeb3 $
-               withFee address factoryFee 0 $
-                   createToken contract address name symbol decimal total
+
+           -- Evaluate Web3 creation function with factory fee
+           let runCreate = liftIO . runWeb3 . withFee address factoryFee 0
+
+           res <- case target :: Text of
+               "Standart token"      -> do
+                   decimal <- question "Count of numbers after point (for integral set 0):"
+                   total <- question "Amount of tokens on your balance after creation:"
+                   runCreate $
+                       createToken "BuilderToken.contract" address name symbol decimal total
+
+               "Token with emission" -> do
+                   decimal <- question "Count of numbers after point (for integral set 0):"
+                   total <- question "Amount of tokens on your balance after creation:"
+                   runCreate $
+                       createToken "BuilderTokenEmission.contract" address name symbol decimal total
+
+               "Token holds Ether"   ->
+                   runCreate $ createTokenEther address name symbol
+
+               _ -> runCreate $ throwError (UserFail "Unknown target! Cancelled.")
+
            case res of
                Right tx ->
                    return $ toMessage ("Success transaction " <> etherscan_tx tx)
