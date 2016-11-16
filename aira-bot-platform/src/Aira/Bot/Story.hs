@@ -46,14 +46,15 @@ operationalFee :: Double
 operationalFee = 0.02
 
 withFee :: Address -> Double -> Double -> Web3 Text -> Web3 Text
-withFee address fee value fun = do
+withFee client fee value fun = do
     beneficiary <- resolve "AiraEth.bot"
-    balance     <- getBalance address
+    airaToken   <- resolve "AiraEtherFunds.contract"
+    balance     <- airaToken `getBalance` client
     if fee + value > balance
     then
         throwError $ UserFail "Allowed balance is too low for this operation!"
     else
-        sendFrom address beneficiary fee >> fun
+        sendFrom client beneficiary fee >> fun
 
 etherscan_tx :: Text -> Text
 etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
@@ -131,17 +132,19 @@ noRegStory _ = return noReg
 
 about :: Story
 about = withAddress noRegStory $ \address c -> do
-    let balance = (,,) <$> getBalance address
-                       <*> balanceOf address
-                       <*> ethBalance address
-    Right (x, y, z) <- liftIO (runWeb3 balance)
-    return $ toMessage $ T.unlines
-        [ "Hello, " <> getName c <> "!"
-        , "Your address: " <> etherscan_addr (toText address)
-        , "Aira balance: " <> floatToText x <> " `ETH` approved / "
-                           <> floatToText y <> " `ETH` on contract / "
-                           <> floatToText z <> " `ETH` on account"
-        ]
+    let balance = do airaToken <- resolve "AiraEtherFunds.contract"
+                     (,,) <$> airaToken `getBalance` address
+                          <*> airaToken `balanceOf` address
+                          <*> ethBalance address
+    res <- liftIO (runWeb3 balance)
+    return $ case res of
+        Right (x, y, z) -> toMessage $ T.unlines
+            [ "Hello, " <> getName c <> "!"
+            , "Your address: " <> etherscan_addr (toText address)
+            , "Aira balance: " <> floatToText x <> " `ETH` approved / "
+                               <> floatToText y <> " `ETH` on contract / "
+                               <> floatToText z <> " `ETH` on account" ]
+        Left e -> toMessage $ pack (show e)
 
 unregister :: Story
 unregister = withAddress noRegStory $ \_ c -> do
