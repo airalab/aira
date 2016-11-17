@@ -4,8 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development ETH_NET=test node server.js",
-    "start:main": "cross-env NODE_ENV=development ETH_NET=main node server.js",
+    "start": "cross-env NODE_ENV=development ETH_NET=main node server.js",
+    "start:test": "cross-env NODE_ENV=development ETH_NET=test node server.js",
     "build": "cross-env NODE_ENV=production ETH_NET=main webpack",
     "build:test": "cross-env NODE_ENV=production ETH_NET=test webpack",
     "lint": "eslint .",

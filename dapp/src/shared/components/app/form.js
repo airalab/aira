@@ -10,7 +10,7 @@ const Form = (props) => {
     labels,
     placeholders,
     selects,
-    onChangeSelect
+    onChangeInput
   } = props
 
   return (
@@ -25,12 +25,6 @@ const Form = (props) => {
                 className="form-control"
                 {...field}
                 value={field.value || ''}
-                onChange={
-                  (e) => {
-                    onChangeSelect(e.target.value)
-                    field.onChange(e)
-                  }
-                }
               >
                 {selects[name].map((item, i) =>
                   <option key={i} value={item.value}>{item.name}</option>)}
@@ -42,6 +36,14 @@ const Form = (props) => {
                   className="form-control"
                   placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
                   {...field}
+                  onChange={
+                    (e) => {
+                      if (_.has(onChangeInput, name)) {
+                        onChangeInput[name](e.target.value)
+                      }
+                      field.onChange(e)
+                    }
+                  }
                 />
               </div>
             }
