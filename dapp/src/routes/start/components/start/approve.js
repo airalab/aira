@@ -3,7 +3,7 @@ import FormApprove from '../../containers/formApprove'
 
 const Approve = props => (
   <div>
-    <h1>Approve token for @AiraEthBot</h1>
+    <h1>Approve token</h1>
     <FormApprove balance={props.balance} approved={props.approved} />
   </div>
 )

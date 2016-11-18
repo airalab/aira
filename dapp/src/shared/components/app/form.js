@@ -1,5 +1,6 @@
 import React, { PropTypes } from 'react'
 import _ from 'lodash'
+import Auto from './auto'
 
 const Form = (props) => {
   const {
@@ -10,6 +11,7 @@ const Form = (props) => {
     labels,
     placeholders,
     selects,
+    autocomplete,
     onChangeInput
   } = props
 
@@ -31,20 +33,32 @@ const Form = (props) => {
               </select>
               :
               <div>
-                <input
-                  type="text"
-                  className="form-control"
-                  placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
-                  {...field}
-                  onChange={
-                    (e) => {
-                      if (_.has(onChangeInput, name)) {
-                        onChangeInput[name](e.target.value)
+                {_.has(autocomplete, name) ?
+                  <Auto
+                    field={field}
+                    placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
+                    items={autocomplete[name]}
+                    onChange={(_.has(onChangeInput, name)) ?
+                      (value) => {
+                        onChangeInput[name](value, props.values)
+                      } : () => {}}
+                  />
+                  :
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={(_.has(placeholders, index)) ? placeholders[index] : ''}
+                    {...field}
+                    onChange={
+                      (e) => {
+                        if (_.has(onChangeInput, name)) {
+                          onChangeInput[name](e.target.value, props.values)
+                        }
+                        field.onChange(e)
                       }
-                      field.onChange(e)
                     }
-                  }
-                />
+                  />
+                }
               </div>
             }
             {field.touched && field.error ? field.error : ''}
