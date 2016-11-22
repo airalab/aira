@@ -12,31 +12,57 @@ export function flashMessage(message) {
 }
 
 export function load() {
+  return {
+    type: 'LOAD'
+  }
+}
+
+export function getApprovedByAddress(token, target) {
   return (dispatch) => {
-    loadAbiByName('AiraEtherFunds')
+    loadAbiByName('TokenEmission')
       .then((abi) => {
-        const contract = getContract(abi, ADDRESS);
-        contract.call('balanceOf', [coinbase()])
+        let decimals
+        const contract = getContract(abi, token);
+        contract.call('decimals')
+          .then((result) => {
+            decimals = result
+            if (decimals > 0) {
+              decimals = Math.pow(10, decimals)
+            } else {
+              decimals = 1
+            }
+            return contract.call('allowance', [coinbase(), target])
+          })
           .then((result) => {
             dispatch({
-              type: SET_BALANCE,
-              payload: _.toNumber(getWeb3().fromWei(result, 'ether'))
+              type: SET_APPROVED,
+              payload: _.toNumber(result) / decimals
             })
           })
       })
   }
 }
 
-export function getApprovedByAddress(address) {
+export function getBalanceByToken(token) {
   return (dispatch) => {
-    loadAbiByName('AiraEtherFunds')
+    loadAbiByName('TokenEmission')
       .then((abi) => {
-        const contract = getContract(abi, ADDRESS);
-        contract.call('allowance', [coinbase(), address])
+        let decimals
+        const contract = getContract(abi, token);
+        contract.call('decimals')
+          .then((result) => {
+            decimals = result
+            if (decimals > 0) {
+              decimals = Math.pow(10, decimals)
+            } else {
+              decimals = 1
+            }
+            return contract.call('balanceOf', [coinbase()])
+          })
           .then((result) => {
             dispatch({
-              type: SET_APPROVED,
-              payload: _.toNumber(getWeb3().fromWei(result, 'ether'))
+              type: SET_BALANCE,
+              payload: _.toNumber(result) / decimals
             })
           })
       })
@@ -75,15 +101,30 @@ export function submitIdentify(form) {
 export function submitApprove(form) {
   return (dispatch) => {
     dispatch(startSubmit('FormApprove'));
-    run(dispatch, ADDRESS, 'AiraEtherFunds', 'approve', [form.address, getWeb3().toWei(form.value, 'ether')])
-      .then((blockNumber) => {
-        dispatch(stopSubmit('FormApprove'))
-        dispatch(reset('FormApprove'))
-        dispatch(flashMessage('blockNumber: ' + blockNumber))
-      })
-      .catch((e) => {
-        console.log(e);
-        dispatch(stopSubmit('FormApprove'))
+    loadAbiByName('TokenEmission')
+      .then((abi) => {
+        let decimals
+        const contract = getContract(abi, form.address_token);
+        contract.call('decimals')
+          .then((result) => {
+            decimals = result
+            if (decimals > 0) {
+              decimals = Math.pow(10, decimals)
+            } else {
+              decimals = 1
+            }
+            const value = _.toNumber(form.value) / decimals
+            return run(dispatch, form.address_token, 'TokenEmission', 'approve', [form.address_target, value])
+          })
+          .then((blockNumber) => {
+            dispatch(stopSubmit('FormApprove'))
+            dispatch(getApprovedByAddress(form.address_token, form.address_target))
+            dispatch(flashMessage('blockNumber: ' + blockNumber))
+          })
+          .catch((e) => {
+            console.log(e);
+            dispatch(stopSubmit('FormApprove'))
+          })
       })
   }
 }
