@@ -93,10 +93,12 @@ withUsername msg story c =
 withAddress :: Story -> (Address -> Story) -> Story
 withAddress storyNoAddress storyAddress =
     withUsername noName $ \name c -> do
-        Right address <- liftIO (runWeb3 $ accountAddress name)
-        if address == zero
-        then storyNoAddress c
-        else storyAddress address c
+        res <- liftIO (runWeb3 $ accountAddress name)
+        case res of
+            Right address -> if address == zero
+                             then storyNoAddress c
+                             else storyAddress address c
+            Left e -> return $ toMessage (pack $ show e)
 
 getName :: Chat -> Text
 getName c = name
