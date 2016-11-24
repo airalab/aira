@@ -14,15 +14,15 @@ contract AiraEtherFunds is TokenHash {
     event ActivationRequest(address indexed ident, bytes32 indexed code);
 
     // Balance limit
-    uint public limit;
+    uint256 public limit;
     
-    function setLimit(uint _limit) onlyOwner
+    function setLimit(uint256 _limit) onlyOwner
     { limit = _limit; }
 
     // Account activation fee
-    uint public fee;
+    uint256 public fee;
     
-    function setFee(uint _fee) onlyOwner
+    function setFee(uint256 _fee) onlyOwner
     { fee = _fee; }
 
     /**
@@ -35,8 +35,8 @@ contract AiraEtherFunds is TokenHash {
         // Get a fee
         if (fee > 0) {
             if (value < fee) throw;
-            balanceOf[sha3(owner)] += fee;
-            value                  -= fee;
+            balances[sha3(owner)] += fee;
+            value                 -= fee;
         }
 
         // Refund over limit
@@ -47,8 +47,8 @@ contract AiraEtherFunds is TokenHash {
         }
 
         // Refill account balance
-        balanceOf[sha3(msg.sender)] += value;
-        totalSupply                 += value;
+        balances[sha3(msg.sender)] += value;
+        totalSupply                += value;
 
         // Activation event
         ActivationRequest(msg.sender, stringToBytes32(_code));
@@ -80,11 +80,11 @@ contract AiraEtherFunds is TokenHash {
      */
     function refill(bytes32 _dest) payable returns (bool) {
         // Throw when over limit
-        if (balanceOf[_dest] + msg.value > limit) throw;
+        if (balances[_dest] + msg.value > limit) throw;
 
         // Refill
-        balanceOf[_dest] += msg.value;
-        totalSupply      += msg.value;
+        balances[_dest] += msg.value;
+        totalSupply     += msg.value;
         return true;
     }
 
@@ -94,14 +94,14 @@ contract AiraEtherFunds is TokenHash {
      * @param _to external destination address
      * @param _value amount of token values to send 
      */
-    function sendFrom(bytes32 _from, address _to, uint _value) {
+    function sendFrom(bytes32 _from, address _to, uint256 _value) {
         var sender = sha3(msg.sender);
-        var avail = allowance[_from][sender]
-                  > balanceOf[_from] ? balanceOf[_from]
-                                     : allowance[_from][sender];
+        var avail = allowances[_from][sender]
+                  > balances[_from] ? balances[_from]
+                                    : allowances[_from][sender];
         if (avail >= _value) {
-            allowance[_from][sender] -= _value;
-            balanceOf[_from]         -= _value;
+            allowances[_from][sender] -= _value;
+            balances[_from]          -= _value;
             totalSupply              -= _value;
             if (!_to.send(_value)) throw;
         }
@@ -115,10 +115,12 @@ contract AiraEtherFunds is TokenHash {
      * @param _client is a client ident
      * @param _value is amount of tokens
      */
-    function secureApprove(bytes32 _client, uint _value) onlySecure {
+    function secureApprove(bytes32 _client, uint256 _value) onlySecure {
         var ethBot = reg.addr("AiraEth");
-        if (ethBot != 0)
-            allowance[_client][sha3(ethBot)] += _value;
+        if (ethBot != 0) {
+            allowances[_client][sha3(ethBot)] += _value;
+            ApprovalHash(_client, sha3(ethBot), _value);
+        }
     }
 
     /**
@@ -128,9 +130,9 @@ contract AiraEtherFunds is TokenHash {
     function secureUnapprove(bytes32 _client) onlySecure {
         var ethBot = reg.addr("AiraEth");
         if (ethBot != 0)
-            allowance[_client][sha3(ethBot)] = 0;
+            allowances[_client][sha3(ethBot)] = 0;
     }
 
-    // By security issues, deny to kill this by owner
+    // By security issues deny to kill this by owner
     function kill() onlyOwner { throw; }
 }
