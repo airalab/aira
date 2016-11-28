@@ -1,45 +1,69 @@
 import { bindActionCreators } from 'redux'
 import { reduxForm } from 'redux-form'
-import _ from 'lodash'
-import { submitApprove, getApprovedByAddress } from '../../../modules/app/actions';
+import { submitApprove, getApprovedByAddress, getBalanceByToken } from '../../../modules/app/actions';
 import Form from '../../../shared/components/app/form';
+import { ADDRESS, ADDRESS_BOT, ADDRESS_ST, ADDRESS_TE } from '../../../config/config'
 
 const validate = (values) => {
   const errors = {};
   if (!values.value) {
     errors.value = 'required'
-  } else if (_.toNumber(values.value) > 20) {
-    errors.value = 'max 20'
   }
   return errors
 };
 function mapStateToProps(state, props) {
   return {
-    fields: ['value', 'address'],
-    selects: {
-      address: [
+    fields: ['address_token', 'address_target', 'value'],
+    labels: ['Token address contract. You balance: ' + props.balance, 'Target address. Approved: ' + props.approved, 'How much tokens you want approve'],
+    placeholders: ['Token address contract', 'Target address', '0.1'],
+    autocomplete: {
+      address_token: [
         {
-          name: '--- select contract ---',
+          title: 'Aira Ether Funds',
+          value: ADDRESS
+        },
+        {
+          title: 'Other',
           value: ''
+        }
+      ],
+      address_target: [
+        {
+          title: '@AiraEthBot',
+          value: ADDRESS_BOT
         },
         {
-          name: 'Standart token',
-          value: '0xb3afb61beb834242ec01f6bbd6f178cc4860c2bb'
+          title: 'Standart token',
+          value: ADDRESS_ST
         },
         {
-          name: 'Token with emission',
-          value: '0x733976c3245953420a69efae41fd3c7553233710'
+          title: 'Token with emission',
+          value: ADDRESS_TE
+        },
+        {
+          title: 'Other',
+          value: ''
         }
       ]
-    },
-    labels: ['How much ETH you want approve', 'Contract approved: ' + props.approved + ' ETH'],
-    placeholders: ['0.1']
+    }
   }
 }
 function mapDispatchToProps(dispatch) {
+  const actions = bindActionCreators({
+    submitApprove,
+    getApprovedByAddress,
+    getBalanceByToken
+  }, dispatch)
   return {
-    onSubmit: bindActionCreators(submitApprove, dispatch),
-    onChangeSelect: bindActionCreators(getApprovedByAddress, dispatch)
+    onSubmit: actions.submitApprove,
+    onChangeInput: {
+      address_token: (value) => {
+        actions.getBalanceByToken(value)
+      },
+      address_target: (value, form) => {
+        actions.getApprovedByAddress(form.address_token, value)
+      }
+    }
   }
 }
 export default reduxForm({
