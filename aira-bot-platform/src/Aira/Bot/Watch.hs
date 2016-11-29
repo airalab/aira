@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell    #-}
 {-# LANGUAGE TypeFamilies       #-}
 -- |
--- Module      :  Aira.Bot.Security.Watch
+-- Module      :  Aira.Bot.Watch
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -12,14 +12,14 @@
 --
 -- Address watcher bot.
 --
-module Aira.Bot.Security.Watch (
-    WatchTx
+module Aira.Bot.Watch (
+    UnwatchRecipient(..)
   , WatchRecipient(..)
-  , UnwatchRecipient(..)
+  , WatchTx
   , listenBlocks
   ) where
 
-import Aira.Bot.Story (floatToText, etherscan_addr, etherscan_tx)
+import Aira.Bot.Common (floatToText, etherscan_addr, etherscan_tx)
 import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage)
 import Control.Concurrent (threadDelay)
 import Control.Monad.IO.Class (liftIO)

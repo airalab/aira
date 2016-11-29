@@ -1,5 +1,5 @@
 -- |
--- Module      :  Aira.Bot.Factory.Contract
+-- Module      :  Aira.Contract.Factory
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -9,7 +9,7 @@
 --
 -- Aira contract API.
 --
-module Aira.Bot.Factory.Contract (
+module Aira.Contract.Factory (
     createToken
   , createTokenEther
   ) where

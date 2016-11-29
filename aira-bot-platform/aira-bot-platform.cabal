@@ -1,5 +1,5 @@
 name:                aira-bot-platform
-version:             0.3.1.0
+version:             0.4.0.0
 synopsis:            Aira helper bot platform 
 description:         Please see README.md
 homepage:            https://github.com/airalab/aira#readme
@@ -14,15 +14,17 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Aira.Registrar
-                     , Aira.Bot.Story
-                     , Aira.Bot.Contract
+  exposed-modules:     Aira.Account
+                     , Aira.Registrar
+                     , Aira.Bot.Watch
+                     , Aira.Bot.Token
+                     , Aira.Bot.Common
+                     , Aira.Bot.Secure
+                     , Aira.Bot.Factory
                      , Aira.Bot.Activation
-                     , Aira.Bot.Ethereum.Story
-                     , Aira.Bot.Security.Story
-                     , Aira.Bot.Security.Watch
-                     , Aira.Bot.Factory.Story
-                     , Aira.Bot.Factory.Contract
+                     , Aira.Contract.Token
+                     , Aira.Contract.Factory
+                     , Aira.Contract.AiraEtherFunds
   build-depends:       base  >= 4.7 && <5
                      , data-default-class
                      , lens-family-th
@@ -31,6 +33,7 @@ library
                      , lens-family
                      , acid-state
                      , containers
+                     , cryptonite
                      , safecopy
                      , random
                      , time 

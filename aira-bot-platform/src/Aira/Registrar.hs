@@ -11,7 +11,9 @@
 --
 module Aira.Registrar (
     resolve
+  , content
   , setAddress
+  , setContent
   , setRegistrar
   ) where
 
@@ -55,6 +57,20 @@ setAddress name address = do
         regData n   = "0x213b9eb8" <> paddedInt 64 <> paddedAddr (toText address) <> text2data n
         ownerCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing (Just "0x8da5cb5b")
 
+-- | Associate domain with content by @AiraRegistrar@ service
+-- @NOTICE@ You sould be owner of leaf registrar contract.
+setContent :: DomainName -> Text -> Web3 Text
+setContent name cont = do
+    (registrar, host) <- leafRegistrar name
+    owner <- T.drop 26 <$> eth_call (ownerCall registrar) "latest"
+    eth_sendTransaction $ regCall registrar owner (regData host)
+  where regCall r o = Call (Just $ "0x" <> o) ("0x" <> toText r) Nothing Nothing Nothing . Just
+        regData n   = "0xfd6f5430" <> paddedInt 64
+                                     <> paddedInt (64 + T.length (text2data n) `div` 2)
+                                     <> text2data n
+                                     <> text2data cont
+        ownerCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing (Just "0x8da5cb5b")
+
 -- | Associate name with registrar by @AiraRegistrar@ service
 -- @NOTICE@ You sould be owner of leaf registrar contract.
 setRegistrar :: DomainName -> Address -> Web3 Text
@@ -77,3 +93,13 @@ resolve name = do (registrar, host) <- leafRegistrar name
                       Left e  -> throwError (UserFail $ "Internal error: " ++ e)
   where regCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing . Just
         regData n = "0x511b1df9" <> paddedInt 32 <> text2data n
+
+-- | Take a content by given domain name with @AiraRegistrar@ service
+content :: DomainName -> Web3 Text
+content name = do (registrar, host) <- leafRegistrar name
+                  res <- eth_call (regCall registrar $ regData host) "latest"
+                  case dataText res of
+                      Right a -> return a
+                      Left e  -> throwError (UserFail $ "Internal error: " ++ e)
+  where regCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing . Just
+        regData n = "0xdd54a62f" <> paddedInt 32 <> text2data n

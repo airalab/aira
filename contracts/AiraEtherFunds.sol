@@ -72,7 +72,7 @@ contract AiraEtherFunds is TokenHash {
      *      a synonym for refill()
      */
     function () payable
-    { refill(sha3(msg.sender)); }
+    { refill(msg.sender); }
 
     /**
      * @dev This is the way to refill token balance by ethers
@@ -101,8 +101,8 @@ contract AiraEtherFunds is TokenHash {
                                     : allowances[_from][sender];
         if (avail >= _value) {
             allowances[_from][sender] -= _value;
-            balances[_from]          -= _value;
-            totalSupply              -= _value;
+            balances[_from]           -= _value;
+            totalSupply               -= _value;
             if (!_to.send(_value)) throw;
         }
     }

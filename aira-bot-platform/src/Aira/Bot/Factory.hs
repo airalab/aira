@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 -- |
--- Module      :  Aira.Bot.Ethereum.Story
+-- Module      :  Aira.Bot.Factory
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -10,7 +10,7 @@
 --
 -- Aira Ethereum bot stories.
 --
-module Aira.Bot.Factory.Story (
+module Aira.Bot.Factory (
     create
   ) where
 
@@ -27,14 +27,16 @@ import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
 
-import Aira.Bot.Factory.Contract
-import Aira.Bot.Story
+import Aira.Contract.Factory
+import Aira.Bot.Common
+import Aira.Account
 
-factoryFee :: Double
-factoryFee = 0.12
+create :: AccountedStory
 
-create :: Story
-create = withAddress noRegStory $ \address _ -> do
+create (Account{accountAddress = Nothing}) = return $
+    toMessage ("Your account should be verified!" :: Text)
+
+create (Account{accountAddress = Just address}) = do
     target <- select "What do you want to create?"
             [ ["Standart token"]
             , ["Token with emission"]
@@ -43,27 +45,24 @@ create = withAddress noRegStory $ \address _ -> do
     name   <- question "Token name (e.g. Ethereum):"
     symbol <- question "Token symbol (e.g. ETH):"
 
-    -- Evaluate Web3 creation function with factory fee
-    let runCreate = liftIO . runWeb3 . withFee address factoryFee 0
-
     res <- case target :: Text of
         "Standart token"      -> do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
-            runCreate $
+            liftIO $ runWeb3 $
                 createToken "BuilderToken.contract" address name symbol decimal total
 
         "Token with emission" -> do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
-            runCreate $
+            liftIO $ runWeb3 $
                 createToken "BuilderTokenEmission.contract" address name symbol decimal total
 
         "Token holds Ether"   ->
-            runCreate $ createTokenEther address name symbol
+            liftIO $ runWeb3 $ createTokenEther address name symbol
 
-        _ -> runCreate $ throwError (UserFail "Unknown target! Cancelled.")
+        _ -> return $ throwError (UserFail "Unknown target! Cancelled.")
 
-    return $ case res of
-        Right tx -> toMessage ("Success transaction " <> etherscan_tx tx)
-        Left e   -> toMessage (pack $ show e)
+    return $ toMessage $ case res of
+        Right tx -> "Success transaction " <> etherscan_tx tx
+        Left e   -> pack (show e)

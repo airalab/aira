@@ -1,5 +1,5 @@
 -- |
--- Module      :  Aira.Bot.Ethereum.Story
+-- Module      :  Aira.Bot.Secure
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -9,11 +9,11 @@
 --
 -- Aira security bot stories.
 --
-module Aira.Bot.Security.Story (
-    approve
-  , unapprove
-  , watch
+module Aira.Bot.Secure (
+    unapprove
   , unwatch
+  , approve
+  , watch
   ) where
 
 import Control.Monad.Error.Class (throwError)
@@ -29,53 +29,52 @@ import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
 
-import Aira.Bot.Security.Watch
 import Aira.Bot.Activation
-import Aira.Bot.Contract
-import Aira.Bot.Story
+import Aira.Bot.Common
+import Aira.Bot.Watch
+import Aira.Contract.AiraEtherFunds
+import Aira.Account
 import Data.Acid
 
-approve :: Story
-approve = withAddress noRegStory $ \address c -> do
+approve :: AccountedStory
+approve a = do
     amount <- question "Amount of approved tokens:"
     res <- liftIO $ runWeb3 $
-        withFee address operationalFee 0 $
-            secureApprove address amount
+        secureApprove (accountHash a) amount
     return $ toMessage $ case res of
-        Left (UserFail e) -> pack e
-        Right tx -> "Success transaction " <> etherscan_tx tx
-        Left _   -> "Internal error occured!"
+        Right tx -> "Success " <> etherscan_tx tx
+        Left e -> pack (show e)
 
-unapprove :: Story
-unapprove = withAddress noRegStory $ \address c -> do
+unapprove :: AccountedStory
+unapprove a = do
     res <- liftIO $ runWeb3 $
-        withFee address operationalFee 0 $
-            secureUnapprove address
+        secureUnapprove (accountHash a)
     return $ toMessage $ case res of
-        Left (UserFail e) -> pack e
-        Right tx -> "Success transaction " <> etherscan_tx tx
-        Left _   -> "Internal error occured!"
+        Right tx -> "Success " <> etherscan_tx tx
+        Left e -> pack (show e)
 
-watch :: AcidState WatchTx -> Story
-watch db = withAddress noRegStory $ \address c -> do
+watch :: AcidState WatchTx -> AccountedStory
+watch db a = do
     res <- select "Do you want to watch incoming transactions of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
-            liftIO $ update db (WatchRecipient address c)
+            let Just address = accountAddress a
+            liftIO $ update db (WatchRecipient address (accountChat a))
             return $ toMessage ("Your address added to watch list." :: Text)
         _ -> do
             recipient <- question "Recipient address for watching:"
-            liftIO $ update db (WatchRecipient recipient c)
+            liftIO $ update db (WatchRecipient recipient (accountChat a))
             return $ toMessage $ "Address " <> toText recipient
                               <> " added to watch list."
 
-unwatch :: AcidState WatchTx -> Story
-unwatch db = withAddress noRegStory $ \address c -> do
+unwatch :: AcidState WatchTx -> AccountedStory
+unwatch db a = do
     res <- select "Do you want to drop watcher of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
+            let Just address = accountAddress a
             liftIO $ update db (UnwatchRecipient address)
             return $ toMessage ("Your address deleted from watch list." :: Text)
         _ -> do
