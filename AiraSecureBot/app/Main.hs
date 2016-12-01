@@ -1,9 +1,11 @@
 {-# LANGUAGE OverloadedLists #-}
 module Main where
 
-import qualified Aira.Bot.Security.Story as Story
-import qualified Aira.Bot.Story as CommonStory
-import Aira.Bot.Security.Watch (listenBlocks)
+import qualified Aira.Bot.Secure as Secure
+import qualified Aira.Bot.Common as Common
+import Aira.Account (accounting)
+
+import Aira.Bot.Watch (listenBlocks)
 import Data.Yaml (decodeFileEither)
 import qualified Data.Text as T
 import Data.Default.Class (def)
@@ -23,19 +25,25 @@ helpMessage = T.unlines
     , "/cancel - stop command execution"
     , "/help or any text - show this message" ]
 
-main :: IO ()
-main = do
+withConfig :: (Config -> IO ()) -> IO ()
+withConfig f = do
     -- Load config
-    Right config <- decodeFileEither "config.yaml"
+    res <- decodeFileEither "config.yaml"
+    case res of
+        Left e -> putStrLn (show e)
+        Right config -> f config
+
+main :: IO ()
+main = withConfig $ \config -> do
     -- Open database
     db <- openLocalState def
     -- Run bot
     runBot config $ do
         listenBlocks db
         storyBot helpMessage $
-            [ ("/me", CommonStory.about)
-            , ("/approve", Story.approve)
-            , ("/unapprove", Story.unapprove)
-            , ("/watch", Story.watch db)
-            , ("/unwatch", Story.unwatch db)
+            [ ("/me",        accounting Common.about)
+            , ("/approve",   accounting Secure.approve)
+            , ("/unapprove", accounting Secure.unapprove)
+            , ("/watch",     accounting $ Secure.watch db)
+            , ("/unwatch",   accounting $ Secure.unwatch db)
             ]

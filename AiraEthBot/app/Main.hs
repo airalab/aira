@@ -1,10 +1,12 @@
 {-# LANGUAGE OverloadedLists #-}
 module Main where
 
-import qualified Aira.Bot.Factory.Story as Factory
-import qualified Aira.Bot.Ethereum.Story as Story
-import qualified Aira.Bot.Story as CommonStory
-import Aira.Bot.Activation (listenCode)
+import qualified Aira.Bot.Activation as Activation
+import qualified Aira.Bot.Factory    as Factory
+import qualified Aira.Bot.Common     as Common
+import qualified Aira.Bot.Token      as Token
+import Aira.Account (accounting)
+
 import Data.Yaml (decodeFileEither)
 import Data.Acid (openLocalState)
 import Data.Default.Class (def)
@@ -26,22 +28,28 @@ helpMessage = T.unlines
     , "/cancel - stop command execution"
     , "/help or any text - show this message" ]
 
-main :: IO ()
-main = do
+withConfig :: (Config -> IO ()) -> IO ()
+withConfig f = do
     -- Load config
-    Right config <- decodeFileEither "config.yaml"
+    res <- decodeFileEither "config.yaml"
+    case res of
+        Left e -> putStrLn (show e)
+        Right config -> f config
+
+main :: IO ()
+main = withConfig $ \config -> do
     -- Open database
     codedb <- openLocalState def
     -- Run bot
     runBot config $ do
-        listenCode codedb
+        Activation.listenCode codedb
         storyBot helpMessage $
-            [ ("/me", CommonStory.about)
-            , ("/start", CommonStory.start codedb)
-            , ("/send", Story.send)
-            , ("/secure", Story.secure)
-            , ("/create", Factory.create)
-            , ("/balance", Story.balance)
-            , ("/transfer", Story.transfer)
-            , ("/unregister", CommonStory.unregister)
+            [ ("/me",         accounting Common.about)
+            , ("/send",       accounting Token.send)
+            , ("/verify",     accounting $ Activation.verify codedb)
+            , ("/secure",     Common.secure)
+            , ("/create",     accounting Factory.create)
+            , ("/balance",    accounting Token.balance)
+            , ("/transfer",   accounting Token.transfer)
+            , ("/unregister", accounting Activation.unregister)
             ]

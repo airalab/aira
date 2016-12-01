@@ -72,6 +72,7 @@ about a = do
     return $ case res of
         Right (x, y, z) -> toMessage $ T.unlines
             [ "Hello, " <> accountFullname a <> "!"
+            , "Account: " <> T.pack (show $ accountState a)
             , "Your address: " <> case accountAddress a of
                                     Just address -> etherscan_addr (toText address)
                                     Nothing -> "None"

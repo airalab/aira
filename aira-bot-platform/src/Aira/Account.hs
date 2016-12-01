@@ -47,14 +47,14 @@ data AccountState = Unknown
                   | Unverified
   deriving (Show, Eq, Read)
 
-$(deriveSafeCopy 0 'base ''Chat)
-$(deriveSafeCopy 0 'base ''ChatType)
-
 instance Ord Chat where
     compare a b = compare (chat_id a) (chat_id b)
 
 instance Eq Chat where
     a == b = chat_id a == chat_id b
+
+$(deriveSafeCopy 0 'base ''Chat)
+$(deriveSafeCopy 0 'base ''ChatType)
 
 data Account
   = Account
@@ -68,38 +68,42 @@ data Account
 
 type AccountedStory = Account -> StoryT Bot BotMessage
 
-newtype AccountAddress = AccountAddress Address
-  deriving (Show, Eq)
-
-instance Answer AccountAddress where
-    parse msg = case text msg of
-        Nothing -> throwError "Please send me text username."
-        Just name -> liftIO (runWeb3 $ resolve (T.toLower name <> ".account"))
-                     >>= go name
-      where go name (Right address)
-                | address == zero
-                    = throwError $ "User `" <> name <> "` have no address!"
-                | otherwise
-                    = return (AccountAddress address)
-            go _ (Left e) = throwError (T.pack $ show e)
-
 instance Answer Account where
     parse msg = case text msg of
         Nothing -> throwError "Please send me text username."
         Just name -> do
-            res <- liftIO $ runWeb3 $
-                loadAccount (Chat 0 Private Nothing (Just name) Nothing Nothing)
+            let name' = T.replace "!" "" name
+                pChat = Chat 0 Private Nothing (Just name') Nothing Nothing
+                force = T.takeEnd 1 name == "!"
+            res <- liftIO $ runWeb3 (loadAccount pChat)
             case res of
-                Right a -> return a
                 Left e  -> throwError (T.pack $ show e)
+                Right a -> case (accountState a, force) of
+                    (Unknown, False) -> throwError $ T.unlines $
+                        [ "I don't known `" <> name <> "`!"
+                        , "You can specify yet by appending '!' char to his name."
+                        , "Of course at your peril." ]
+                    _ -> return a
+
+newtype AccountAddress = AccountAddress Address
+  deriving (Show, Eq)
+
+instance Answer AccountAddress where
+    parse msg = do
+        acc <- parse msg
+        case accountAddress acc of
+            Nothing -> throwError $ "So sorry, but user `"
+                                  <> accountUsername acc
+                                  <> "` have no linked Ethereum address!"
+            Just a -> return (AccountAddress a)
 
 withUsername :: Story -> Story
 withUsername story c =
     case chat_username c of
         Just _ -> story c
         Nothing -> return $ toMessage $ T.unlines
-            [ "Hi! You have not use Telegram username!"
-            , "It's required for Aira identity systems."
+            [ "Hi! You don't use Telegram username!"
+            , "But it's required for Aira identity systems."
             , "Please go to Telegram app settings and"
             , "fill `username` field." ]
 
@@ -110,10 +114,12 @@ getName c = (full, user)
 
 -- | Take address by account name
 loadAccount :: Chat -> Web3 Account
-loadAccount c = Account c full user (hash $ encodeUtf8 user)
-    <$> (fmap zeroMaybe (resolve (user <> ".account")))
-    <*> (fmap readAccSt (content (user <> ".account")))
+loadAccount c = Account c full user ident
+    <$> (fmap zeroMaybe (resolve (identText <> ".account")))
+    <*> (fmap readAccSt (content (identText <> ".account")))
   where (full, user) = getName c
+        ident = hash (encodeUtf8 user)
+        identText = T.pack (show ident)
         zeroMaybe a | a == zero = Nothing
                     | otherwise = Just a
         readAccSt t = case readMaybe (T.unpack t) of
@@ -121,16 +127,17 @@ loadAccount c = Account c full user (hash $ encodeUtf8 user)
             Just s  -> s
 
 -- | Full verification of account
-accountVerify :: Text -> Address -> Web3 Text
-accountVerify user addr = do
-    setAddress (user <> ".account") addr
-    setContent (user <> ".account") (T.pack $ show Verified)
+accountVerify :: Account -> Address -> Web3 Text
+accountVerify acc addr = do
+    setAddress (ident acc <> ".account") addr
+    setContent (ident acc <> ".account") (T.pack $ show Verified)
+  where ident = T.pack . show . accountHash
 
 -- Take name and remove record from registrar
-accountDelete :: Text -> Web3 Text
-accountDelete user = do
-    setAddress (user <> ".account") zero
-    setContent (user <> ".account") ""
+accountDelete :: Account -> Web3 Text
+accountDelete acc =
+    disown (ident acc <> ".account")
+  where ident = T.pack . show . accountHash
 
 -- User accounting combinator
 accounting :: AccountedStory -> Story
@@ -138,13 +145,15 @@ accounting story = withUsername $ \c -> do
     res <- liftIO $ runWeb3 (loadAccount c)
     case res of
         Left e -> return $ toMessage (T.pack $ show e)
-        Right a -> do
-            when (accountState a == Unknown) $ do
-                liftIO $ runWeb3 $ accountSimpleReg (accountUsername a)
-                return ()
-            story $ a {accountState = Unverified}
+        Right a ->
+            if accountState a == Unknown
+            then do liftIO $ runWeb3 (accountSimpleReg a)
+                    story (a {accountState = Unverified})
+            else story a
 
 -- | Simple account registration
-accountSimpleReg :: Text -> Web3 Text
-accountSimpleReg user =
-    setContent (user <> ".account") (T.pack $ show Unverified)
+accountSimpleReg :: Account -> Web3 Text
+accountSimpleReg acc =
+    setContent (ident acc <> ".account")
+               (T.pack $ show Unverified)
+  where ident = T.pack . show . accountHash

@@ -36,52 +36,105 @@ contract Mortal is Owned {
     function kill() onlyOwner
     { suicide(owner); }
 }
-/**
- * @title Token contract represents any asset in digital economy
- */
-contract Token is Mortal {
-    event Transfer(address indexed _from,  address indexed _to,      uint256 _value);
-    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+// Standard token interface (ERC 20)
+// https://github.com/ethereum/EIPs/issues/20
+contract ERC20 
+{
+// Functions:
+    /// @return total amount of tokens
+    uint256 public totalSupply;
+
+    /// @param _owner The address from which the balance will be retrieved
+    /// @return The balance
+    function balanceOf(address _owner) constant returns (uint256);
+
+    /// @notice send `_value` token to `_to` from `msg.sender`
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transfer(address _to, uint256 _value) returns (bool);
+
+    /// @notice send `_value` token to `_to` from `_from` on the condition it is approved by `_from`
+    /// @param _from The address of the sender
+    /// @param _to The address of the recipient
+    /// @param _value The amount of token to be transferred
+    /// @return Whether the transfer was successful or not
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool);
+
+    /// @notice `msg.sender` approves `_addr` to spend `_value` tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @param _value The amount of wei to be approved for transfer
+    /// @return Whether the approval was successful or not
+    function approve(address _spender, uint256 _value) returns (bool);
+
+    /// @param _owner The address of the account owning tokens
+    /// @param _spender The address of the account able to transfer the tokens
+    /// @return Amount of remaining tokens allowed to spent
+    function allowance(address _owner, address _spender) constant returns (uint256);
+
+// Events:
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+}
+
+/**
+ * @title Token compatible contract represents any asset in digital economy
+ * @dev Accounting based on sha3 hashed identifiers
+ */
+contract TokenHash is Mortal, ERC20 {
     /* Short description of token */
     string public name;
     string public symbol;
 
-    /* Total count of tokens exist */
-    uint public totalSupply;
-
     /* Fixed point position */
     uint8 public decimals;
-    
+
     /* Token approvement system */
-    mapping(address => uint) public balanceOf;
-    mapping(address => mapping(address => uint)) public allowance;
+    mapping(bytes32 => uint256) balances;
+    mapping(bytes32 => mapping(bytes32 => uint256)) allowances;
  
     /**
-     * @return available balance of `sender` account (self balance)
+     * @dev Get balance of plain address
+     * @param _owner is a target address
+     * @return amount of tokens on balance
      */
-    function getBalance() constant returns (uint)
-    { return balanceOf[msg.sender]; }
- 
+    function balanceOf(address _owner) constant returns (uint256)
+    { return balances[sha3(_owner)]; }
+
     /**
-     * @dev This method returns non zero result when sender is approved by
-     *      argument address and target address have non zero self balance
-     * @param _address target address 
-     * @return available for `sender` balance of given address
+     * @dev Get balance of ident
+     * @param _owner is a target ident
+     * @return amount of tokens on balance
      */
-    function getBalance(address _address) constant returns (uint) {
-        return allowance[_address][msg.sender]
-             > balanceOf[_address] ? balanceOf[_address]
-                                   : allowance[_address][msg.sender];
-    }
- 
+    function balanceOf(bytes32 _owner) constant returns (uint256)
+    { return balances[_owner]; }
+
+    /**
+     * @dev Take allowed tokens
+     * @param _owner The address of the account owning tokens
+     * @param _spender The address of the account able to transfer the tokens
+     * @return Amount of remaining tokens allowed to spent
+     */
+    function allowance(address _owner, address _spender) constant returns (uint256)
+    { return allowances[sha3(_owner)][sha3(_spender)]; }
+
+    /**
+     * @dev Take allowed tokens
+     * @param _owner The ident of the account owning tokens
+     * @param _spender The ident of the account able to transfer the tokens
+     * @return Amount of remaining tokens allowed to spent
+     */
+    function allowance(bytes32 _owner, bytes32 _spender) constant returns (uint256)
+    { return allowances[_owner][_spender]; }
+
     /* Token constructor */
-    function Token(string _name, string _symbol, uint8 _decimals, uint _count) {
-        name     = _name;
-        symbol   = _symbol;
-        decimals = _decimals;
-        totalSupply           = _count;
-        balanceOf[msg.sender] = _count;
+    function TokenHash(string _name, string _symbol, uint8 _decimals, uint256 _count) {
+        name        = _name;
+        symbol      = _symbol;
+        decimals    = _decimals;
+        totalSupply = _count;
+        balances[sha3(msg.sender)] = _count;
     }
  
     /**
@@ -91,15 +144,37 @@ contract Token is Mortal {
      * @notice `_value` tokens will be sended to `_to`
      * @return `true` when transfer done
      */
-    function transfer(address _to, uint _value) returns (bool) {
-        if (balanceOf[msg.sender] >= _value) {
-            balanceOf[msg.sender] -= _value;
-            balanceOf[_to]        += _value;
+    function transfer(address _to, uint256 _value) returns (bool) {
+        var sender = sha3(msg.sender);
+
+        if (balances[sender] >= _value) {
+            balances[sender]    -= _value;
+            balances[sha3(_to)] += _value;
             Transfer(msg.sender, _to, _value);
             return true;
         }
         return false;
     }
+
+    /**
+     * @dev Transfer self tokens to given address
+     * @param _to destination ident
+     * @param _value amount of token values to send
+     * @notice `_value` tokens will be sended to `_to`
+     * @return `true` when transfer done
+     */
+    function transfer(bytes32 _to, uint256 _value) returns (bool) {
+        var sender = sha3(msg.sender);
+
+        if (balances[sender] >= _value) {
+            balances[sender] -= _value;
+            balances[_to]    += _value;
+            TransferHash(sender, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * @dev Transfer with approvement mechainsm
@@ -109,14 +184,17 @@ contract Token is Mortal {
      * @notice from `_from` will be sended `_value` tokens to `_to`
      * @return `true` when transfer is done
      */
-    function transferFrom(address _from, address _to, uint _value) returns (bool) {
-        var avail = allowance[_from][msg.sender]
-                  > balanceOf[_from] ? balanceOf[_from]
-                                     : allowance[_from][msg.sender];
+    function transferFrom(address _from, address _to, uint256 _value) returns (bool) {
+        var to    = sha3(_to);
+        var from  = sha3(_from);
+        var sender= sha3(msg.sender);
+        var avail = allowances[from][sender]
+                  > balances[from] ? balances[from]
+                                   : allowances[from][sender];
         if (avail >= _value) {
-            allowance[_from][msg.sender] -= _value;
-            balanceOf[_from] -= _value;
-            balanceOf[_to]   += _value;
+            allowances[from][sender] -= _value;
+            balances[from] -= _value;
+            balances[to]   += _value;
             Transfer(_from, _to, _value);
             return true;
         }
@@ -124,64 +202,67 @@ contract Token is Mortal {
     }
 
     /**
+     * @dev Transfer with approvement mechainsm
+     * @param _from source ident, `_value` tokens shold be approved for `sender`
+     * @param _to destination ident
+     * @param _value amount of token values to send 
+     * @notice from `_from` will be sended `_value` tokens to `_to`
+     * @return `true` when transfer is done
+     */
+    function transferFrom(bytes32 _from, bytes32 _to, uint256 _value) returns (bool) {
+        var sender= sha3(msg.sender);
+        var avail = allowances[_from][sender]
+                  > balances[_from] ? balances[_from]
+                                    : allowances[_from][sender];
+        if (avail >= _value) {
+            allowances[_from][sender] -= _value;
+            balances[_from] -= _value;
+            balances[_to]   += _value;
+            TransferHash(_from, _to, _value);
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * @dev Give to target address ability for self token manipulation without sending
-     * @param _address target address
+     * @param _spender target address (future requester)
      * @param _value amount of token values for approving
      */
-    function approve(address _address, uint _value) {
-        allowance[msg.sender][_address] += _value;
-        Approval(msg.sender, _address, _value);
+    function approve(address _spender, uint256 _value) returns (bool) {
+        allowances[sha3(msg.sender)][sha3(_spender)] += _value;
+        Approval(msg.sender, _spender, _value);
+        return true;
     }
-
+ 
     /**
-     * @dev Reset count of tokens approved for given address
-     * @param _address target address
+     * @dev Give to target ident ability for self token manipulation without sending
+     * @param _spender target ident (future requester)
+     * @param _value amount of token values for approving
      */
-    function unapprove(address _address)
-    { allowance[msg.sender][_address] = 0; }
-}
-/**
- * @title Ethereum crypto currency extention for Token contract
- */
-contract TokenEther is Token {
-    function TokenEther(string _name, string _symbol)
-             Token(_name, _symbol, 18, 0)
-    {}
-
-    /**
-     * @dev This is the way to withdraw money from token
-     * @param _value how many tokens withdraw from balance
-     */
-    function withdraw(uint _value) {
-        if (balanceOf[msg.sender] >= _value) {
-            balanceOf[msg.sender] -= _value;
-            totalSupply           -= _value;
-            if(!msg.sender.send(_value)) throw;
-        }
-    }
-
-    /**
-     * @dev This is the way to refill your token balance by ethers
-     */
-    function refill() payable returns (bool) {
-        balanceOf[msg.sender] += msg.value;
-        totalSupply           += msg.value;
+    function approve(bytes32 _spender, uint256 _value) returns (bool) {
+        allowances[sha3(msg.sender)][_spender] += _value;
+        ApprovalHash(sha3(msg.sender), _spender, _value);
         return true;
     }
 
     /**
-     * @dev This method is called when money sended to contract address,
-     *      a synonym for refill()
+     * @dev Reset count of tokens approved for given address
+     * @param _spender target address
      */
-    function () payable {
-        balanceOf[msg.sender] += msg.value;
-        totalSupply           += msg.value;
-    }
-    
+    function unapprove(address _spender)
+    { allowances[sha3(msg.sender)][sha3(_spender)] = 0; }
+ 
     /**
-     * @dev By security issues token that holds ethers can not be killed
+     * @dev Reset count of tokens approved for given ident
+     * @param _spender target ident
      */
-    function kill() onlyOwner { throw; }
+    function unapprove(bytes32 _spender)
+    { allowances[sha3(msg.sender)][_spender] = 0; }
+ 
+    /* Hash driven events */
+    event TransferHash(bytes32 indexed _from,  bytes32 indexed _to,      uint256 _value);
+    event ApprovalHash(bytes32 indexed _owner, bytes32 indexed _spender, uint256 _value);
 }
 
 
@@ -243,27 +324,27 @@ contract AiraRegistrarService is Registrar, Mortal {
 	mapping (string => Record) m_toRecord;
 }
 
-contract AiraEtherFunds is TokenEther {
+contract AiraEtherFunds is TokenHash {
     function AiraEtherFunds(address _bot_reg, string _name, string _symbol)
-            TokenEther(_name, _symbol) {
+            TokenHash(_name, _symbol, 18, 0) {
         reg = AiraRegistrarService(_bot_reg);
     }
 
     /**
      * @dev Event spawned when activation request received
      */
-    event ActivationRequest(address indexed sender, bytes32 indexed code);
+    event ActivationRequest(address indexed ident, bytes32 indexed code);
 
     // Balance limit
-    uint public limit;
+    uint256 public limit;
     
-    function setLimit(uint _limit) onlyOwner
+    function setLimit(uint256 _limit) onlyOwner
     { limit = _limit; }
 
     // Account activation fee
-    uint public fee;
+    uint256 public fee;
     
-    function setFee(uint _fee) onlyOwner
+    function setFee(uint256 _fee) onlyOwner
     { fee = _fee; }
 
     /**
@@ -276,8 +357,8 @@ contract AiraEtherFunds is TokenEther {
         // Get a fee
         if (fee > 0) {
             if (value < fee) throw;
-            balanceOf[owner] += fee;
-            value            -= fee;
+            balances[sha3(owner)] += fee;
+            value                 -= fee;
         }
 
         // Refund over limit
@@ -288,8 +369,8 @@ contract AiraEtherFunds is TokenEther {
         }
 
         // Refill account balance
-        balanceOf[msg.sender] += value;
-        totalSupply           += value;
+        balances[sha3(msg.sender)] += value;
+        totalSupply                += value;
 
         // Activation event
         ActivationRequest(msg.sender, stringToBytes32(_code));
@@ -302,59 +383,48 @@ contract AiraEtherFunds is TokenEther {
     { assembly { result := mload(add(source, 32)) } }
 
     /**
-     * @dev This is the way to refill your token balance by ethers
-     */
-    function refill() payable returns (bool) {
-        // Throw when over limit
-        if (balanceOf[msg.sender] + msg.value > limit) throw;
-
-        // Refill
-        balanceOf[msg.sender] += msg.value;
-        totalSupply           += msg.value;
-        return true;
-    }
-
-    /**
      * @dev This is the way to refill token balance by ethers
      * @param _dest is destination address
      */
-    function refill(address _dest) payable returns (bool) {
-        // Throw when over limit
-        if (balanceOf[_dest] + msg.value > limit) throw;
-
-        // Refill
-        balanceOf[_dest] += msg.value;
-        totalSupply      += msg.value;
-        return true;
-    }
+    function refill(address _dest) payable returns (bool)
+    { return refill(sha3(_dest)); }
 
     /**
      * @dev This method is called when money sended to contract address,
      *      a synonym for refill()
      */
-    function () payable {
+    function () payable
+    { refill(msg.sender); }
+
+    /**
+     * @dev This is the way to refill token balance by ethers
+     * @param _dest is destination identifier
+     */
+    function refill(bytes32 _dest) payable returns (bool) {
         // Throw when over limit
-        if (balanceOf[msg.sender] + msg.value > limit) throw;
+        if (balances[_dest] + msg.value > limit) throw;
 
         // Refill
-        balanceOf[msg.sender] += msg.value;
-        totalSupply           += msg.value;
+        balances[_dest] += msg.value;
+        totalSupply     += msg.value;
+        return true;
     }
 
     /**
      * @dev Outgoing transfer (send) with allowance
-     * @param _from source address
-     * @param _to destination address
+     * @param _from source identifier
+     * @param _to external destination address
      * @param _value amount of token values to send 
      */
-    function sendFrom(address _from, address _to, uint _value) {
-        var avail = allowance[_from][msg.sender]
-                  > balanceOf[_from] ? balanceOf[_from]
-                                     : allowance[_from][msg.sender];
+    function sendFrom(bytes32 _from, address _to, uint256 _value) {
+        var sender = sha3(msg.sender);
+        var avail = allowances[_from][sender]
+                  > balances[_from] ? balances[_from]
+                                    : allowances[_from][sender];
         if (avail >= _value) {
-            allowance[_from][msg.sender] -= _value;
-            balanceOf[_from]             -= _value;
-            totalSupply                  -= _value;
+            allowances[_from][sender] -= _value;
+            balances[_from]           -= _value;
+            totalSupply               -= _value;
             if (!_to.send(_value)) throw;
         }
     }
@@ -364,22 +434,27 @@ contract AiraEtherFunds is TokenEther {
 
     /**
      * @dev Increase approved token values for AiraEthBot
-     * @param _client is a client address
+     * @param _client is a client ident
      * @param _value is amount of tokens
      */
-    function secureApprove(address _client, uint _value) onlySecure {
+    function secureApprove(bytes32 _client, uint256 _value) onlySecure {
         var ethBot = reg.addr("AiraEth");
-        if (ethBot != 0)
-            allowance[_client][ethBot] += _value;
+        if (ethBot != 0) {
+            allowances[_client][sha3(ethBot)] += _value;
+            ApprovalHash(_client, sha3(ethBot), _value);
+        }
     }
 
     /**
      * @dev Close allowance for AiraEthBot
+     * @param _client is a client ident
      */
-    function secureUnapprove(address _client) onlySecure {
+    function secureUnapprove(bytes32 _client) onlySecure {
         var ethBot = reg.addr("AiraEth");
         if (ethBot != 0)
-            allowance[_client][ethBot] = 0;
+            allowances[_client][sha3(ethBot)] = 0;
     }
-}
 
+    // By security issues deny to kill this by owner
+    function kill() onlyOwner { throw; }
+}

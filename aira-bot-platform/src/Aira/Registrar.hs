@@ -10,7 +10,8 @@
 -- Aira registrar service.
 --
 module Aira.Registrar (
-    resolve
+    disown
+  , resolve
   , content
   , setAddress
   , setContent
@@ -28,9 +29,9 @@ import Data.Text (Text)
 root_registrar_address :: Address
 root_registrar_address = address
 -- Mainnet ROOT
-  where Right address = fromText "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
+--  where Right address = fromText "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
 -- Testnet ROOT
---  where Right address = fromText "0x1942fAB8D465a9aDd99962a7e8e93b50f7FCa2D3"
+  where Right address = fromText "0x2d420359f7D51272D49fB74656491F7cBC9bE2c3"
 
 type DomainName = Text
 
@@ -66,9 +67,19 @@ setContent name cont = do
     eth_sendTransaction $ regCall registrar owner (regData host)
   where regCall r o = Call (Just $ "0x" <> o) ("0x" <> toText r) Nothing Nothing Nothing . Just
         regData n   = "0xfd6f5430" <> paddedInt 64
-                                     <> paddedInt (64 + T.length (text2data n) `div` 2)
-                                     <> text2data n
-                                     <> text2data cont
+                                   <> T.take 64 (paddedText cont)
+                                   <> text2data n
+        ownerCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing (Just "0x8da5cb5b")
+
+-- | Remove registrar record at all
+-- @NOTICE@ You sould be owner of leaf registrar contract.
+disown :: DomainName -> Web3 Text
+disown name = do
+    (registrar, host) <- leafRegistrar name
+    owner <- T.drop 26 <$> eth_call (ownerCall registrar) "latest"
+    eth_sendTransaction $ regCall registrar owner (regData host)
+  where regCall r o = Call (Just $ "0x" <> o) ("0x" <> toText r) Nothing Nothing Nothing . Just
+        regData n   = "0x01bd4051" <> paddedInt 32 <> text2data n
         ownerCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing (Just "0x8da5cb5b")
 
 -- | Associate name with registrar by @AiraRegistrar@ service
@@ -97,9 +108,7 @@ resolve name = do (registrar, host) <- leafRegistrar name
 -- | Take a content by given domain name with @AiraRegistrar@ service
 content :: DomainName -> Web3 Text
 content name = do (registrar, host) <- leafRegistrar name
-                  res <- eth_call (regCall registrar $ regData host) "latest"
-                  case dataText res of
-                      Right a -> return a
-                      Left e  -> throwError (UserFail $ "Internal error: " ++ e)
+                  res <- T.drop 2 <$> eth_call (regCall registrar $ regData host) "latest"
+                  return $ T.takeWhile (/= '\NUL') (unhex res)
   where regCall r = Call Nothing ("0x" <> toText r) Nothing Nothing Nothing . Just
         regData n = "0xdd54a62f" <> paddedInt 32 <> text2data n

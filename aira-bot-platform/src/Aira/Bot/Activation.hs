@@ -107,15 +107,21 @@ handleActivation db (Change {changeTopics = topics}) = do
     case mbChat of
         Nothing -> return ()
         Just chat -> do
-            let Just first_name = chat_first_name chat
-                Just name = chat_username chat
-            liftIO $ do
+            res <- liftIO $ do
                 update db (DeleteCode code)
-                runWeb3 $ accountVerify (T.toLower name) address
-            sendMessageBot chat $
-                toMessage $ T.unlines [ "A good news, " <> first_name <> "!"
-                                      , "Activation code received, unlocking..."
-                                      , "Wait a bit to give you a power. /me" ]
+                runWeb3 $ do
+                    account <- loadAccount chat
+                    tx <- accountVerify account address
+                    return (account, tx)
+            case res of
+                Right (account, tx) ->
+                    sendMessageBot chat $
+                        toMessage $ T.unlines $
+                            [ "A good news, " <> accountFullname account <> "!"
+                            , "Activation code received, unlocking by "
+                            , "sending transaction " <> etherscan_tx tx <> "..."
+                            , "Wait a bit to give you a power. /me" ]
+                Left e -> liftIO $ putStrLn (show e)
 
 -- | Listening events from AiraEtherFunds and try to activate account
 listenCode :: AcidState ActivationCode -> Bot ()
@@ -152,7 +158,7 @@ unregister a = do
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
         "Do as I say!" -> do
-            r <- liftIO $ runWeb3 (accountDelete $ accountUsername a)
+            r <- liftIO $ runWeb3 (accountDelete a)
             return . toMessage $ case r of
                 Right tx -> "Account will be deleted on the few next blocks." <>
                             "Transaction " <> etherscan_tx tx
