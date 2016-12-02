@@ -46,6 +46,7 @@ main = withConfig $ \config -> do
         storyBot helpMessage $
             [ ("/me",         accounting Common.about)
             , ("/send",       accounting Token.send)
+            , ("/start",      accounting Common.start)
             , ("/verify",     accounting $ Activation.verify codedb)
             , ("/secure",     Common.secure)
             , ("/create",     accounting Factory.create)

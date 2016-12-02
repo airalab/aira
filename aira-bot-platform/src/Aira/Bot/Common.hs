@@ -16,6 +16,7 @@ module Aira.Bot.Common (
   , floatToText
   , secure
   , about
+  , start
   ) where
 
 import Control.Monad.Error.Class (throwError)
@@ -83,3 +84,9 @@ about a = do
                                     Nothing -> ""
             ]
         Left e -> toMessage $ pack (show e)
+
+start :: AccountedStory
+start a@(Account{ accountState = Unknown }) = do
+    liftIO $ runWeb3 (accountSimpleReg a)
+    about a
+start a = about a

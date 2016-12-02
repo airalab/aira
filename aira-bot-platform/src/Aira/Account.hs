@@ -15,6 +15,7 @@ module Aira.Account (
     Account(..)
   , AccountAddress(..)
   , AccountState(..)
+  , accountSimpleReg
   , AccountedStory
   , accountDelete
   , accountVerify
@@ -144,12 +145,8 @@ accounting :: AccountedStory -> Story
 accounting story = withUsername $ \c -> do
     res <- liftIO $ runWeb3 (loadAccount c)
     case res of
-        Left e -> return $ toMessage (T.pack $ show e)
-        Right a ->
-            if accountState a == Unknown
-            then do liftIO $ runWeb3 (accountSimpleReg a)
-                    story (a {accountState = Unverified})
-            else story a
+        Left e  -> return $ toMessage (T.pack $ show e)
+        Right a -> story a
 
 -- | Simple account registration
 accountSimpleReg :: Account -> Web3 Text

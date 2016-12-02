@@ -42,6 +42,7 @@ main = withConfig $ \config -> do
         listenBlocks db
         storyBot helpMessage $
             [ ("/me",        accounting Common.about)
+            , ("/start",     accounting Common.start)
             , ("/approve",   accounting Secure.approve)
             , ("/unapprove", accounting Secure.unapprove)
             , ("/watch",     accounting $ Secure.watch db)
