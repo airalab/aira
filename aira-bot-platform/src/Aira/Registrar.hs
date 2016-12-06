@@ -29,9 +29,9 @@ import Data.Text (Text)
 root_registrar_address :: Address
 root_registrar_address = address
 -- Mainnet ROOT
---  where Right address = fromText "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
+  where Right address = fromText "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
 -- Testnet ROOT
-  where Right address = fromText "0x2d420359f7D51272D49fB74656491F7cBC9bE2c3"
+--  where Right address = fromText "0x2d420359f7D51272D49fB74656491F7cBC9bE2c3"
 
 type DomainName = Text
 
