@@ -38,27 +38,27 @@ create (Account{accountAddress = Nothing}) = return $
 
 create (Account{accountAddress = Just address}) = do
     target <- select "What do you want to create?"
-            [ ["Standart token"]
-            , ["Token with emission"]
-            , ["Token holds Ether"] ]
+            [ ["ERC20 token"]
+            , ["ERC20 token with emission"]
+            , ["Ether vault contract"] ]
 
     name   <- question "Token name (e.g. Ethereum):"
     symbol <- question "Token symbol (e.g. ETH):"
 
     res <- case target :: Text of
-        "Standart token"      -> do
+        "ERC20 token"      -> do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
             liftIO $ runWeb3 $
                 createToken "BuilderToken.contract" address name symbol decimal total
 
-        "Token with emission" -> do
+        "ERC20 token with emission" -> do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
             liftIO $ runWeb3 $
                 createToken "BuilderTokenEmission.contract" address name symbol decimal total
 
-        "Token holds Ether"   ->
+        "Ether vault contract"   ->
             liftIO $ runWeb3 $ createTokenEther address name symbol
 
         _ -> return $ throwError (UserFail "Unknown target! Cancelled.")
