@@ -73,7 +73,7 @@ instance Answer Account where
     parse msg = case text msg of
         Nothing -> throwError "Please send me text username."
         Just name -> do
-            let name' = T.replace "!" "" name
+            let name' = T.replace "!" "" (T.replace "@" "" name)
                 pChat = Chat 0 Private Nothing (Just name') Nothing Nothing
                 force = T.takeEnd 1 name == "!"
             res <- liftIO $ runWeb3 (loadAccount pChat)
@@ -83,7 +83,8 @@ instance Answer Account where
                     (Unknown, False) -> throwError $ T.unlines $
                         [ "I don't known `" <> name <> "`!"
                         , "You can specify yet by appending '!' char to his name."
-                        , "Of course at your peril." ]
+                        , "Of course at your peril."
+                        , "Example: `" <> name <> "!`"]
                     _ -> return a
 
 newtype AccountAddress = AccountAddress Address

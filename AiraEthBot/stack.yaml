@@ -1,5 +1,5 @@
 # Resolver to choose a 'specific' stackage snapshot or a compiler version.
-resolver: lts-7.5
+resolver: lts-7.12
 
 # User packages to be built.
 packages:
@@ -12,7 +12,7 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
 - telegram-api-0.5.0.1
-- aeson-1.0.2.0
+- aeson-1.0.2.1
 
 # Override default flag values for local packages and extra-deps
 flags: {}

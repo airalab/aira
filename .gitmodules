@@ -4,3 +4,6 @@
 [submodule "telegram-bot"]
 	path = telegram-bot
 	url = https://github.com/akru/telegram-bot.git
+[submodule "hs-ipfs-client"]
+	path = hs-ipfs-client
+	url = https://github.com/akru/hs-ipfs-client.git
