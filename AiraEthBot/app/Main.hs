@@ -16,17 +16,18 @@ import Data.Text (Text)
 
 helpMessage :: Text
 helpMessage = T.unlines
-    [ "You can control me by sending these commands:"
+    [ "You can control me by sending:"
     , ""
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
     , "/create - create new contract by Factory"
+    , "/verify - get activation code for Ethereum address linking"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
     , "/unregister - remove account address"
     , "/cancel - stop command execution"
-    , "/help or any text - show this message" ]
+    , "/help - show this message" ]
 
 withConfig :: (Config -> IO ()) -> IO ()
 withConfig f = do

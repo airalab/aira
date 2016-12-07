@@ -19,6 +19,7 @@ module Aira.Bot.Token (
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
+import Data.Text.Read (hexadecimal)
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
@@ -63,21 +64,55 @@ transferERC20 _ = return $
 
 transferAIRA :: AccountedStory
 transferAIRA a = do
+    source <- case accountAddress a of
+        Nothing -> return (accountHash a)
+        Just address -> do
+            item <- select "Start transaction from" [["Account"], ["Linked address"]]
+            case item :: Text of
+                "Account" -> return (accountHash a)
+                _ -> return (addressHash address)
     dest   <- question "Recipient username:"
     amount <- question "Value in `ether`:"
     res <- liftIO $ runWeb3 $
-        AEF.transferFrom (accountHash a) (accountHash dest) amount
+        AEF.transferFrom source (accountHash dest) amount
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
         Left e   -> pack (show e)
 
+ethBalance :: Address -> Web3 Double
+ethBalance address = do
+    res <- eth_getBalance ("0x" <> toText address) "latest"
+    case hexadecimal res of
+        Right (x, _) -> return (fromWei x)
+        Left e       -> throwError (ParserFail e)
+
 balanceAIRA :: AccountedStory
 balanceAIRA a = do
-    let userBalance = (,) <$> AEF.getBalance (accountHash a)
-                          <*> AEF.balanceOf (accountHash a)
-    Right (x, y) <- liftIO (runWeb3 userBalance)
-    return $ toMessage $ "Balance: " <> floatToText x <> " approved / "
-                                     <> floatToText y <> " on contract"
+    res <- liftIO $ runWeb3 $ do
+        allowedBalance <- (,) <$> AEF.getBalance (accountHash a)
+                              <*> mapM (AEF.getBalance . addressHash) (accountAddress a)
+        totalBalance <- (,) <$> AEF.balanceOf (accountHash a)
+                            <*> mapM (AEF.balanceOf . addressHash) (accountAddress a)
+        eth <- mapM ethBalance (accountAddress a)
+        return (allowedBalance, totalBalance, eth)
+    return $ toMessage $ case res of
+        Left e -> T.pack (show e)
+        Right (allowed, total, eth) -> T.unlines $
+                [ "Balances:"
+                , "  Account: " <> floatToText (fst allowed)
+                                <> " approved / "
+                                <> floatToText (fst total)
+                                <> " on contract" ]
+                ++ case (snd allowed, snd total) of
+                    (Just x, Just y) ->
+                        ["  Address: " <> floatToText x
+                                       <> " approved / "
+                                       <> floatToText y
+                                       <> " on contract" ]
+                    _ -> []
+                ++ case eth of
+                    Just ethers -> ["  Ethereum: " <> floatToText ethers]
+                    _ -> []
 
 balanceERC20 :: AccountedStory
 balanceERC20 (Account{accountAddress = Just address}) = do

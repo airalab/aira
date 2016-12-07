@@ -15,7 +15,7 @@ import Data.Acid
 
 helpMessage :: Text
 helpMessage = T.unlines
-    [ "You can control me by sending these commands:"
+    [ "You can control me by sending:"
     , ""
     , "/me - show information about your account"
     , "/approve - approve value for @AiraEthBot"
@@ -23,7 +23,7 @@ helpMessage = T.unlines
     , "/watch - waiting for incoming transactions"
     , "/unwatch - drop incoming transactions listener"
     , "/cancel - stop command execution"
-    , "/help or any text - show this message" ]
+    , "/help - show this message" ]
 
 withConfig :: (Config -> IO ()) -> IO ()
 withConfig f = do

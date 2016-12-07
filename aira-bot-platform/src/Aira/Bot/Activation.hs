@@ -154,7 +154,7 @@ genCode db chat = do
 -- Deverification story
 unregister :: AccountedStory
 unregister a = do
-    res <- question $ T.unlines [ "Do you want to delete account address?"
+    res <- question $ T.unlines [ "Do you want to delete account?"
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
         "Do as I say!" -> do
