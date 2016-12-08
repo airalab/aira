@@ -10,7 +10,8 @@
 -- Aira contract API.
 --
 module Aira.Contract.Factory (
-    createToken
+    createDeal
+  , createToken
   , createTokenEther
   ) where
 
@@ -21,6 +22,22 @@ import Data.Monoid ((<>))
 import Data.Text (Text)
 import Data.Text.Read
 import Aira.Registrar
+
+createDeal :: Text -> SHA3 -> Double -> Web3 Text
+createDeal desc beneficiary value = do
+    comission <- resolve "ComissionDeal.contract"
+    builder   <- resolve "BuilderDeal.contract"
+    self      <- resolve "AiraEth.bot"
+    let builder_address = "0x" <> toText builder
+        self_address    = "0x" <> toText self
+        createCall = Call (Just self_address) builder_address Nothing Nothing Nothing . Just
+        encodedDesc = text2data desc
+        createData = "0xb84c11da" <> paddedAddr comission
+                                  <> paddedInt 160
+                                  <> T.pack (show beneficiary)
+                                  <> paddedInt (toWei value)
+                                  <> paddedAddr self
+                                  <> encodedDesc
 
 createToken :: Text
             -> Address
