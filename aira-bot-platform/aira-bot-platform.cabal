@@ -1,7 +1,7 @@
 name:                aira-bot-platform
-version:             0.4.1.0
+version:             0.5.0.0
 synopsis:            Aira helper bot platform 
-description:         Please see README.md
+description:         This is a library for autonomous agent creation
 homepage:            https://github.com/airalab/aira#readme
 license:             BSD3
 license-file:        LICENSE
@@ -22,11 +22,16 @@ library
                      , Aira.Bot.Secure
                      , Aira.Bot.Factory
                      , Aira.Bot.Activation
+  other-modules:       Aira.Contract.Deal
                      , Aira.Contract.Token
-                     , Aira.Contract.Factory
+                     , Aira.Contract.BuilderDeal
+                     , Aira.Contract.BuilderToken
                      , Aira.Contract.AiraEtherFunds
-  build-depends:       base  >= 4.7 && <5
+                     , Aira.Contract.BuilderTokenEther
+                     , Aira.Contract.BuilderTokenEmission
+  build-depends:       base >4.8 && <4.10
                      , data-default-class
+                     , base16-bytestring
                      , lens-family-th
                      , telegram-bot
                      , telegram-api
@@ -34,15 +39,17 @@ library
                      , acid-state
                      , containers
                      , cryptonite
-                     , hexstring
                      , safecopy
+                     , memory
                      , random
+                     , pipes
                      , time 
                      , web3
                      , text
                      , mtl
   default-extensions:  OverloadedStrings
   default-language:    Haskell2010
+  --ghc-options:         -ddump-splices
 
 source-repository head
   type:     git

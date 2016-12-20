@@ -19,8 +19,8 @@ module Aira.Bot.Watch (
   , listenBlocks
   ) where
 
-import Aira.Bot.Common (floatToText, etherscan_addr, etherscan_tx)
 import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage)
+import Aira.Bot.Common (etherscan_addr, etherscan_tx)
 import Control.Concurrent (threadDelay)
 import Control.Monad.IO.Class (liftIO)
 import Web.Telegram.Bot.Types (Bot)
@@ -38,6 +38,8 @@ import Data.SafeCopy
 import Data.Acid
 
 import Network.Ethereum.Web3.Address
+import Network.Ethereum.Web3.Types
+import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
 
 import Lens.Family2.State
@@ -72,8 +74,7 @@ eitherMaybe (Right a) = Just a
 
 handleTx :: AcidState WatchTx -> Transaction -> Bot ()
 handleTx db (Transaction {txHash = hash, txFrom = from, txTo = to, txValue = value}) = do
-    mbChat <- traverse (liftIO . query db . GetRecipientChat)
-                       (eitherMaybe . fromText =<< to)
+    mbChat <- traverse (liftIO . query db . GetRecipientChat) to
     case join mbChat of
         Nothing -> return ()
         Just chat -> do
@@ -84,7 +85,7 @@ handleTx db (Transaction {txHash = hash, txFrom = from, txTo = to, txValue = val
                                       , "- Value: " <>
                                             case hexadecimal value of
                                                 Right (v, _) ->
-                                                    floatToText (fromWei v) <> " `ether`"
+                                                    T.pack (show (fromWei v :: Ether))
                                                 _ -> value
                                       ]
 

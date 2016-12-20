@@ -29,26 +29,29 @@ import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
 
+import qualified Aira.Contract.AiraEtherFunds as AEF
 import Aira.Bot.Activation
 import Aira.Bot.Common
 import Aira.Bot.Watch
-import Aira.Contract.AiraEtherFunds
+import Aira.Registrar
 import Aira.Account
 import Data.Acid
 
 approve :: AccountedStory
 approve a = do
-    amount <- question "Amount of approved tokens:"
-    res <- liftIO $ runWeb3 $
-        secureApprove (accountHash a) amount
+    amount <- question "Amount of approved ethers:"
+    res <- liftIO $ runWeb3 $ do
+        aef <- getAddress "AiraEtherFunds.contract"
+        AEF.secureApprove aef nopay (accountHash a) (toWei (amount :: Ether))
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
         Left e -> pack (show e)
 
 unapprove :: AccountedStory
 unapprove a = do
-    res <- liftIO $ runWeb3 $
-        secureUnapprove (accountHash a)
+    res <- liftIO $ runWeb3 $ do
+        aef <- getAddress "AiraEtherFunds.contract"
+        AEF.secureUnapprove aef nopay (accountHash a)
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
         Left e -> pack (show e)

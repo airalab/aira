@@ -1,21 +1,19 @@
 {-# LANGUAGE QuasiQuotes #-}
-{-# LANGUAGE DataKinds   #-}
 -- |
--- Module      :  Aira.Contract.AiraEtherFunds
+-- Module      :  Aira.Contract.BuilderToken
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
 -- Maintainer  :  mail@akru.me
 -- Stability   :  experimental
--- Portability :  unknown
+-- Portability :  portable
 --
--- AiraEtherFunds contract API.
+-- BuilderToken contract API.
 --
-module Aira.Contract.AiraEtherFunds where
+module Aira.Contract.BuilderToken where
 
 import Network.Ethereum.Web3.TH
 import Network.Ethereum.Web3
 import Data.Text (Text)
-import Aira.Registrar
 
-[abiFrom|abi/aef.json|]
+[abiFrom|abi/builder_token.json|]

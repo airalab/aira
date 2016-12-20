@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE DataKinds            #-}
 -- |
 -- Module      :  Aira.Bot.Common
 -- Copyright   :  Alexander Krupenkin 2016
@@ -13,24 +15,21 @@
 module Aira.Bot.Common (
     etherscan_addr
   , etherscan_tx
-  , floatToText
   , addressHash
   , secure
   , about
   , start
   ) where
 
+import qualified Data.ByteString.Base16 as B16
 import Control.Monad.Error.Class (throwError)
-import Data.Text.Lazy.Builder (toLazyText)
-import Data.HexString (hexString, toBytes)
-import Data.Text.Lazy.Builder.RealFloat
+import Crypto.Hash (hash, Digest, Keccak_256)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text.Encoding (encodeUtf8)
+import qualified Data.ByteArray as BA
 import Network.Ethereum.Web3.Address
-import Control.Applicative ((<|>))
-import Data.Text.Lazy (toStrict)
 import Network.Ethereum.Web3
-import Crypto.Hash (hash)
+import Text.Read (readMaybe)
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
@@ -42,14 +41,13 @@ import Aira.Account
 etherscan_tx :: Text -> Text
 etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
 
-etherscan_addr :: Text -> Text
-etherscan_addr a = "[" <> a <> "](https://etherscan.io/address/" <> a <> ")"
+etherscan_addr :: Address -> Text
+etherscan_addr a = "[" <> toText a <> "](https://etherscan.io/address/" <> toText a <> ")"
 
-floatToText :: RealFloat a => a -> Text
-floatToText = toStrict . toLazyText . formatRealFloat Fixed Nothing
-
-addressHash :: Address -> AEF.SHA3
-addressHash = hash . toBytes . hexString . encodeUtf8 . toText
+addressHash :: Address -> BytesN 32
+addressHash = BytesN . BA.convert . keccak
+  where keccak :: Address -> Digest Keccak_256
+        keccak = hash . fst . B16.decode . encodeUtf8 . toText
 
 instance Answer Address where
     parse msg = case text msg of
@@ -57,6 +55,12 @@ instance Answer Address where
         Just addr -> case fromText addr of
             Left e -> throwError (T.pack e)
             Right a -> return a
+
+instance Answer Ether where
+    parse msg = case (readMaybe . (++ " ether") . T.unpack) =<< text msg of
+        Nothing -> throwError "Please send me a value in ether."
+        Just x -> if x > 0 then return x
+                           else throwError "Please send me a positive value."
 
 secure :: Story
 secure _ = return . toMessage $ T.unlines
@@ -69,7 +73,7 @@ about a = return $ toMessage $ T.unlines $
     , "Account: " <> T.pack (show $ accountState a)
     , "Your address: " <>
         case accountAddress a of
-            Just address -> etherscan_addr (toText address)
+            Just address -> etherscan_addr address
             Nothing -> "None"
     , "Do you want to check /balance?" ]
 
