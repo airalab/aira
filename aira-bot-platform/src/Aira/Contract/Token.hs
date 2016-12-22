@@ -19,10 +19,10 @@ import Network.Ethereum.Web3
 
 fromDecimals :: Address -> Integer -> Web3 Double
 fromDecimals token raw = scale <$> decimals token
-  where scale :: Int -> Double
+  where scale :: Integer -> Double
         scale = (fromIntegral raw /) . (10^)
 
 toDecimals :: Address -> Double -> Web3 Integer
 toDecimals token scaled = scale <$> decimals token
-  where scale :: Int -> Integer
+  where scale :: Integer -> Integer
         scale = round . (scaled *) . (10^)
