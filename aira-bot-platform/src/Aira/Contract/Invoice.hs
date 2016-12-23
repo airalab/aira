@@ -1,7 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DataKinds   #-}
 -- |
--- Module      :  Aira.Contract.Deal
+-- Module      :  Aira.Contract.Invoice
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -11,10 +11,10 @@
 --
 -- Deal contract API.
 --
-module Aira.Contract.Deal where
+module Aira.Contract.Invoice where
 
 import Network.Ethereum.Web3.TH
 import Network.Ethereum.Web3
 import Data.Text (Text)
 
-[abiFrom|abi/deal.json|]
+[abiFrom|abi/invoice.json|]

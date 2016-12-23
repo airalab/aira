@@ -11,7 +11,7 @@
 -- Aira Ethereum bot stories.
 --
 module Aira.Bot.Factory (
-    createDeal
+    createInvoice
   , createToken
   ) where
 
@@ -23,8 +23,8 @@ import Web.Telegram.Bot
 import Data.Text as T
 import Pipes (yield)
 
-import qualified Aira.Contract.Deal                 as Deal
-import qualified Aira.Contract.BuilderDeal          as BDeal
+import qualified Aira.Contract.Invoice              as Invoice
+import qualified Aira.Contract.BuilderInvoice       as BInvoice
 import qualified Aira.Contract.BuilderToken         as BToken
 import qualified Aira.Contract.BuilderTokenEther    as BTokenEther
 import qualified Aira.Contract.BuilderTokenEmission as BTokenEmission
@@ -32,9 +32,9 @@ import Aira.Bot.Common
 import Aira.Registrar
 import Aira.Account
 
--- | Create Deal contract by Factory
-createDeal :: AccountedStory
-createDeal (Account{accountHash = ident}) = do
+-- | Create Invoice contract by Factory
+createInvoice :: AccountedStory
+createInvoice (Account{accountHash = ident}) = do
     desc <- question "Description:"
     amount <- question "Value in ethers:"
 
@@ -43,15 +43,15 @@ createDeal (Account{accountHash = ident}) = do
 
     res <- liftIO $ runWeb3 $ do
         owner     <- getAddress "AiraEth.bot"
-        builder   <- getAddress "BuilderDeal.contract"
-        comission <- getAddress "ComissionDeal.contract"
-        cost    <- fromWei <$> BDeal.buildingCostWei builder
-        event builder $ \(BDeal.Builded _ inst) -> do
-            res <- runWeb3 (Deal.beneficiary inst :: Web3 (BytesN 32))
+        builder   <- getAddress "BuilderInvoice.contract"
+        comission <- getAddress "ComissionInvoice.contract"
+        cost    <- fromWei <$> BInvoice.buildingCostWei builder
+        event builder $ \(BInvoice.Builded _ inst) -> do
+            res <- runWeb3 (Invoice.beneficiary inst :: Web3 (BytesN 32))
             case res of
                 Right ident -> writeChan notify inst >> return TerminateEvent
                 _ -> return ContinueEvent
-        BDeal.create builder (cost :: Wei) comission desc ident (toWei (amount :: Ether)) owner
+        BInvoice.create builder (cost :: Wei) comission desc ident (toWei (amount :: Ether)) owner
 
     case res of
         Left e -> return (toMessage (T.pack (show e)))
@@ -60,7 +60,7 @@ createDeal (Account{accountHash = ident}) = do
                             <> "\nWaiting for confirmation...")
             inst <- liftIO (readChan notify)
             return (toMessage $
-                "Deal contract created:\n"
+                "Invoice contract created:\n"
                 <> etherscan_addr inst)
 
 -- | Create token by Factory

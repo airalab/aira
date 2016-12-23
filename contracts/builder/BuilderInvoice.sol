@@ -1,15 +1,15 @@
 //
-// AIRA Builder for Deal contract
+// AIRA Builder for Invoice contract
 //
 
 pragma solidity ^0.4.2;
-import 'creator/CreatorDeal.sol';
+import 'creator/CreatorInvoice.sol';
 import 'builder/Builder.sol';
 
 /**
- * @title BuilderDeal contract
+ * @title BuilderInvoice contract
  */
-contract BuilderDeal is Builder {
+contract BuilderInvoice is Builder {
     /**
      * @dev Run script creation contract
      * @return address new contract
@@ -36,7 +36,7 @@ contract BuilderDeal is Builder {
         if (_client == 0)
             _client = msg.sender;
  
-        var inst = CreatorDeal.create(_comission, _description, _beneficiary, _value);
+        var inst = CreatorInvoice.create(_comission, _description, _beneficiary, _value);
         inst.delegate(_client);
         Builded(_client, inst);
         getContractsOf[_client].push(inst);

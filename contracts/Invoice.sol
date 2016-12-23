@@ -2,7 +2,7 @@ pragma solidity ^0.4.4;
 import 'common/Mortal.sol';
 import './Comission.sol';
 
-contract Deal is Mortal {
+contract Invoice is Mortal {
     address   public signer;
     uint      public closeBlock;
 
@@ -18,10 +18,10 @@ contract Deal is Mortal {
      * @param _beneficiary Beneficiary account
      * @param _value Deal value
      */
-    function Deal(address _comission,
-                  string  _description,
-                  bytes32 _beneficiary,
-                  uint    _value) {
+    function Invoice(address _comission,
+                     string  _description,
+                     bytes32 _beneficiary,
+                     uint    _value) {
         comission   = Comission(_comission);
         description = _description;
         beneficiary = _beneficiary;

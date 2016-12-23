@@ -14,6 +14,7 @@ module Aira.Bot.Token (
     transfer
   , balance
   , send
+  , ethBalance
   ) where
 
 import Network.Ethereum.Web3.Types (CallMode(Latest))

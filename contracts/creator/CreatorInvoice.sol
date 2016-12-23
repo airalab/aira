@@ -1,10 +1,10 @@
 pragma solidity ^0.4.4;
 
-import 'contracts/Deal.sol';
+import 'contracts/Invoice.sol';
 
 library CreatorDeal {
-    function create(address _comission, string _description, bytes32 _beneficiary, uint256 _value) returns (Deal)
-    { return new Deal(_comission, _description, _beneficiary, _value); }
+    function create(address _comission, string _description, bytes32 _beneficiary, uint256 _value) returns (Invoice)
+    { return new Invoice(_comission, _description, _beneficiary, _value); }
 
     function version() constant returns (string)
     { return "v0.5.0 (a9ea4c6c)"; }

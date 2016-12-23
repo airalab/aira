@@ -1,7 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DataKinds   #-}
 -- |
--- Module      :  Aira.Contract.BuilderDeal
+-- Module      :  Aira.Contract.BuilderInvoice
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -9,12 +9,12 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- BuilderDeal contract API.
+-- BuilderInvoice contract API.
 --
-module Aira.Contract.BuilderDeal where
+module Aira.Contract.BuilderInvoice where
 
 import Network.Ethereum.Web3.TH
 import Network.Ethereum.Web3
 import Data.Text (Text)
 
-[abiFrom|abi/builder_deal.json|]
+[abiFrom|abi/builder_invoice.json|]

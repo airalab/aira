@@ -2,6 +2,7 @@
 module Main where
 
 import qualified Aira.Bot.Activation as Activation
+import qualified Aira.Bot.Invoice    as Invoice
 import qualified Aira.Bot.Factory    as Factory
 import qualified Aira.Bot.Common     as Common
 import qualified Aira.Bot.Token      as Token
@@ -21,11 +22,13 @@ helpMessage = T.unlines
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
-    , "/create - create new contract by Factory"
-    , "/verify - get activation code for Ethereum address linking"
+    , "/newinvoice - create invoice contract by Factory"
+    , "/invoice - show invoice information and withdraw"
+    , "/newtoken - create new token by Factory"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
     , "/unregister - remove account address"
+    , "/verify - get activation code for Ethereum address linking"
     , "/cancel - stop command execution"
     , "/help - show this message" ]
 
@@ -51,7 +54,8 @@ main = withConfig $ \config -> do
             , ("/verify",     accounting $ Activation.verify codedb)
             , ("/secure",     Common.secure)
             , ("/newtoken",   accounting Factory.createToken)
-            , ("/newdeal",    accounting Factory.createDeal)
+            , ("/newinvoice", accounting Factory.createInvoice)
+            , ("/invoice",    accounting Invoice.invoice)
             , ("/balance",    accounting Token.balance)
             , ("/transfer",   accounting Token.transfer)
             , ("/unregister", accounting Activation.unregister)

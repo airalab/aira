@@ -21,11 +21,12 @@ library
                      , Aira.Bot.Common
                      , Aira.Bot.Secure
                      , Aira.Bot.Factory
+                     , Aira.Bot.Invoice
                      , Aira.Bot.Activation
-  other-modules:       Aira.Contract.Deal
-                     , Aira.Contract.Token
-                     , Aira.Contract.BuilderDeal
+  other-modules:       Aira.Contract.Token
+                     , Aira.Contract.Invoice
                      , Aira.Contract.BuilderToken
+                     , Aira.Contract.BuilderInvoice
                      , Aira.Contract.AiraEtherFunds
                      , Aira.Contract.BuilderTokenEther
                      , Aira.Contract.BuilderTokenEmission
