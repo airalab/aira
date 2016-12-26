@@ -2,6 +2,7 @@
 module Main where
 
 import qualified Aira.Bot.Activation as Activation
+import qualified Aira.Bot.Invoice    as Invoice
 import qualified Aira.Bot.Factory    as Factory
 import qualified Aira.Bot.Common     as Common
 import qualified Aira.Bot.Token      as Token
@@ -16,17 +17,20 @@ import Data.Text (Text)
 
 helpMessage :: Text
 helpMessage = T.unlines
-    [ "You can control me by sending these commands:"
+    [ "You can control me by sending:"
     , ""
     , "/me - show information about your account"
     , "/send - send money to Ethereum account"
     , "/transfer - money transfer to Telegram account"
-    , "/create - create new contract by Factory"
+    , "/newinvoice - create invoice contract by Factory"
+    , "/invoice - show invoice information and withdraw"
+    , "/newtoken - create new token by Factory"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
     , "/unregister - remove account address"
+    , "/verify - get activation code for Ethereum address linking"
     , "/cancel - stop command execution"
-    , "/help or any text - show this message" ]
+    , "/help - show this message" ]
 
 withConfig :: (Config -> IO ()) -> IO ()
 withConfig f = do
@@ -49,7 +53,9 @@ main = withConfig $ \config -> do
             , ("/start",      accounting Common.start)
             , ("/verify",     accounting $ Activation.verify codedb)
             , ("/secure",     Common.secure)
-            , ("/create",     accounting Factory.create)
+            , ("/newtoken",   accounting Factory.createToken)
+            , ("/newinvoice", accounting Factory.createInvoice)
+            , ("/invoice",    accounting Invoice.invoice)
             , ("/balance",    accounting Token.balance)
             , ("/transfer",   accounting Token.transfer)
             , ("/unregister", accounting Activation.unregister)

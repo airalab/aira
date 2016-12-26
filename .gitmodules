@@ -1,9 +1,9 @@
 [submodule "web3"]
 	path = web3
-	url = https://github.com/akru/web3.git
+	url = https://github.com/airalab/hs-web3.git
 [submodule "telegram-bot"]
 	path = telegram-bot
 	url = https://github.com/akru/telegram-bot.git
 [submodule "hs-ipfs-client"]
 	path = hs-ipfs-client
-	url = https://github.com/akru/hs-ipfs-client.git
+	url = https://github.com/airalab/hs-ipfs-client.git

@@ -1,4 +1,6 @@
-{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE DataKinds            #-}
 -- |
 -- Module      :  Aira.Bot.Common
 -- Copyright   :  Alexander Krupenkin 2016
@@ -13,21 +15,21 @@
 module Aira.Bot.Common (
     etherscan_addr
   , etherscan_tx
-  , floatToText
+  , addressHash
   , secure
   , about
   , start
   ) where
 
+import qualified Data.ByteString.Base16 as B16
 import Control.Monad.Error.Class (throwError)
-import Data.Text.Lazy.Builder (toLazyText)
-import Data.Text.Lazy.Builder.RealFloat
+import Crypto.Hash (hash, Digest, Keccak_256)
 import Control.Monad.IO.Class (liftIO)
+import Data.Text.Encoding (encodeUtf8)
+import qualified Data.ByteArray as BA
 import Network.Ethereum.Web3.Address
-import Data.Text.Read (hexadecimal)
-import Control.Applicative ((<|>))
-import Data.Text.Lazy (toStrict)
 import Network.Ethereum.Web3
+import Text.Read (readMaybe)
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
 import Data.Text as T
@@ -39,11 +41,13 @@ import Aira.Account
 etherscan_tx :: Text -> Text
 etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
 
-etherscan_addr :: Text -> Text
-etherscan_addr a = "[" <> a <> "](https://etherscan.io/address/" <> a <> ")"
+etherscan_addr :: Address -> Text
+etherscan_addr a = "[" <> toText a <> "](https://etherscan.io/address/" <> toText a <> ")"
 
-floatToText :: RealFloat a => a -> Text
-floatToText = toStrict . toLazyText . formatRealFloat Fixed Nothing
+addressHash :: Address -> BytesN 32
+addressHash = BytesN . BA.convert . keccak
+  where keccak :: Address -> Digest Keccak_256
+        keccak = hash . fst . B16.decode . encodeUtf8 . toText
 
 instance Answer Address where
     parse msg = case text msg of
@@ -52,12 +56,11 @@ instance Answer Address where
             Left e -> throwError (T.pack e)
             Right a -> return a
 
-ethBalance :: Address -> Web3 Double
-ethBalance address = do
-    res <- eth_getBalance ("0x" <> toText address) "latest"
-    case hexadecimal res of
-        Right (x, _) -> return (fromWei x)
-        Left e       -> throwError (ParserFail e)
+instance Answer Ether where
+    parse msg = case (readMaybe . (++ " ether") . T.unpack) =<< text msg of
+        Nothing -> throwError "Please send me a value in ether."
+        Just x -> if x > 0 then return x
+                           else throwError "Please send me a positive value."
 
 secure :: Story
 secure _ = return . toMessage $ T.unlines
@@ -65,25 +68,14 @@ secure _ = return . toMessage $ T.unlines
     [ "@AiraSecureBot" ]
 
 about :: AccountedStory
-about a = do
-    let info = (,,) <$> AEF.getBalance  (accountHash a)
-                    <*> AEF.balanceOf   (accountHash a)
-                    <*> mapM ethBalance (accountAddress a)
-    res <- liftIO (runWeb3 info)
-    return $ case res of
-        Right (x, y, z) -> toMessage $ T.unlines
-            [ "Hello, " <> accountFullname a <> "!"
-            , "Account: " <> T.pack (show $ accountState a)
-            , "Your address: " <> case accountAddress a of
-                                    Just address -> etherscan_addr (toText address)
-                                    Nothing -> "None"
-            , "Aira balance: " <> floatToText x <> " `ETH` approved / "
-                               <> floatToText y <> " `ETH` on contract"
-                               <> case z of
-                                    Just z' -> " / " <> floatToText z' <> " `ETH` on account"
-                                    Nothing -> ""
-            ]
-        Left e -> toMessage $ pack (show e)
+about a = return $ toMessage $ T.unlines $
+    [ "Hello, " <> accountFullname a <> "!"
+    , "Account: " <> T.pack (show $ accountState a)
+    , "Your address: " <>
+        case accountAddress a of
+            Just address -> etherscan_addr address
+            Nothing -> "None"
+    , "Do you want to check /balance?" ]
 
 start :: AccountedStory
 start a@(Account{ accountState = Unknown }) = do

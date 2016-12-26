@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell  #-}
+{-# LANGUAGE DataKinds        #-}
 -- |
 -- Module      :  Aira.Account
 -- Copyright   :  Alexander Krupenkin 2016
@@ -26,10 +27,11 @@ module Aira.Account (
 import Web.Telegram.API.Bot (Chat(..), ChatType(..))
 import Web.Telegram.API.Bot.Data (Message(text))
 import Control.Monad.Error.Class (throwError)
-import Aira.Contract.AiraEtherFunds (SHA3)
+import Crypto.Hash (hash, Digest, Keccak_256)
+import Network.Ethereum.Web3.Address (zero)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text.Encoding (encodeUtf8)
-import Network.Ethereum.Web3.Address
+import qualified Data.ByteArray as BA
 import Control.Applicative ((<|>))
 import qualified Data.Text as T
 import Web.Telegram.Bot.Story
@@ -37,7 +39,6 @@ import Web.Telegram.Bot.Types
 import Network.Ethereum.Web3
 import Text.Read (readMaybe)
 import Control.Monad (when)
-import Crypto.Hash (hash)
 import Data.Monoid ((<>))
 import Data.Text (Text)
 import Aira.Registrar
@@ -62,7 +63,7 @@ data Account
   { accountChat     :: Chat
   , accountFullname :: Text
   , accountUsername :: Text
-  , accountHash     :: SHA3
+  , accountHash     :: BytesN 32
   , accountAddress  :: Maybe Address
   , accountState    :: AccountState
   } deriving (Show, Eq)
@@ -117,10 +118,13 @@ getName c = (full, user)
 -- | Take address by account name
 loadAccount :: Chat -> Web3 Account
 loadAccount c = Account c full user ident
-    <$> (fmap zeroMaybe (resolve (identText <> ".account")))
-    <*> (fmap readAccSt (content (identText <> ".account")))
+    <$> (fmap zeroMaybe (getAddress (identText <> ".account")))
+    <*> (fmap readAccSt (getContent (identText <> ".account")))
   where (full, user) = getName c
-        ident = hash (encodeUtf8 user)
+        keccak :: Digest Keccak_256
+        keccak = hash (encodeUtf8 user)
+        ident :: BytesN 32
+        ident  = BytesN (BA.convert keccak)
         identText = T.pack (show ident)
         zeroMaybe a | a == zero = Nothing
                     | otherwise = Just a
@@ -131,14 +135,13 @@ loadAccount c = Account c full user ident
 -- | Full verification of account
 accountVerify :: Account -> Address -> Web3 Text
 accountVerify acc addr = do
-    setAddress (ident acc <> ".account") addr
-    setContent (ident acc <> ".account") (T.pack $ show Verified)
+    regAddress (ident acc <> ".account") addr
+    regContent (ident acc <> ".account") (T.pack $ show Verified)
   where ident = T.pack . show . accountHash
 
 -- Take name and remove record from registrar
 accountDelete :: Account -> Web3 Text
-accountDelete acc =
-    disown (ident acc <> ".account")
+accountDelete acc = removeRecord (ident acc <> ".account")
   where ident = T.pack . show . accountHash
 
 -- User accounting combinator
@@ -152,6 +155,6 @@ accounting story = withUsername $ \c -> do
 -- | Simple account registration
 accountSimpleReg :: Account -> Web3 Text
 accountSimpleReg acc =
-    setContent (ident acc <> ".account")
+    regContent (ident acc <> ".account")
                (T.pack $ show Unverified)
   where ident = T.pack . show . accountHash

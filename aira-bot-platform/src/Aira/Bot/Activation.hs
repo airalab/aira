@@ -19,19 +19,23 @@ module Aira.Bot.Activation (
   , verify
   ) where
 
-import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage)
+import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage, BotMessage)
+import Aira.Contract.AiraEtherFunds (ActivationRequest(..))
 import Web.Telegram.API.Bot (Chat(..), ChatType(..))
 import Data.Time (UTCTime, getCurrentTime)
 import Network.Ethereum.Web3.Address as A
 import Control.Concurrent (threadDelay)
 import Data.Default.Class (Default(..))
 import Control.Monad.IO.Class (liftIO)
+import Data.Text.Encoding (decodeUtf8)
+import qualified Data.ByteArray as BA
 import Aira.Bot.Common (etherscan_tx)
 import Web.Telegram.Bot.Types (Bot)
 import Web.Telegram.Bot (question)
 import Control.Monad.Reader (ask)
 import qualified Data.Text as T
 import qualified Data.Map as M
+import Control.Concurrent.Chan
 import Data.Text (Text, pack)
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
@@ -91,49 +95,45 @@ getTime code = times `views` M.lookup code <$> ask
 
 $(makeAcidic ''ActivationCode ['newCode, 'deleteCode, 'getCode, 'getChat, 'getTime])
 
-activationFilter :: Address -> Filter
-activationFilter emitter =
-    Filter (Just ("0x" <> A.toText emitter))
-           (Just [ Just "0x87283f0fd3af976c1c41e7d549d4b95f8f812b475d4b68fa8e1db59db0391c94"
-                 , Nothing])
-           Nothing
-           Nothing
-
-handleActivation :: AcidState ActivationCode -> Change -> Bot ()
-handleActivation db (Change {changeTopics = topics}) = do
-    let Right address = fromText (T.drop 26 $ topics !! 1)
-        code = unhex (T.take (codeLength * 2) $ T.drop 2 $ topics !! 2)
-    mbChat <- liftIO $ query db (GetChat code)
+handleActivation :: AcidState ActivationCode
+                 -> Chan (Chat, BotMessage)
+                 -> ActivationRequest
+                 -> IO EventAction
+handleActivation db chan (ActivationRequest sender codeBytes) = do
+    let code = decodeUtf8 $ BA.convert $ unBytesN codeBytes
+    print code
+    mbChat <- query db (GetChat code)
     case mbChat of
-        Nothing -> return ()
+        Nothing -> return ContinueEvent
         Just chat -> do
-            res <- liftIO $ do
-                update db (DeleteCode code)
-                runWeb3 $ do
-                    account <- loadAccount chat
-                    tx <- accountVerify account address
-                    return (account, tx)
+            update db (DeleteCode code)
+            res <- runWeb3 $ do
+                account <- loadAccount chat
+                tx <- accountVerify account sender
+                return (account, tx)
             case res of
                 Right (account, tx) ->
-                    sendMessageBot chat $
-                        toMessage $ T.unlines $
-                            [ "A good news, " <> accountFullname account <> "!"
-                            , "Activation code received, unlocking by "
-                            , "sending transaction " <> etherscan_tx tx <> "..."
-                            , "Wait a bit to give you a power. /me" ]
-                Left e -> liftIO $ putStrLn (show e)
+                    writeChan chan (chat, toMessage $ T.unlines $
+                                [ "A good news, " <> accountFullname account <> "!"
+                                , "Activation code received, unlocking by "
+                                , "sending transaction " <> etherscan_tx tx <> "..."
+                                , "Wait a bit to give you a power. /me" ])
+                Left e -> putStrLn (show e)
+            return ContinueEvent
 
 -- | Listening events from AiraEtherFunds and try to activate account
 listenCode :: AcidState ActivationCode -> Bot ()
 listenCode db = do
     forkBot $ do
-        Right actFilterId <- liftIO $ runWeb3 $
-            resolve "AiraEtherFunds.contract" >>= eth_newFilter . activationFilter
-        let loop = do
-             Right upd <- liftIO $ runWeb3 (eth_getFilterChanges actFilterId)
-             mapM_ (handleActivation db) upd
-             liftIO (threadDelay 10000000)
-             loop
+        chan <- liftIO newChan
+
+        liftIO $ runWeb3 $ do
+            aef <- getAddress "AiraEtherFunds.contract"
+            event aef (handleActivation db chan)
+
+        let loop = do cmsg <- liftIO (readChan chan)
+                      uncurry sendMessageBot cmsg
+                      loop
          in loop
     return ()
 
@@ -154,7 +154,7 @@ genCode db chat = do
 -- Deverification story
 unregister :: AccountedStory
 unregister a = do
-    res <- question $ T.unlines [ "Do you want to delete account address?"
+    res <- question $ T.unlines [ "Do you want to delete account?"
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
         "Do as I say!" -> do
