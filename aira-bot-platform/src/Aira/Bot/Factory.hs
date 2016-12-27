@@ -47,9 +47,12 @@ createInvoice (Account{accountHash = ident}) = do
         comission <- getAddress "ComissionInvoice.contract"
         cost    <- fromWei <$> BInvoice.buildingCostWei builder
         event builder $ \(BInvoice.Builded _ inst) -> do
-            res <- runWeb3 (Invoice.beneficiary inst :: Web3 (BytesN 32))
+            res <- runWeb3 (Invoice.beneficiary inst)
             case res of
-                Right ident -> writeChan notify inst >> return TerminateEvent
+                Right a ->
+                    if a == ident
+                    then writeChan notify inst >> return TerminateEvent
+                    else return ContinueEvent
                 _ -> return ContinueEvent
         BInvoice.create builder (cost :: Wei) comission desc ident (toWei (amount :: Ether)) owner
 
@@ -90,10 +93,9 @@ createToken (Account{accountAddress = Just address}) = do
                 builder <- getAddress "BuilderToken.contract"
                 cost    <- fromWei <$> BToken.buildingCostWei builder
                 event builder $ \(BToken.Builded client inst) ->
-                    case client of
-                        address -> writeChan notify inst
-                                >> return TerminateEvent
-                        _ -> return ContinueEvent
+                    if client == address
+                    then writeChan notify inst >> return TerminateEvent
+                    else return ContinueEvent
                 BToken.create builder (cost :: Wei) name symbol decimal total address
 
             case res of
@@ -113,10 +115,9 @@ createToken (Account{accountAddress = Just address}) = do
                 builder <- getAddress "BuilderTokenEmission.contract"
                 cost    <- fromWei <$> BTokenEmission.buildingCostWei builder
                 event builder (\(BTokenEmission.Builded client inst) ->
-                    case client of
-                        address -> writeChan notify inst
-                                >> return TerminateEvent
-                        _ -> return ContinueEvent)
+                    if client == address
+                    then writeChan notify inst >> return TerminateEvent
+                    else return ContinueEvent)
                 BTokenEmission.create builder (cost :: Wei) name symbol decimal total address
 
             case res of
@@ -134,10 +135,9 @@ createToken (Account{accountAddress = Just address}) = do
                 builder <- getAddress "BuilderTokenEther.contract"
                 cost    <- fromWei <$> BTokenEther.buildingCostWei builder
                 event builder $ \(BTokenEther.Builded client inst) ->
-                    case client of
-                        address -> writeChan notify inst
-                                >> return TerminateEvent
-                        _ -> return ContinueEvent
+                    if client == address
+                    then writeChan notify inst >> return TerminateEvent
+                    else return ContinueEvent
                 BTokenEther.create builder (cost :: Wei) name symbol address
 
             case res of
