@@ -70,12 +70,14 @@ secure _ = return . toMessage $ T.unlines
 about :: AccountedStory
 about a = return $ toMessage $ T.unlines $
     [ "Hello, " <> accountFullname a <> "!"
-    , "Account: " <> T.pack (show $ accountState a)
-    , "Your address: " <>
+    , "Your account is " <>
+        case accountState a of
+            Verified -> "verified"
+            _ -> "anonymous"
+    , "Ethereum address is " <>
         case accountAddress a of
             Just address -> etherscan_addr address
-            Nothing -> "None"
-    , "Do you want to check /balance?" ]
+            Nothing -> "unknown" ]
 
 start :: AccountedStory
 start a@(Account{ accountState = Unknown }) = do
