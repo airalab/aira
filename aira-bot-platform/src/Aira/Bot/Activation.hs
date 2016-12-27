@@ -100,8 +100,7 @@ handleActivation :: AcidState ActivationCode
                  -> ActivationRequest
                  -> IO EventAction
 handleActivation db chan (ActivationRequest sender codeBytes) = do
-    let code = decodeUtf8 $ BA.convert $ unBytesN codeBytes
-    print code
+    let code = decodeBytes codeBytes
     mbChat <- query db (GetChat code)
     case mbChat of
         Nothing -> return ContinueEvent
@@ -120,6 +119,7 @@ handleActivation db chan (ActivationRequest sender codeBytes) = do
                                 , "Wait a bit to give you a power. /me" ])
                 Left e -> putStrLn (show e)
             return ContinueEvent
+  where decodeBytes = T.takeWhile (/= '\NUL') . decodeUtf8 . BA.convert . unBytesN
 
 -- | Listening events from AiraEtherFunds and try to activate account
 listenCode :: AcidState ActivationCode -> Bot ()
