@@ -19,8 +19,6 @@ module Aira.Bot.Token (
 
 import Network.Ethereum.Web3.Types (CallMode(Latest))
 import Control.Monad.Error.Class (throwError)
-import Control.Monad.IO.Class (liftIO)
-import Network.Ethereum.Web3.Address
 import Data.Text.Read (hexadecimal)
 import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
@@ -30,7 +28,7 @@ import Data.Text as T
 import Control.Arrow
 
 import qualified Aira.Contract.AiraEtherFunds as AEF
-import qualified Aira.Contract.Token as ERC20
+import qualified Aira.Contract.Token          as ERC20
 import Aira.Bot.Common
 import Aira.Registrar
 import Aira.Account
@@ -57,12 +55,21 @@ transferERC20 (Account{accountAddress = Just from}) = do
     token               <- question "Token address:"
     AccountAddress dest <- question "Recipient username:"
     amount              <- question "Value in tokens:"
-    res <- liftIO $ runWeb3 $ do
+    res <- runWeb3 $ do
+        bot   <- getAddress "AiraEth.bot"
+
         value <- ERC20.toDecimals token amount
-        ERC20.transferFrom token nopay from dest value
+        bal   <- ERC20.balanceOf token from
+        app   <- ERC20.allowance token from bot
+
+        if value > bal || value > app
+        then throwError $ UserFail $
+                "Balance is too low: " ++ show (if bal > app then app else bal)
+                                       ++ " needed: " ++ show value
+        else ERC20.transferFrom token nopay from dest value
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
-        Left e   -> pack (show e)
+        Left e   -> "Error " <> pack (show e)
 
 transferERC20 _ = return $
     toMessage ("Your account should be verified!" :: Text)
@@ -78,10 +85,19 @@ transferAIRA a = do
                 _ -> return (addressHash address)
     dest <- question "Recipient username:"
     amount <- question "Transfered value:"
-    res <- liftIO $ runWeb3 $ do
+    res <- runWeb3 $ do
         token <- getAddress "AiraEtherFunds.contract"
-        AEF.transferFrom' token nopay source (accountHash dest)
-                                             (toWei (amount :: Ether))
+        bot   <- addressHash <$> getAddress "AiraEth.bot"
+
+        bal   <- AEF.balanceOf token source
+        app   <- AEF.allowance' token source bot
+
+        if toWei amount > bal || toWei amount > app
+        then throwError $ UserFail $
+                "Balance is too low: " ++ show (if bal > app then app else bal)
+                                       ++ " needed: " ++ (show $ toWei amount)
+        else AEF.transferFrom' token nopay source (accountHash dest)
+                                                  (toWei (amount :: Ether))
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
         Left e   -> pack (show e)
@@ -95,7 +111,7 @@ ethBalance address = do
 
 balanceAIRA :: AccountedStory
 balanceAIRA a = do
-    res <- liftIO $ runWeb3 $ do
+    res <- runWeb3 $ do
         botAccount <- (addressHash . Prelude.head) <$> eth_accounts
         token <- getAddress "AiraEtherFunds.contract"
         allowedBalance <- (,) <$> AEF.allowance' token (accountHash a) botAccount
@@ -129,7 +145,7 @@ balanceAIRA a = do
 balanceERC20 :: AccountedStory
 balanceERC20 (Account{accountAddress = Just address}) = do
     token <- question "Token address:"
-    Right x <- liftIO $ runWeb3 $ do
+    Right x <- runWeb3 $ do
         b <- ERC20.balanceOf token address
         ERC20.fromDecimals token b
     return $ toMessage $ "Balance: " <> T.pack (show x) <> " tokens"
@@ -141,7 +157,7 @@ send :: AccountedStory
 send a = do
     dest   <- question "Recipient Ethereum address:"
     amount <- question "Amount of `ether` you want to send:"
-    res <- liftIO $ runWeb3 $ do
+    res <- runWeb3 $ do
         token <- getAddress "AiraEtherFunds.contract"
         AEF.sendFrom token nopay (accountHash a) dest (toWei (amount :: Ether))
     return $ toMessage $ case res of
