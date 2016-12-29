@@ -127,7 +127,7 @@ listenCode db = do
     forkBot $ do
         chan <- liftIO newChan
 
-        liftIO $ runWeb3 $ do
+        runWeb3 $ do
             aef <- getAddress "AiraEtherFunds.contract"
             event aef (handleActivation db chan)
 
@@ -158,7 +158,7 @@ unregister a = do
                                 , "Send me 'Do as I say!' to confirm." ]
     case res :: Text of
         "Do as I say!" -> do
-            r <- liftIO $ runWeb3 (accountDelete a)
+            r <- runWeb3 (accountDelete a)
             return . toMessage $ case r of
                 Right tx -> "Account will be deleted on the few next blocks." <>
                             "Transaction " <> etherscan_tx tx

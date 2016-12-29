@@ -41,7 +41,7 @@ createInvoice (Account{accountHash = ident}) = do
     -- Notification channel
     notify <- liftIO newChan
 
-    res <- liftIO $ runWeb3 $ do
+    res <- runWeb3 $ do
         owner     <- getAddress "AiraEth.bot"
         builder   <- getAddress "BuilderInvoice.contract"
         comission <- getAddress "ComissionInvoice.contract"
@@ -89,7 +89,7 @@ createToken (Account{accountAddress = Just address}) = do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
 
-            res <- liftIO $ runWeb3 $ do
+            res <- runWeb3 $ do
                 builder <- getAddress "BuilderToken.contract"
                 cost    <- fromWei <$> BToken.buildingCostWei builder
                 event builder $ \(BToken.Builded client inst) ->
@@ -111,7 +111,7 @@ createToken (Account{accountAddress = Just address}) = do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
 
-            res <- liftIO $ runWeb3 $ do
+            res <- runWeb3 $ do
                 builder <- getAddress "BuilderTokenEmission.contract"
                 cost    <- fromWei <$> BTokenEmission.buildingCostWei builder
                 event builder (\(BTokenEmission.Builded client inst) ->
@@ -131,7 +131,7 @@ createToken (Account{accountAddress = Just address}) = do
                         <> etherscan_addr inst)
 
         "Ether vault contract" -> do
-            res <- liftIO $ runWeb3 $ do
+            res <- runWeb3 $ do
                 builder <- getAddress "BuilderTokenEther.contract"
                 cost    <- fromWei <$> BTokenEther.buildingCostWei builder
                 event builder $ \(BTokenEther.Builded client inst) ->

@@ -24,7 +24,6 @@ module Aira.Bot.Common (
 import qualified Data.ByteString.Base16 as B16
 import Control.Monad.Error.Class (throwError)
 import Crypto.Hash (hash, Digest, Keccak_256)
-import Control.Monad.IO.Class (liftIO)
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.ByteArray as BA
 import Network.Ethereum.Web3.Address
@@ -81,6 +80,6 @@ about a = return $ toMessage $ T.unlines $
 
 start :: AccountedStory
 start a@(Account{ accountState = Unknown }) = do
-    liftIO $ runWeb3 (accountSimpleReg a)
+    runWeb3 (accountSimpleReg a)
     about a
 start a = about a

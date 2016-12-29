@@ -18,8 +18,9 @@ module Aira.Bot.Token (
   ) where
 
 import Network.Ethereum.Web3.Types (CallMode(Latest))
-import Control.Monad.Error.Class (throwError)
+import Control.Monad.IO.Class (liftIO)
 import Data.Text.Read (hexadecimal)
+import Control.Exception (throwIO)
 import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
@@ -63,7 +64,7 @@ transferERC20 (Account{accountAddress = Just from}) = do
         app   <- ERC20.allowance token from bot
 
         if value > bal || value > app
-        then throwError $ UserFail $
+        then liftIO $ throwIO $ UserFail $
                 "Balance is too low: " ++ show (if bal > app then app else bal)
                                        ++ " needed: " ++ show value
         else ERC20.transferFrom token nopay from dest value
@@ -93,7 +94,7 @@ transferAIRA a = do
         app   <- AEF.allowance' token source bot
 
         if toWei amount > bal || toWei amount > app
-        then throwError $ UserFail $
+        then liftIO $ throwIO $ UserFail $
                 "Balance is too low: " ++ show (if bal > app then app else bal)
                                        ++ " needed: " ++ (show $ toWei amount)
         else AEF.transferFrom' token nopay source (accountHash dest)
@@ -102,12 +103,12 @@ transferAIRA a = do
         Right tx -> "Success " <> etherscan_tx tx
         Left e   -> pack (show e)
 
-ethBalance :: Unit a => Address -> Web3 a
+ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
 ethBalance address = do
     res <- eth_getBalance address Latest
     case hexadecimal res of
         Right (x, _) -> return (fromWei x)
-        Left e       -> throwError (ParserFail e)
+        Left e       -> liftIO $ throwIO (ParserFail e)
 
 balanceAIRA :: AccountedStory
 balanceAIRA a = do

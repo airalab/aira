@@ -29,7 +29,6 @@ import Web.Telegram.API.Bot.Data (Message(text))
 import Control.Monad.Error.Class (throwError)
 import Crypto.Hash (hash, Digest, Keccak_256)
 import Network.Ethereum.Web3.Address (zero)
-import Control.Monad.IO.Class (liftIO)
 import Data.Text.Encoding (encodeUtf8)
 import qualified Data.ByteArray as BA
 import Control.Applicative ((<|>))
@@ -77,7 +76,7 @@ instance Answer Account where
             let name' = T.replace "!" "" (T.replace "@" "" name)
                 pChat = Chat 0 Private Nothing (Just name') Nothing Nothing
                 force = T.takeEnd 1 name == "!"
-            res <- liftIO $ runWeb3 (loadAccount pChat)
+            res <- runWeb3 (loadAccount pChat)
             case res of
                 Left e  -> throwError (T.pack $ show e)
                 Right a -> case (accountState a, force) of
@@ -116,7 +115,7 @@ getName c = (full, user)
         Just user = T.toLower <$> chat_username c
 
 -- | Take address by account name
-loadAccount :: Chat -> Web3 Account
+loadAccount :: Provider a => Chat -> Web3 a Account
 loadAccount c = Account c full user ident
     <$> (fmap zeroMaybe (getAddress (identText <> ".account")))
     <*> (fmap readAccSt (getContent (identText <> ".account")))
@@ -133,27 +132,27 @@ loadAccount c = Account c full user ident
             Just s  -> s
 
 -- | Full verification of account
-accountVerify :: Account -> Address -> Web3 Text
+accountVerify :: Provider a => Account -> Address -> Web3 a Text
 accountVerify acc addr = do
     regAddress (ident acc <> ".account") addr
     regContent (ident acc <> ".account") (T.pack $ show Verified)
   where ident = T.pack . show . accountHash
 
 -- Take name and remove record from registrar
-accountDelete :: Account -> Web3 Text
+accountDelete :: Provider a => Account -> Web3 a Text
 accountDelete acc = removeRecord (ident acc <> ".account")
   where ident = T.pack . show . accountHash
 
 -- User accounting combinator
 accounting :: AccountedStory -> Story
 accounting story = withUsername $ \c -> do
-    res <- liftIO $ runWeb3 (loadAccount c)
+    res <- runWeb3 (loadAccount c)
     case res of
         Left e  -> return $ toMessage (T.pack $ show e)
         Right a -> story a
 
 -- | Simple account registration
-accountSimpleReg :: Account -> Web3 Text
+accountSimpleReg :: Provider a => Account -> Web3 a Text
 accountSimpleReg acc =
     regContent (ident acc <> ".account")
                (T.pack $ show Unverified)

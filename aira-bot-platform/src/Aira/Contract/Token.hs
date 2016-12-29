@@ -17,12 +17,12 @@ import Network.Ethereum.Web3
 
 [abiFrom|abi/token.json|]
 
-fromDecimals :: Address -> Integer -> Web3 Double
+fromDecimals :: Provider a => Address -> Integer -> Web3 a Double
 fromDecimals token raw = scale <$> decimals token
   where scale :: Integer -> Double
         scale = (fromIntegral raw /) . (10^)
 
-toDecimals :: Address -> Double -> Web3 Integer
+toDecimals :: Provider a => Address -> Double -> Web3 a Integer
 toDecimals token scaled = scale <$> decimals token
   where scale :: Integer -> Integer
         scale = round . (scaled *) . (10^)
