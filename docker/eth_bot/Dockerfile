@@ -7,7 +7,7 @@ RUN wget -qO- https://get.haskellstack.org/ | sh
 RUN apt-get autoclean
 
 RUN git clone --recursive https://github.com/airalab/aira -b ${GIT_BRANCH:-master}
-RUN sed -i "s/localhost/parity/g" aira/web3/src/Network/Ethereum/Web3/Types.hs
+RUN sed -i "s/localhost/parity/g" aira/web3/src/Network/Ethereum/Web3/Provider.hs
 RUN cd /aira/AiraEthBot && stack setup
 RUN cd /aira/AiraEthBot && stack install
 RUN mv /root/.local/bin/AiraEthBot /usr/local/bin
