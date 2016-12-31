@@ -15,12 +15,16 @@ module Aira.Bot.Factory (
   , createToken
   ) where
 
-import Control.Monad.IO.Class (liftIO)
+import Network.Ethereum.Web3.Address (zero)
+import Control.Monad.IO.Class (MonadIO(..))
+import Control.Monad (liftM2, filterM)
+import qualified Data.Text as T
 import Control.Concurrent.Chan
 import Network.Ethereum.Web3
 import Data.Monoid ((<>))
 import Web.Telegram.Bot
-import Data.Text as T
+import Data.Text (Text)
+import Control.Arrow
 import Pipes (yield)
 
 import qualified Aira.Contract.Invoice              as Invoice
@@ -32,9 +36,34 @@ import Aira.Bot.Common
 import Aira.Registrar
 import Aira.Account
 
+tryWhileM :: MonadIO m => [Web3 DefaultProvider b] -> m [b]
+tryWhileM = go []
+  where go acc [] = return (reverse acc)
+        go acc (x : xs) = do
+            res <- runWeb3' x
+            case res of
+                Right a -> go (a : acc) xs
+                Left _ -> return (reverse acc)
+
+invoiceGuard :: AccountedStory -> AccountedStory
+invoiceGuard story a@(Account{accountHash = client}) = do
+    Right bot     <- runWeb3 $ getAddress "AiraEth.bot"
+    Right builder <- runWeb3 $ getAddress "BuilderInvoice.contract"
+    invoices <- tryWhileM (BInvoice.getContractsOf builder bot <$> [0..])
+    opened   <- runWeb3 $ filterM (openBy client) invoices
+    if length opened < 2
+    then story a
+    else return $ toMessage $ T.unlines
+            [ "You already have TWO opened invoices!"
+            , "Is no more allowed, sorry." ]
+  where
+    openBy x = uncurry (liftM2 (&&)) . (isOpen &&& isBeneficiary x)
+    isBeneficiary x = fmap (x ==) . Invoice.beneficiary
+    isOpen = fmap (== zero) . Invoice.signer
+
 -- | Create Invoice contract by Factory
 createInvoice :: AccountedStory
-createInvoice (Account{accountHash = ident}) = do
+createInvoice = invoiceGuard $ \Account{accountHash = ident} -> do
     desc <- question "Description:"
     amount <- question "Value in ethers:"
 

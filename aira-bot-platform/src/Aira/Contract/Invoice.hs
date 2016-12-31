@@ -15,6 +15,5 @@ module Aira.Contract.Invoice where
 
 import Network.Ethereum.Web3.TH
 import Network.Ethereum.Web3
-import Data.Text (Text)
 
 [abiFrom|abi/invoice.json|]
