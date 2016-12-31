@@ -49,8 +49,8 @@ invoiceGuard :: AccountedStory -> AccountedStory
 invoiceGuard story a@(Account{accountHash = client}) = do
     Right bot     <- runWeb3 $ getAddress "AiraEth.bot"
     Right builder <- runWeb3 $ getAddress "BuilderInvoice.contract"
-    invoices <- tryWhileM (BInvoice.getContractsOf builder bot <$> [0..])
-    opened   <- runWeb3 $ filterM (openBy client) invoices
+    invoices      <- tryWhileM (BInvoice.getContractsOf builder bot <$> [0..])
+    Right opened  <- runWeb3 $ filterM (openBy client) invoices
     if length opened < 2
     then story a
     else return $ toMessage $ T.unlines
