@@ -14,20 +14,17 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Aira.Account
+  exposed-modules:     Aira.Config
+                     , Aira.Account
                      , Aira.Registrar
                      , Aira.Bot.Watch
                      , Aira.Bot.Token
                      , Aira.Bot.Common
                      , Aira.Bot.Secure
                      , Aira.Bot.Factory
-                     , Aira.Bot.Invoice
-                     , Aira.Bot.Activation
   other-modules:       Aira.Contract.Token
-                     , Aira.Contract.Invoice
+                     , Aira.Contract.Proxy
                      , Aira.Contract.BuilderToken
-                     , Aira.Contract.BuilderInvoice
-                     , Aira.Contract.AiraEtherFunds
                      , Aira.Contract.BuilderTokenEther
                      , Aira.Contract.BuilderTokenEmission
   build-depends:       base >4.8 && <4.10
@@ -43,10 +40,12 @@ library
                      , safecopy
                      , memory
                      , random
+                     , aeson
                      , pipes
                      , time 
                      , web3
                      , text
+                     , yaml
                      , mtl
   default-extensions:  OverloadedStrings
   default-language:    Haskell2010

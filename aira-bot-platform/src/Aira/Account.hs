@@ -1,6 +1,4 @@
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE TemplateHaskell  #-}
-{-# LANGUAGE DataKinds        #-}
+{-# LANGUAGE DataKinds #-}
 -- |
 -- Module      :  Aira.Account
 -- Copyright   :  Alexander Krupenkin 2016
@@ -14,146 +12,113 @@
 --
 module Aira.Account (
     Account(..)
-  , AccountAddress(..)
-  , AccountState(..)
-  , accountSimpleReg
-  , AccountedStory
-  , accountDelete
-  , accountVerify
-  , loadAccount
+  , AiraStory
   , accounting
+  , airaWeb3
+  , proxy
   ) where
 
-import Web.Telegram.API.Bot (Chat(..), ChatType(..))
-import Web.Telegram.API.Bot.Data (Message(text))
-import Control.Monad.Error.Class (throwError)
-import Crypto.Hash (hash, Digest, Keccak_256)
-import Network.Ethereum.Web3.Address (zero)
+import qualified Aira.Contract.BuilderProxy as BuilderProxy
+import qualified Aira.Contract.Proxy        as Proxy
+import qualified Data.ByteString.Base16     as B16
+import qualified Data.ByteArray             as BA
+import qualified Data.Text                  as T
 import Data.Text.Encoding (encodeUtf8)
-import qualified Data.ByteArray as BA
-import Control.Applicative ((<|>))
-import qualified Data.Text as T
-import Web.Telegram.Bot.Story
+import Crypto.Hash (hash, Digest, Keccak_256)
+import Control.Concurrent.Chan
+import Control.Exception (throwIO)
+import Control.Monad.IO.Class
+import Control.Monad (filterM)
 import Web.Telegram.Bot.Types
+import Web.Telegram.Bot
+
+import Network.Ethereum.Web3.Encoding
+import Network.Ethereum.Web3.Types
 import Network.Ethereum.Web3
-import Text.Read (readMaybe)
-import Control.Monad (when)
-import Data.Monoid ((<>))
-import Data.Text (Text)
+import Aira.TextFormat
 import Aira.Registrar
-import Data.SafeCopy
+import Aira.Config
+import Pipes (yield)
 
-data AccountState = Unknown
-                  | Verified
-                  | Unverified
-  deriving (Show, Eq, Read)
+type Proxy = Address
 
-instance Ord Chat where
-    compare a b = compare (chat_id a) (chat_id b)
+-- | Passthrough given method of target over proxy contract
+proxy :: (Method method, Unit amount, Provider p)
+      => Proxy
+      -- ^ Proxy address
+      -> Address
+      -- ^ Target contract address
+      -> amount
+      -- ^ Transaction value
+      -> method
+      -- ^ Target contract method
+      -> Web3 p TxHash
+      -- ^ Transaction hash
+proxy a tgt val tx = Proxy.request a nopay tgt (toWei val) (toBytes tx)
+  where toBytes = BytesD . BA.convert . fst . B16.decode . encodeUtf8 . toData
 
-instance Eq Chat where
-    a == b = chat_id a == chat_id b
+type Account   = (User, [Proxy])
+type AiraStory = Account -> StoryT Bot BotMessage
 
-$(deriveSafeCopy 0 'base ''Chat)
-$(deriveSafeCopy 0 'base ''ChatType)
+trySeq :: MonadIO m => [Web3 AiraConfig b] -> m [b]
+trySeq = go []
+  where go acc [] = return (reverse acc)
+        go acc (x : xs) = airaWeb3 x
+                      >>= either (\_ -> go acc [])
+                                 (\a -> go (a : acc) xs)
 
-data Account
-  = Account
-  { accountChat     :: Chat
-  , accountFullname :: Text
-  , accountUsername :: Text
-  , accountHash     :: BytesN 32
-  , accountAddress  :: Maybe Address
-  , accountState    :: AccountState
-  } deriving (Show, Eq)
+userIdent :: User -> BytesN 32
+userIdent = BytesN . BA.convert . sha3
+  where sha3 :: User -> Digest Keccak_256
+        sha3 = hash . encodeUtf8 . T.pack . show
 
-type AccountedStory = Account -> StoryT Bot BotMessage
+-- | Load proxies by user tag
+loadProxies :: MonadIO m => User -> m [Proxy]
+loadProxies u = do
+    Right builder <- airaWeb3 $ getAddress "BuilderProxy.contract"
+    Right bot     <- airaWeb3 $ getAddress "AiraEth.bot"
+    proxies <- trySeq (BuilderProxy.getContractsOf builder bot <$> [0..])
+    Right upx <- airaWeb3 $
+        filterM (fmap (== userIdent u) . Proxy.getIdent) proxies
+    return upx
 
-instance Answer Account where
-    parse msg = case text msg of
-        Nothing -> throwError "Please send me text username."
-        Just name -> do
-            let name' = T.replace "!" "" (T.replace "@" "" name)
-                pChat = Chat 0 Private Nothing (Just name') Nothing Nothing
-                force = T.takeEnd 1 name == "!"
-            res <- runWeb3 (loadAccount pChat)
+-- | User account creation story
+accountCreation :: User -> StoryT Bot Account
+accountCreation u = do
+    yield $ toMessage $ T.unlines
+        [ "Hello, " <> user_first_name u <> "!"
+        , "New user initiated, please wait..." ]
+    notify <- liftIO newChan
+
+    res <- airaWeb3 $ do
+        builder <- getAddress "BuilderProxy.contract"
+        bot     <- getAddress "AiraEth.bot"
+        cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
+
+        event builder $ \(BuilderProxy.Builded sender inst) -> do
+            res <- airaWeb3 $ Proxy.getIdent inst
             case res of
-                Left e  -> throwError (T.pack $ show e)
-                Right a -> case (accountState a, force) of
-                    (Unknown, False) -> throwError $ T.unlines $
-                        [ "I don't known `" <> name <> "`!"
-                        , "You can specify yet by appending '!' char to his name."
-                        , "Of course at your peril."
-                        , "Example: `" <> name <> "!`"]
-                    _ -> return a
+                Right ident -> if ident == userIdent u && sender == bot
+                               then writeChan notify inst >> return TerminateEvent
+                               else return ContinueEvent
+                Left e -> print e >> return TerminateEvent
 
-newtype AccountAddress = AccountAddress Address
-  deriving (Show, Eq)
+        BuilderProxy.create builder (cost :: Wei) (userIdent u) bot
 
-instance Answer AccountAddress where
-    parse msg = do
-        acc <- parse msg
-        case accountAddress acc of
-            Nothing -> throwError $ "So sorry, but user `"
-                                  <> accountUsername acc
-                                  <> "` have no linked Ethereum address!"
-            Just a -> return (AccountAddress a)
-
-withUsername :: Story -> Story
-withUsername story c =
-    case chat_username c of
-        Just _ -> story c
-        Nothing -> return $ toMessage $ T.unlines
-            [ "Hi! You don't use Telegram username!"
-            , "But it's required for Aira identity systems."
-            , "Please go to Telegram app settings and"
-            , "fill `username` field." ]
-
-getName :: Chat -> (Text, Text)
-getName c = (full, user)
-  where Just full = chat_first_name c <|> chat_username c
-        Just user = T.toLower <$> chat_username c
-
--- | Take address by account name
-loadAccount :: Provider a => Chat -> Web3 a Account
-loadAccount c = Account c full user ident
-    <$> (fmap zeroMaybe (getAddress (identText <> ".account")))
-    <*> (fmap readAccSt (getContent (identText <> ".account")))
-  where (full, user) = getName c
-        keccak :: Digest Keccak_256
-        keccak = hash (encodeUtf8 user)
-        ident :: BytesN 32
-        ident  = BytesN (BA.convert keccak)
-        identText = T.pack (show ident)
-        zeroMaybe a | a == zero = Nothing
-                    | otherwise = Just a
-        readAccSt t = case readMaybe (T.unpack t) of
-            Nothing -> Unknown
-            Just s  -> s
-
--- | Full verification of account
-accountVerify :: Provider a => Account -> Address -> Web3 a Text
-accountVerify acc addr = do
-    regAddress (ident acc <> ".account") addr
-    regContent (ident acc <> ".account") (T.pack $ show Verified)
-  where ident = T.pack . show . accountHash
-
--- Take name and remove record from registrar
-accountDelete :: Provider a => Account -> Web3 a Text
-accountDelete acc = removeRecord (ident acc <> ".account")
-  where ident = T.pack . show . accountHash
-
--- User accounting combinator
-accounting :: AccountedStory -> Story
-accounting story = withUsername $ \c -> do
-    res <- runWeb3 (loadAccount c)
     case res of
-        Left e  -> return $ toMessage (T.pack $ show e)
-        Right a -> story a
+        Right tx -> do
+            yield $ toMessage $ "Proxy initiated at " <> etherscan_tx tx
+                             <> ", waiting for confirmation..."
+            inst <- liftIO (readChan notify)
+            yield $ toMessage $ "Proxy instantiated as " <> etherscan_addr inst <> "!"
+            return (u, [inst])
 
--- | Simple account registration
-accountSimpleReg :: Provider a => Account -> Web3 a Text
-accountSimpleReg acc =
-    regContent (ident acc <> ".account")
-               (T.pack $ show Unverified)
-  where ident = T.pack . show . accountHash
+        Left e -> liftIO (throwIO e)
+
+-- | User accounting combinator
+accounting :: AiraStory -> Story
+accounting story u = do
+    px <- loadProxies u
+    case px of
+        [] -> accountCreation u >>= story
+        _  -> story (u, px)

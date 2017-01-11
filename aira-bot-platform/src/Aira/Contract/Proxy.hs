@@ -1,7 +1,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DataKinds   #-}
 -- |
--- Module      :  Aira.Contract.BuilderInvoice
+-- Module      :  Aira.Contract.Proxy
 -- Copyright   :  Alexander Krupenkin 2016
 -- License     :  BSD3
 --
@@ -9,12 +9,11 @@
 -- Stability   :  experimental
 -- Portability :  portable
 --
--- BuilderInvoice contract API.
+-- Proxy contract API.
 --
-module Aira.Contract.BuilderInvoice where
+module Aira.Contract.Proxy where
 
 import Network.Ethereum.Web3.TH
 import Network.Ethereum.Web3
-import Data.Text (Text)
 
-[abiFrom|abi/builder_invoice.json|]
+[abiFrom|abi/proxy.json|]
