@@ -20,12 +20,11 @@ module Aira.Bot.Watch (
   ) where
 
 import Web.Telegram.Bot (forkBot, sendMessageBot, toMessage)
-import Aira.Bot.Common (etherscan_addr, etherscan_tx)
+import Web.Telegram.Bot.Types (Bot, BotConfig)
 import Control.Concurrent (threadDelay)
 import Control.Monad.IO.Class (liftIO)
-import Web.Telegram.Bot.Types (Bot)
 import Data.Text.Read (hexadecimal)
-import Web.Telegram.API.Bot (Chat)
+import Web.Telegram.API.Bot (Chat(..), ChatType(Private))
 import Control.Monad.Reader (ask)
 import qualified Data.Text as T
 import qualified Data.Map as M
@@ -33,6 +32,8 @@ import Data.Maybe (fromJust)
 import Control.Monad (join)
 import Data.Default.Class
 import Data.Monoid ((<>))
+import Aira.TextFormat
+import Aira.Config
 import Data.Map (Map)
 import Data.SafeCopy
 import Data.Acid
@@ -48,7 +49,7 @@ import Lens.Family2
 
 $(deriveSafeCopy 0 'base ''Address)
 
-data WatchTx = WatchTx { _recipient :: Map Address Chat }
+data WatchTx = WatchTx { _recipient :: Map Address Int }
   deriving Show
 
 instance Default WatchTx where
@@ -57,28 +58,31 @@ instance Default WatchTx where
 $(makeLenses ''WatchTx)
 $(deriveSafeCopy 0 'base ''WatchTx)
 
-watchRecipient :: Address -> Chat -> Update WatchTx ()
-watchRecipient a c = recipient %= M.insert a c
+watchRecipient :: Address -> Int -> Update WatchTx ()
+watchRecipient a i = recipient %= M.insert a i
 
 unwatchRecipient :: Address -> Update WatchTx ()
 unwatchRecipient a = recipient %= M.delete a
 
-getRecipientChat :: Address -> Query WatchTx (Maybe Chat)
-getRecipientChat a = recipient `views` M.lookup a <$> ask
+getRecipientChatId :: Address -> Query WatchTx (Maybe Int)
+getRecipientChatId a = (recipient `views` M.lookup a <$> ask)
 
-$(makeAcidic ''WatchTx ['watchRecipient, 'getRecipientChat, 'unwatchRecipient])
+mkChat :: Int -> Chat
+mkChat cid = Chat cid Private Nothing Nothing Nothing Nothing
+
+$(makeAcidic ''WatchTx ['watchRecipient, 'getRecipientChatId, 'unwatchRecipient])
 
 eitherMaybe :: Either a b -> Maybe b
 eitherMaybe (Left _) = Nothing
 eitherMaybe (Right a) = Just a
 
-handleTx :: AcidState WatchTx -> Transaction -> Bot ()
+handleTx :: BotConfig a => AcidState WatchTx -> Transaction -> Bot a ()
 handleTx db (Transaction {txHash = hash, txFrom = from, txTo = to, txValue = value}) = do
-    mbChat <- traverse (liftIO . query db . GetRecipientChat) to
+    mbChat <- traverse (liftIO . query db . GetRecipientChatId) to
     case join mbChat of
         Nothing -> return ()
-        Just chat -> do
-            sendMessageBot chat $
+        Just chatId -> do
+            sendMessageBot (mkChat chatId) $
                 toMessage $ T.unlines [ "Incoming transaction " <> etherscan_tx hash <> ":"
                                       , "- To:    " <> etherscan_addr (fromJust to)
                                       , "- From:  " <> etherscan_addr from
@@ -90,12 +94,12 @@ handleTx db (Transaction {txHash = hash, txFrom = from, txTo = to, txValue = val
                                       ]
 
 -- | Listening new blocks and notify Tx recipents
-listenBlocks :: AcidState WatchTx -> Bot ()
+listenBlocks :: BotConfig a => AcidState WatchTx -> Bot a ()
 listenBlocks db = do
     forkBot $ do
-        Right blockFilterId <- liftIO $ runWeb3 eth_newBlockFilter
+        Right blockFilterId <- airaWeb3 eth_newBlockFilter
         let loop = do
-             res <- liftIO $ runWeb3 $ do
+             res <- airaWeb3 $ do
                 hashes <- eth_getBlockFilterChanges blockFilterId
                 blocks <- mapM eth_getBlockByHash hashes
                 return (concatMap blockTransactions blocks)

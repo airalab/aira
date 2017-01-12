@@ -12,6 +12,7 @@
 module Aira.TextFormat (
     etherscan_addr
   , etherscan_tx
+  , Text
   , (<>)
   ) where
 

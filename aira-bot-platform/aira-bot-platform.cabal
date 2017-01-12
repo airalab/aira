@@ -17,6 +17,8 @@ library
   exposed-modules:     Aira.Config
                      , Aira.Account
                      , Aira.Registrar
+                     , Aira.TextFormat
+                     , Aira.Bot.Proxy
                      , Aira.Bot.Watch
                      , Aira.Bot.Token
                      , Aira.Bot.Common
@@ -24,6 +26,7 @@ library
                      , Aira.Bot.Factory
   other-modules:       Aira.Contract.Token
                      , Aira.Contract.Proxy
+                     , Aira.Contract.BuilderProxy
                      , Aira.Contract.BuilderToken
                      , Aira.Contract.BuilderTokenEther
                      , Aira.Contract.BuilderTokenEmission

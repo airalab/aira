@@ -10,76 +10,41 @@
 -- Aira security bot stories.
 --
 module Aira.Bot.Secure (
-    unapprove
-  , unwatch
-  , approve
+    unwatch
   , watch
   ) where
 
-import Control.Monad.Error.Class (throwError)
-import Data.Text.Lazy.Builder (toLazyText)
-import Data.Text.Lazy.Builder.RealFloat
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
-import Data.Text.Read (hexadecimal)
-import Control.Applicative ((<|>))
-import Data.Text.Lazy (toStrict)
-import Network.Ethereum.Web3
-import Data.Monoid ((<>))
+import Aira.Bot.Common ()
 import Web.Telegram.Bot
-import Data.Text as T
-
-import qualified Aira.Contract.AiraEtherFunds as AEF
-import Aira.Bot.Activation
-import Aira.Bot.Common
+import Aira.TextFormat
 import Aira.Bot.Watch
-import Aira.Registrar
 import Aira.Account
 import Data.Acid
 
-approve :: AccountedStory
-approve a = do
-    amount <- question "Amount of approved ethers:"
-    res <- liftIO $ runWeb3 $ do
-        aef <- getAddress "AiraEtherFunds.contract"
-        AEF.secureApprove aef nopay (accountHash a) (toWei (amount :: Ether))
-    return $ toMessage $ case res of
-        Right tx -> "Success " <> etherscan_tx tx
-        Left e -> pack (show e)
-
-unapprove :: AccountedStory
-unapprove a = do
-    res <- liftIO $ runWeb3 $ do
-        aef <- getAddress "AiraEtherFunds.contract"
-        AEF.secureUnapprove aef nopay (accountHash a)
-    return $ toMessage $ case res of
-        Right tx -> "Success " <> etherscan_tx tx
-        Left e -> pack (show e)
-
-watch :: AcidState WatchTx -> AccountedStory
-watch db a = do
+watch :: AcidState WatchTx -> AiraStory
+watch db (_, c, px : _) = do
     res <- select "Do you want to watch incoming transactions of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
-            let Just address = accountAddress a
-            liftIO $ update db (WatchRecipient address (accountChat a))
-            return $ toMessage ("Your address added to watch list." :: Text)
+            liftIO $ update db $ WatchRecipient px (chat_id c)
+            return $ toMessage ("Your account added to watch list." :: Text)
         _ -> do
             recipient <- question "Recipient address for watching:"
-            liftIO $ update db (WatchRecipient recipient (accountChat a))
+            liftIO $ update db (WatchRecipient recipient (chat_id c))
             return $ toMessage $ "Address " <> toText recipient
                               <> " added to watch list."
 
-unwatch :: AcidState WatchTx -> AccountedStory
-unwatch db a = do
+unwatch :: AcidState WatchTx -> AiraStory
+unwatch db (_, _, px : _) = do
     res <- select "Do you want to drop watcher of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
-            let Just address = accountAddress a
-            liftIO $ update db (UnwatchRecipient address)
-            return $ toMessage ("Your address deleted from watch list." :: Text)
+            liftIO $ update db (UnwatchRecipient px)
+            return $ toMessage ("Your account deleted from watch list." :: Text)
         _ -> do
             recipient <- question "Drop listener for address:"
             liftIO $ update db (UnwatchRecipient recipient)

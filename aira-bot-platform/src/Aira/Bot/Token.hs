@@ -23,85 +23,72 @@ import Data.Text.Read (hexadecimal)
 import Control.Exception (throwIO)
 import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
-import Data.Monoid ((<>))
 import Web.Telegram.Bot
-import Data.Text as T
-import Control.Arrow
 
-import qualified Aira.Contract.AiraEtherFunds as AEF
-import qualified Aira.Contract.Token          as ERC20
+import qualified Aira.Contract.Token as ERC20
+import qualified Data.Text           as T
 import Aira.Bot.Common
+import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
 
-transfer :: AccountedStory
+transfer :: AiraStory
 transfer = selectToken transferAIRA transferERC20
 
-balance :: AccountedStory
+balance :: AiraStory
 balance = selectToken balanceAIRA balanceERC20
 
-selectToken :: AccountedStory
-            -> AccountedStory
-            -> AccountedStory
+selectToken :: AiraStory -> AiraStory -> AiraStory
 selectToken f1 f2 a = do
-    tokenType <- select "Token to use:"
-                        [["AIRA Ether Funds"], ["ERC20"]]
+    tokenType <- select "Token to use:" [["Ether"], ["ERC20"]]
     case tokenType :: Text of
-        "AIRA Ether Funds" -> f1 a
-        "ERC20"            -> f2 a
+        "Ether" -> f1 a
+        "ERC20" -> f2 a
         x -> return $ toMessage ("Unknown option `" <> x <> "`!")
 
-transferERC20 :: AccountedStory
-transferERC20 (Account{accountAddress = Just from}) = do
+transferERC20 :: AiraStory
+transferERC20 (_, _, px : _) = do
     token               <- question "Token address:"
     AccountAddress dest <- question "Recipient username:"
     amount              <- question "Value in tokens:"
-    res <- runWeb3 $ do
-        bot   <- getAddress "AiraEth.bot"
-
+    res <- airaWeb3 $ do
         value <- ERC20.toDecimals token amount
-        bal   <- ERC20.balanceOf token from
-        app   <- ERC20.allowance token from bot
+        bal   <- ERC20.balanceOf token px
 
-        if value > bal || value > app
+        if value > bal
         then liftIO $ throwIO $ UserFail $
-                "Balance is too low: " ++ show (if bal > app then app else bal)
-                                       ++ " needed: " ++ show value
-        else ERC20.transferFrom token nopay from dest value
+                "Balance is too low: " ++ show bal
+                                       ++ " requested: " ++ show value
+        else proxy px token nopay (ERC20.TransferData dest value)
+
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
-        Left e   -> "Error " <> pack (show e)
+        Left e   -> "Error " <> T.pack (show e)
 
-transferERC20 _ = return $
-    toMessage ("Your account should be verified!" :: Text)
+transferERC20 _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]
 
-transferAIRA :: AccountedStory
-transferAIRA a = do
-    source <- case accountAddress a of
-        Nothing -> return (accountHash a)
-        Just address -> do
-            item <- select "Start transaction from" [["Account"], ["Linked address"]]
-            case item :: Text of
-                "Account" -> return (accountHash a)
-                _ -> return (addressHash address)
-    dest <- question "Recipient username:"
-    amount <- question "Transfered value:"
-    res <- runWeb3 $ do
-        token <- getAddress "AiraEtherFunds.contract"
-        bot   <- addressHash <$> getAddress "AiraEth.bot"
+transferAIRA :: AiraStory
+transferAIRA (_, _, px : _) = do
+    AccountAddress dest <- question "Recipient username:"
+    amount              <- question "Value in ethers:"
+    res <- airaWeb3 $ do
+        bal <- ethBalance px
 
-        bal   <- AEF.balanceOf token source
-        app   <- AEF.allowance' token source bot
-
-        if toWei amount > bal || toWei amount > app
+        if amount > bal
         then liftIO $ throwIO $ UserFail $
-                "Balance is too low: " ++ show (if bal > app then app else bal)
-                                       ++ " needed: " ++ (show $ toWei amount)
-        else AEF.transferFrom' token nopay source (accountHash dest)
-                                                  (toWei (amount :: Ether))
+                "Balance is too low: " ++ show bal
+                                       ++ " requested: " ++ show amount
+        else proxy px dest (amount :: Ether) NoMethod
+
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
-        Left e   -> pack (show e)
+        Left e   -> T.pack (show e)
+
+transferAIRA _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]
 
 ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
 ethBalance address = do
@@ -110,57 +97,43 @@ ethBalance address = do
         Right (x, _) -> return (fromWei x)
         Left e       -> liftIO $ throwIO (ParserFail e)
 
-balanceAIRA :: AccountedStory
-balanceAIRA a = do
-    res <- runWeb3 $ do
-        botAccount <- (addressHash . Prelude.head) <$> eth_accounts
-        token <- getAddress "AiraEtherFunds.contract"
-        allowedBalance <- (,) <$> AEF.allowance' token (accountHash a) botAccount
-                              <*> mapM (\x -> AEF.allowance' token (addressHash x) botAccount)
-                                       (accountAddress a)
-        totalBalance <- (,) <$> AEF.balanceOf token (accountHash a)
-                            <*> mapM (AEF.balanceOf token . addressHash) (accountAddress a)
-        ethers <- mapM ethBalance (accountAddress a)
-        return ((fromWei *** fmap fromWei) allowedBalance,
-                (fromWei *** fmap fromWei) totalBalance,
-                ethers)
+balanceAIRA :: AiraStory
+balanceAIRA (_, _, pxs) = do
+    res <- airaWeb3 $ mapM ethBalance pxs
     return $ toMessage $ case res of
         Left e -> T.pack (show e)
-        Right (allowed, total, eth) -> T.unlines $
-                [ "Balances:"
-                , "  Account: " <> T.pack (show (fst allowed :: Ether))
-                                <> " approved / "
-                                <> T.pack (show (fst total :: Ether))
-                                <> " on contract" ]
-                ++ case (snd allowed, snd total) of
-                    (Just x, Just y) ->
-                        ["  Address: " <> T.pack (show (x :: Ether))
-                                       <> " approved / "
-                                       <> T.pack (show (y :: Ether))
-                                       <> " on contract" ]
-                    _ -> []
-                ++ case eth of
-                    Just ethers -> ["  Ethereum: " <> T.pack (show (ethers :: Ether))]
-                    _ -> []
+        Right balances -> T.unlines $
+            "Account balances:" : fmap pxBalance (zip pxs balances)
+  where pxBalance :: (Address, Ether) -> Text
+        pxBalance (p, b) = "- " <> etherscan_addr p <> ": " <> T.pack (show b)
 
-balanceERC20 :: AccountedStory
-balanceERC20 (Account{accountAddress = Just address}) = do
+balanceAIRA _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]
+
+balanceERC20 :: AiraStory
+balanceERC20 (_, _, px : _) = do
     token <- question "Token address:"
-    Right x <- runWeb3 $ do
-        b <- ERC20.balanceOf token address
+    res <- airaWeb3 $ do
+        b <- ERC20.balanceOf token px
         ERC20.fromDecimals token b
-    return $ toMessage $ "Balance: " <> T.pack (show x) <> " tokens"
+    return $ toMessage $ case res of
+        Right x -> "Balance: " <> T.pack (show x) <> " tokens"
+        Left e -> T.pack (show e)
 
-balanceERC20 _ = return $
-    toMessage ("Your account should be verified!" :: Text)
+balanceERC20 _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]
 
-send :: AccountedStory
-send a = do
+send :: AiraStory
+send (_, _, px : _) = do
     dest   <- question "Recipient Ethereum address:"
     amount <- question "Amount of `ether` you want to send:"
-    res <- runWeb3 $ do
-        token <- getAddress "AiraEtherFunds.contract"
-        AEF.sendFrom token nopay (accountHash a) dest (toWei (amount :: Ether))
+    res <- airaWeb3 $ proxy px dest (amount :: Ether) NoMethod
     return $ toMessage $ case res of
         Right tx -> "Success " <> etherscan_tx tx
-        Left e   -> pack (show e)
+        Left e   -> T.pack (show e)
+
+send _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]

@@ -11,97 +11,26 @@
 -- Aira Ethereum bot stories.
 --
 module Aira.Bot.Factory (
-    createInvoice
-  , createToken
+    createToken
   ) where
 
-import Network.Ethereum.Web3.Address (zero)
-import Control.Monad.IO.Class (MonadIO(..))
-import Control.Monad (liftM2, filterM)
-import qualified Data.Text as T
-import Control.Concurrent.Chan
-import Network.Ethereum.Web3
-import Data.Monoid ((<>))
-import Web.Telegram.Bot
-import Data.Text (Text)
-import Control.Arrow
-import Pipes (yield)
-
-import qualified Aira.Contract.Invoice              as Invoice
-import qualified Aira.Contract.BuilderInvoice       as BInvoice
+import qualified Data.Text                          as T
 import qualified Aira.Contract.BuilderToken         as BToken
 import qualified Aira.Contract.BuilderTokenEther    as BTokenEther
 import qualified Aira.Contract.BuilderTokenEmission as BTokenEmission
+import Control.Concurrent.Chan
+import Control.Monad.IO.Class
+import Network.Ethereum.Web3
+import Web.Telegram.Bot
 import Aira.Bot.Common
+import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
-
-tryWhileM :: MonadIO m => [Web3 DefaultProvider b] -> m [b]
-tryWhileM = go []
-  where go acc [] = return (reverse acc)
-        go acc (x : xs) = do
-            res <- runWeb3' x
-            case res of
-                Right a -> go (a : acc) xs
-                Left _ -> return (reverse acc)
-
-invoiceGuard :: AccountedStory -> AccountedStory
-invoiceGuard story a@(Account{accountHash = client}) = do
-    Right bot     <- runWeb3 $ getAddress "AiraEth.bot"
-    Right builder <- runWeb3 $ getAddress "BuilderInvoice.contract"
-    invoices      <- tryWhileM (BInvoice.getContractsOf builder bot <$> [0..])
-    Right opened  <- runWeb3 $ filterM (openBy client) invoices
-    if length opened < 2
-    then story a
-    else return $ toMessage $ T.unlines
-            [ "You already have TWO opened invoices!"
-            , "Is no more allowed, sorry." ]
-  where
-    openBy x = uncurry (liftM2 (&&)) . (isOpen &&& isBeneficiary x)
-    isBeneficiary x = fmap (x ==) . Invoice.beneficiary
-    isOpen = fmap (== zero) . Invoice.signer
-
--- | Create Invoice contract by Factory
-createInvoice :: AccountedStory
-createInvoice = invoiceGuard $ \Account{accountHash = ident} -> do
-    desc <- question "Description:"
-    amount <- question "Value in ethers:"
-
-    -- Notification channel
-    notify <- liftIO newChan
-
-    res <- runWeb3 $ do
-        owner     <- getAddress "AiraEth.bot"
-        builder   <- getAddress "BuilderInvoice.contract"
-        comission <- getAddress "ComissionInvoice.contract"
-        cost    <- fromWei <$> BInvoice.buildingCostWei builder
-        event builder $ \(BInvoice.Builded _ inst) -> do
-            res <- runWeb3 (Invoice.beneficiary inst)
-            case res of
-                Right a ->
-                    if a == ident
-                    then writeChan notify inst >> return TerminateEvent
-                    else return ContinueEvent
-                _ -> return ContinueEvent
-        BInvoice.create builder (cost :: Wei) comission desc ident (toWei (amount :: Ether)) owner
-
-    case res of
-        Left e -> return (toMessage (T.pack (show e)))
-        Right tx -> do
-            yield (toMessage $ "Success transaction " <> etherscan_tx tx
-                            <> "\nWaiting for confirmation...")
-            inst <- liftIO (readChan notify)
-            return (toMessage $
-                "Invoice contract created:\n"
-                <> etherscan_addr inst)
+import Pipes (yield)
 
 -- | Create token by Factory
-createToken :: AccountedStory
-
-createToken (Account{accountAddress = Nothing}) = return $
-    toMessage ("Your account should be verified!" :: Text)
-
-createToken (Account{accountAddress = Just address}) = do
+createToken :: AiraStory
+createToken (_, _, px : _) = do
     target <- select "What do you want to create?"
             [ ["ERC20 token"]
             , ["ERC20 token with emission"]
@@ -118,14 +47,19 @@ createToken (Account{accountAddress = Just address}) = do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
 
-            res <- runWeb3 $ do
+            res <- airaWeb3 $ do
                 builder <- getAddress "BuilderToken.contract"
                 cost    <- fromWei <$> BToken.buildingCostWei builder
+
+                tx <- proxy px builder (cost :: Wei) $
+                    BToken.CreateData name symbol decimal total px
+
                 event builder $ \(BToken.Builded client inst) ->
-                    if client == address
+                    if client == px
                     then writeChan notify inst >> return TerminateEvent
                     else return ContinueEvent
-                BToken.create builder (cost :: Wei) name symbol decimal total address
+
+                return tx
 
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
@@ -140,14 +74,19 @@ createToken (Account{accountAddress = Just address}) = do
             decimal <- question "Count of numbers after point (for integral set 0):"
             total <- question "Amount of tokens on your balance after creation:"
 
-            res <- runWeb3 $ do
+            res <- airaWeb3 $ do
                 builder <- getAddress "BuilderTokenEmission.contract"
                 cost    <- fromWei <$> BTokenEmission.buildingCostWei builder
+
+                tx <- proxy px builder (cost :: Wei) $
+                    BTokenEmission.CreateData name symbol decimal total px
+
                 event builder (\(BTokenEmission.Builded client inst) ->
-                    if client == address
+                    if client == px
                     then writeChan notify inst >> return TerminateEvent
                     else return ContinueEvent)
-                BTokenEmission.create builder (cost :: Wei) name symbol decimal total address
+
+                return tx
 
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
@@ -160,14 +99,20 @@ createToken (Account{accountAddress = Just address}) = do
                         <> etherscan_addr inst)
 
         "Ether vault contract" -> do
-            res <- runWeb3 $ do
+            res <- airaWeb3 $ do
                 builder <- getAddress "BuilderTokenEther.contract"
                 cost    <- fromWei <$> BTokenEther.buildingCostWei builder
+
+                tx <- proxy px builder (cost :: Wei) $
+                    BTokenEther.CreateData name symbol px
+
                 event builder $ \(BTokenEther.Builded client inst) ->
-                    if client == address
+                    if client == px
                     then writeChan notify inst >> return TerminateEvent
                     else return ContinueEvent
-                BTokenEther.create builder (cost :: Wei) name symbol address
+
+                return tx
+
 
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
