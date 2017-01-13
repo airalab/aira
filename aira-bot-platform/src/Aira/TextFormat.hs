@@ -10,8 +10,9 @@
 -- Text formatting utils.
 --
 module Aira.TextFormat (
-    etherscan_addr
-  , etherscan_tx
+    uri_address
+  , uri_block
+  , uri_tx
   , Text
   , (<>)
   ) where
@@ -20,8 +21,14 @@ import Network.Ethereum.Web3.Address
 import Data.Monoid ((<>))
 import Data.Text
 
-etherscan_tx :: Text -> Text
-etherscan_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
+uri_tx :: Text -> Text
+--uri_tx tx = "[" <> tx <> "](https://etherscan.io/tx/" <> tx <> ")"
+uri_tx tx = "[" <> tx <> "](https://testnet.etherscan.io/tx/" <> tx <> ")"
 
-etherscan_addr :: Address -> Text
-etherscan_addr a = "[" <> toText a <> "](https://etherscan.io/address/" <> toText a <> ")"
+uri_address :: Address -> Text
+--uri_address a = "[" <> toText a <> "](https://etherscan.io/address/" <> toText a <> ")"
+uri_address a = "[" <> toText a <> "](https://testnet.etherscan.io/address/" <> toText a <> ")"
+
+uri_block :: Integer -> Text
+--uri_block b = "[" <> pack (show b) <> "](https://etherscan.io/block/" <> pack (show b) <> ")"
+uri_block b = "[" <> pack (show b) <> "](https://testnet.etherscan.io/block/" <> pack (show b) <> ")"

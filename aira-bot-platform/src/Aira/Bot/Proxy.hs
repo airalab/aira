@@ -1,4 +1,6 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TypeFamilies    #-}
+{-# LANGUAGE DataKinds       #-}
 -- |
 -- Module      :  Aira.Bot.Proxy
 -- Copyright   :  Alexander Krupenkin 2016
@@ -12,6 +14,7 @@
 --
 module Aira.Bot.Proxy (
     Proxy
+  , UserIdent
   , createProxy
   , userProxies
   , proxyNotifyBot
@@ -25,24 +28,58 @@ import qualified Aira.Contract.Token        as ERC20
 import qualified Data.ByteString.Base16     as B16
 import qualified Data.ByteArray             as BA
 import qualified Data.Text                  as T
+
 import Control.Concurrent.Chan (newChan, writeChan, readChan)
 import Control.Monad (filterM, when, forever)
 import Crypto.Hash (hash, Digest, Keccak_256)
+import Control.Monad.Reader.Class (ask)
+import Data.Default.Class (Default(..))
 import Data.Text.Encoding (encodeUtf8)
 import Control.Exception (throwIO)
 import Control.Monad.IO.Class
 
+import Lens.Family2.State
+import Lens.Family2.TH
+import Lens.Family2
+
+import qualified Data.Map as M
+import Data.Map (Map)
+
+import Web.Telegram.API.Bot.Data (Chat(..), ChatType(Private), User(..))
 import Web.Telegram.Bot.Types
 import Web.Telegram.Bot
 
 import Network.Ethereum.Web3.Encoding
 import Network.Ethereum.Web3.Types
 import Network.Ethereum.Web3
+import Data.ByteArray (Bytes)
+import Data.SafeCopy
+import Data.Acid
 
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Config
 import Pipes (yield)
+
+data UserIdent = UserIdent { _identMap :: Map Text Int }
+  deriving Show
+
+instance Default UserIdent where
+    def = UserIdent M.empty
+
+$(makeLenses ''UserIdent)
+$(deriveSafeCopy 0 'base ''UserIdent)
+
+setUserChatId :: Text -> Int -> Update UserIdent ()
+setUserChatId a i = identMap %= M.insert a i
+
+getUserChatId :: Text -> Query UserIdent (Maybe Int)
+getUserChatId a = identMap `views` M.lookup a <$> ask
+
+mkChat :: Int -> Chat
+mkChat cid = Chat cid Private Nothing Nothing Nothing Nothing
+
+$(makeAcidic ''UserIdent ['setUserChatId, 'getUserChatId])
 
 type Proxy = Address
 
@@ -122,8 +159,8 @@ userProxies u = do
         Right upx -> return upx
 
 -- | Create first proxy for given user
-createProxy :: User -> StoryT (Bot AiraConfig) Proxy
-createProxy u = do
+createProxy :: AcidState UserIdent -> User -> Chat -> StoryT (Bot AiraConfig) Proxy
+createProxy db u c = do
     yield $ toMessage $ T.unlines
         [ "Hello, " <> user_first_name u <> "!"
         , "New user initiated, please wait..." ]
@@ -146,22 +183,24 @@ createProxy u = do
 
     case res of
         Right tx -> do
-            yield $ toMessage $ "Proxy initiated at " <> etherscan_tx tx
+            yield $ toMessage $ "Proxy initiated at " <> uri_tx tx
                              <> ", waiting for confirmation..."
             inst <- liftIO (readChan notify)
-            yield $ toMessage $ "Proxy instantiated as " <> etherscan_addr inst <> "!"
+            yield $ toMessage $ "Proxy instantiated as " <> uri_address inst <> "!"
+            liftIO $ update db $ SetUserChatId (T.pack $ show $ userIdent u) (chat_id c)
             return inst
 
         Left e -> liftIO (throwIO e)
 
-proxyNotifyBot :: Bot AiraConfig ()
-proxyNotifyBot = do
+proxyNotifyBot :: AcidState UserIdent -> Bot AiraConfig ()
+proxyNotifyBot db = do
     proxies <- liftIO newChan
 
-    -- Proxy listen spawner
+    -- Proxy listener spawner
     forkBot $
-        forever $
-            liftIO (readChan proxies) >>= proxyListener
+        forever $ do
+            p <- liftIO (readChan proxies)
+            proxyListener db p
 
     -- Spawn listener for builded proxies
     airaWeb3 $ do
@@ -175,5 +214,91 @@ proxyNotifyBot = do
     -- Read exist proxies
     mapM_ (liftIO . writeChan proxies) =<< botProxies
 
-proxyListener :: Address -> Bot AiraConfig ()
-proxyListener = undefined
+txInfo :: Proxy -> Integer -> Address -> Ether -> BytesD -> [Text]
+txInfo px index tgt value dat =
+  [ "- account : " <> uri_address px
+  , "- index   : " <> T.pack (show index)
+  , "- target  : " <> uri_address tgt
+  , "- value   : " <> T.pack (show value)
+  , "- size    : " <> T.pack (show $ BA.length $ unBytesD dat) <> " bytes" ]
+
+proxyListener :: AcidState UserIdent -> Address -> Bot AiraConfig ()
+proxyListener db px = withUserChat $ \chat -> do
+    msgQueue <- liftIO newChan
+
+    airaWeb3 $ do
+        event px $ \(Proxy.PaymentReceived sender value) -> do
+            liftIO $ writeChan msgQueue $ toMessage $ T.unlines
+                [ "Incoming payment:"
+                , "- from    : " <> uri_address sender
+                , "- value   : " <> T.pack (show (fromWei value :: Ether))
+                , "- account : " <> uri_address px ]
+            return ContinueEvent
+
+        event px $ \(Proxy.CallRequest index) -> do
+            res <- airaWeb3 $ do
+                (tgt, val, dat, _) <- Proxy.callAt px index
+                let msg = "New transaction:"
+                        : txInfo px index tgt (fromWei val) dat
+                ready <- Proxy.isAuthorized px index
+                if not ready
+                then return $ T.unlines $
+                        msg ++ ["- status  : waiting for authorization"]
+                else do
+                    tx <- Proxy.run px nopay index
+                    return $ T.unlines $
+                        msg ++ [ "- status  : authorized, pending"
+                               , "- hash    : " <> uri_tx tx ]
+            liftIO $ writeChan msgQueue $ toMessage $
+                either (T.pack . show) id res
+            return ContinueEvent
+
+        event px $ \(Proxy.CallAuthorized index authNode) -> do
+            res <- airaWeb3 $ do
+                let msg = "Transaction #" <> T.pack (show index)
+                        <> " is authorized by " <> uri_address authNode <> "."
+                (_, _, _, blk) <- Proxy.callAt px index
+                ready <- (blk == 0 &&) <$> Proxy.isAuthorized px index
+                if not ready
+                then return $ T.unlines
+                        [ msg
+                        , "Transaction is not ready for run, "
+                        , "may be additional authorization is needed." ]
+                else do
+                    tx <- Proxy.run px nopay index
+                    return $ T.unlines
+                        [ msg
+                        , "Transaction unlocked!"
+                        , "Is pending in " <> uri_tx tx ]
+            liftIO $ writeChan msgQueue $ toMessage $
+                either (T.pack . show) id res
+            return ContinueEvent
+
+        event px $ \(Proxy.CallExecuted index block) -> do
+            res <- airaWeb3 $ do
+                (tgt, val, dat, _) <- Proxy.callAt px index
+                return $ T.unlines $
+                    ("Transaction executed:"
+                    : txInfo px index tgt (fromWei val) dat)
+                    ++ [ "- status  : executed"
+                       , "- block   : " <> uri_block block ]
+            liftIO $ writeChan msgQueue $ toMessage $
+                either (T.pack . show) id res
+            return ContinueEvent
+
+    forkBot $
+        forever $ do
+            msg <- liftIO (readChan msgQueue)
+            sendMessageBot chat msg
+    return ()
+  where
+    withUserChat f = do
+        res <- airaWeb3 (Proxy.getIdent px)
+        case res of
+            Left e -> liftIO (print e)
+            Right ident -> do
+                mbChatId <- liftIO $ query db (GetUserChatId (T.pack $ show ident))
+                case mbChatId of
+                    Just cid -> f (mkChat cid)
+                    Nothing ->
+                        liftIO (print $ "Unknown user with ident: " ++ show ident)

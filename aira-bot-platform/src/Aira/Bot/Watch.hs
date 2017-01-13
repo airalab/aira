@@ -83,9 +83,9 @@ handleTx db (Transaction {txHash = hash, txFrom = from, txTo = to, txValue = val
         Nothing -> return ()
         Just chatId -> do
             sendMessageBot (mkChat chatId) $
-                toMessage $ T.unlines [ "Incoming transaction " <> etherscan_tx hash <> ":"
-                                      , "- To:    " <> etherscan_addr (fromJust to)
-                                      , "- From:  " <> etherscan_addr from
+                toMessage $ T.unlines [ "Incoming transaction " <> uri_tx hash <> ":"
+                                      , "- To:    " <> uri_address (fromJust to)
+                                      , "- From:  " <> uri_address from
                                       , "- Value: " <>
                                             case hexadecimal value of
                                                 Right (v, _) ->

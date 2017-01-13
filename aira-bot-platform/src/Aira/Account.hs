@@ -18,6 +18,7 @@ module Aira.Account (
   , proxy
   ) where
 
+import Web.Telegram.API.Bot.Data (Chat, User, Message(text))
 import Control.Monad.Error.Class (throwError)
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
@@ -27,16 +28,17 @@ import Aira.TextFormat
 import Aira.Bot.Proxy
 import Aira.Registrar
 import Aira.Config
+import Data.Acid
 
 type Account   = (User, Chat, [Proxy])
 type AiraStory = Account -> StoryT (Bot AiraConfig) BotMessage
 
 -- | User accounting combinator
-accounting :: AiraStory -> Story AiraConfig
-accounting story (u, c) = do
+accounting :: AcidState UserIdent -> AiraStory -> Story AiraConfig
+accounting db story (u, c) = do
     px <- userProxies u
     case px of
-        [] -> do p <- createProxy u
+        [] -> do p <- createProxy db u c
                  story (u, c, [p])
         _  -> story (u, c, px)
 

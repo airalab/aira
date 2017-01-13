@@ -14,6 +14,7 @@ module Aira.Bot.Secure (
   , watch
   ) where
 
+import Web.Telegram.API.Bot.Data (Chat(chat_id))
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
 import Aira.Bot.Common ()

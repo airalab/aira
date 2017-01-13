@@ -18,6 +18,7 @@ module Aira.Bot.Common (
   , start
   ) where
 
+import Web.Telegram.API.Bot.Data (User(user_first_name), Message(text))
 import Control.Monad.Error.Class (throwError)
 import Network.Ethereum.Web3.Address
 import Network.Ethereum.Web3
@@ -50,7 +51,7 @@ secure _ = return . toMessage $ T.unlines
 about :: AiraStory
 about (u, _, px : _) = return $ toMessage $ T.unlines $
     [ "Hello, " <> user_first_name u <> "!"
-    , "Your account is " <> etherscan_addr px ]
+    , "Your account is " <> uri_address px ]
 
 start :: AiraStory
 start = about

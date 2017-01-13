@@ -64,11 +64,11 @@ createToken (_, _, px : _) = do
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
                 Right tx -> do
-                    yield (toMessage $ "Success transaction " <> etherscan_tx tx
+                    yield (toMessage $ "Success transaction " <> uri_tx tx
                                     <> "\nWaiting for confirmation...")
                     inst <- liftIO (readChan notify)
                     return (toMessage $
-                        "ERC20 contract created:\n" <> etherscan_addr inst)
+                        "ERC20 contract created:\n" <> uri_address inst)
 
         "ERC20 token with emission" -> do
             decimal <- question "Count of numbers after point (for integral set 0):"
@@ -91,12 +91,12 @@ createToken (_, _, px : _) = do
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
                 Right tx -> do
-                    yield (toMessage $ "Success transaction " <> etherscan_tx tx
+                    yield (toMessage $ "Success transaction " <> uri_tx tx
                                     <> "\nWaiting for confirmation...")
                     inst <- liftIO (readChan notify)
                     return (toMessage $
                         "ERC20 with emission contract created:\n"
-                        <> etherscan_addr inst)
+                        <> uri_address inst)
 
         "Ether vault contract" -> do
             res <- airaWeb3 $ do
@@ -117,11 +117,11 @@ createToken (_, _, px : _) = do
             case res of
                 Left e -> return (toMessage (T.pack (show e)))
                 Right tx -> do
-                    yield (toMessage $ "Success transaction " <> etherscan_tx tx
+                    yield (toMessage $ "Success transaction " <> uri_tx tx
                                     <> "\nWaiting for confirmation...")
                     inst <- liftIO (readChan notify)
                     return (toMessage $
                         "Ether vault contract created:\n"
-                        <> etherscan_addr inst)
+                        <> uri_address inst)
 
         _ -> return (toMessage ("Unknown target! Cancelled." :: Text))

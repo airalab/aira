@@ -62,7 +62,7 @@ transferERC20 (_, _, px : _) = do
         else proxy px token nopay (ERC20.TransferData dest value)
 
     return $ toMessage $ case res of
-        Right tx -> "Success " <> etherscan_tx tx
+        Right tx -> "Success " <> uri_tx tx
         Left e   -> "Error " <> T.pack (show e)
 
 transferERC20 _ = return $ toMessage $ T.unlines
@@ -83,7 +83,7 @@ transferAIRA (_, _, px : _) = do
         else proxy px dest (amount :: Ether) NoMethod
 
     return $ toMessage $ case res of
-        Right tx -> "Success " <> etherscan_tx tx
+        Right tx -> "Success " <> uri_tx tx
         Left e   -> T.pack (show e)
 
 transferAIRA _ = return $ toMessage $ T.unlines
@@ -105,7 +105,7 @@ balanceAIRA (_, _, pxs) = do
         Right balances -> T.unlines $
             "Account balances:" : fmap pxBalance (zip pxs balances)
   where pxBalance :: (Address, Ether) -> Text
-        pxBalance (p, b) = "- " <> etherscan_addr p <> ": " <> T.pack (show b)
+        pxBalance (p, b) = "- " <> uri_address p <> ": " <> T.pack (show b)
 
 balanceAIRA _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
@@ -131,7 +131,7 @@ send (_, _, px : _) = do
     amount <- question "Amount of `ether` you want to send:"
     res <- airaWeb3 $ proxy px dest (amount :: Ether) NoMethod
     return $ toMessage $ case res of
-        Right tx -> "Success " <> etherscan_tx tx
+        Right tx -> "Success " <> uri_tx tx
         Left e   -> T.pack (show e)
 
 send _ = return $ toMessage $ T.unlines
