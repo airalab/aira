@@ -122,7 +122,7 @@ proxy :: (Method method, Unit amount, Provider p)
       -- ^ Target contract method
       -> Web3 p TxHash
       -- ^ Transaction hash
-proxy a b c d = do feeGuard a
+proxy a b c d = do --feeGuard a
                    -- TODO: Add checks
                    proxy' a b c d
 
@@ -161,9 +161,7 @@ userProxies u = do
 -- | Create first proxy for given user
 createProxy :: AcidState UserIdent -> User -> Chat -> StoryT (Bot AiraConfig) Proxy
 createProxy db u c = do
-    yield $ toMessage $ T.unlines
-        [ "Hello, " <> user_first_name u <> "!"
-        , "New user initiated, please wait..." ]
+    yield $ toMessage $ "Hello, " <> user_first_name u <> "!"
     notify <- liftIO newChan
 
     res <- airaWeb3 $ do
@@ -183,11 +181,24 @@ createProxy db u c = do
 
     case res of
         Right tx -> do
-            yield $ toMessage $ "Proxy initiated at " <> uri_tx tx
+            yield $ toMessage $ "Account initiated at " <> uri_tx tx
                              <> ", waiting for confirmation..."
             inst <- liftIO (readChan notify)
-            yield $ toMessage $ "Proxy instantiated as " <> uri_address inst <> "!"
+            yield $ toMessage $ "Account instantiated as " <> uri_address inst <> "!"
+
+            -- Store user id
             liftIO $ update db $ SetUserChatId (T.pack $ show $ userIdent u) (chat_id c)
+
+            -- Greeting proxy balance
+            res <- airaWeb3 $ do
+                air <- getAddress "AirToken.contract"
+                ERC20.transfer air nopay inst 50
+
+            case res of
+                Right gtx ->
+                    yield $ toMessage $ "Free Air transfered at " <> uri_tx gtx <> "."
+                Left e -> liftIO (throwIO e)
+
             return inst
 
         Left e -> liftIO (throwIO e)
