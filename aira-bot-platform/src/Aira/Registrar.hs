@@ -34,9 +34,9 @@ import Data.Text (Text)
 -- | Constant registrar contract address
 root_registrar_address :: Address
 -- Mainnet ROOT
-root_registrar_address = "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
+--root_registrar_address = "0x37C0f21f9dc15bE832d06a3c79ee45d16f9ed1d6"
 -- Testnet ROOT
---root_registrar_address = "0x2d420359f7D51272D49fB74656491F7cBC9bE2c3"
+root_registrar_address = "0x2d420359f7D51272D49fB74656491F7cBC9bE2c3"
 
 type DomainName = Text
 
