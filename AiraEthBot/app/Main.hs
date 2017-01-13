@@ -33,6 +33,7 @@ main = do
     db <- openLocalState def
     -- Run bot
     airaBot $ do
+        Proxy.proxyNotifyBot db
         storyBot helpMessage $ fmap (accounting db)
             [ ("/me",       Common.about)
             , ("/send",     Token.send)
