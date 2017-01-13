@@ -1,5 +1,5 @@
 name:                AiraEthBot
-version:             0.5.0.0
+version:             0.6.0.0
 synopsis:            Aira Ethereum helper bot
 description:         Please see README.md
 homepage:            https://github.com/airalab/aira#readme
@@ -21,7 +21,6 @@ executable AiraEthBot
                      , telegram-bot
                      , acid-state
                      , text
-                     , yaml
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-extensions:  OverloadedStrings
   default-language:    Haskell2010

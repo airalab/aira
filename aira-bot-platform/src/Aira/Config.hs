@@ -10,7 +10,12 @@
 --
 -- Aira configuration.
 --
-module Aira.Config (AiraConfig, readConfig, airaWeb3) where
+module Aira.Config (
+    AiraConfig
+  , readConfig
+  , airaWeb3
+  , airaBot
+  ) where
 
 import Web.Telegram.API.Bot (Token(..))
 import Control.Monad.IO.Class
@@ -50,6 +55,10 @@ airaWeb3 = runWeb3'
 
 instance Provider AiraConfig where
     rpcUri = web3uri <$> readConfig
+
+airaBot :: Bot AiraConfig a -> IO a
+{-# INLINE airaBot #-}
+airaBot = runBot
 
 instance BotConfig AiraConfig where
     authToken = token <$> readConfig
