@@ -191,13 +191,16 @@ createProxy db u c = do
 
             -- Greeting proxy balance
             res <- airaWeb3 $ do
+                bot <- getAddress "AiraEth.bot"
                 air <- getAddress "AirToken.contract"
-                ERC20.transfer air nopay inst 50
+                airtx <- ERC20.transfer air nopay inst 50
+                proxy inst air nopay (ERC20.ApproveData bot 50)
+                return airtx
 
             case res of
-                Right gtx ->
-                    yield $ toMessage $ "Free Air transfered at " <> uri_tx gtx <> "."
                 Left e -> liftIO (throwIO e)
+                Right tx -> yield $ toMessage $
+                    "Free Air tokens credited at " <> uri_tx tx
 
             return inst
 

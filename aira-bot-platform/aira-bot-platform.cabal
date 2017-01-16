@@ -26,6 +26,7 @@ library
                      , Aira.Bot.Factory
   other-modules:       Aira.Contract.Token
                      , Aira.Contract.Proxy
+                     , Aira.Contract.TokenSelling
                      , Aira.Contract.BuilderProxy
                      , Aira.Contract.BuilderToken
                      , Aira.Contract.BuilderTokenEther

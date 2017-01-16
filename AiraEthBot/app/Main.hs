@@ -24,6 +24,7 @@ helpMessage = T.unlines
     , "/newtoken - create new token by Factory"
     , "/balance - get avail balance"
     , "/secure - get information about security bot"
+    , "/refill - refill Air balance"
     , "/cancel - stop command execution"
     , "/help - show this message" ]
 
@@ -38,6 +39,7 @@ main = do
             [ ("/me",       Common.about)
             , ("/send",     Token.send)
             , ("/start",    Common.start)
+            , ("/refill",   Token.refill)
             , ("/secure",   Common.secure)
             , ("/newtoken", Factory.createToken)
             , ("/balance",  Token.balance)
