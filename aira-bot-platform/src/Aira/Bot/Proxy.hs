@@ -101,7 +101,7 @@ proxy' a tgt val tx = Proxy.request a nopay tgt (toWei val) (toBytes tx)
 -- | Air taxman
 feeGuard :: Provider p => Address -> Web3 p TxHash
 feeGuard a = do
-    air <- getAddress "AirToken.contract"
+    air <- getAddress "TokenAir.contract"
     bot <- getAddress "AiraEth.bot"
     bal <- ERC20.balanceOf air a
     alw <- ERC20.allowance air a bot
@@ -192,7 +192,7 @@ createProxy db u c = do
             -- Greeting proxy balance
             res <- airaWeb3 $ do
                 bot <- getAddress "AiraEth.bot"
-                air <- getAddress "AirToken.contract"
+                air <- getAddress "TokenAir.contract"
                 airtx <- ERC20.transfer air nopay inst 50
                 proxy inst air nopay (ERC20.ApproveData bot 50)
                 return airtx
