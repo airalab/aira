@@ -15,3 +15,4 @@ RUN rm -rf /aira /root/.stack /root/.local
 
 ADD docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
+VOLUME ["/state"]
