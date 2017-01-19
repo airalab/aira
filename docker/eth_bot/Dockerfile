@@ -4,7 +4,7 @@ LABEL Description="Aira Ethereum bot" Vendor="Airalab" Version="0.3"
 
 RUN apt-get update \
     && apt-get install -y wget git \
-        libmysqlclient-dev libpq-dev libsqlite3-dev
+        pkg-config libmysqlclient-dev libpq-dev libsqlite3-dev
 RUN wget -qO- https://get.haskellstack.org/ | sh
 RUN apt-get autoclean
 
