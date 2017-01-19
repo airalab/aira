@@ -1,5 +1,5 @@
 name:                aira-bot-platform
-version:             0.6.0.0
+version:             0.6.1.0
 synopsis:            Aira helper bot platform 
 description:         This is a library for autonomous agent creation
 homepage:            https://github.com/airalab/aira#readme
@@ -31,22 +31,13 @@ library
                      , Aira.Contract.BuilderToken
                      , Aira.Contract.BuilderTokenEther
                      , Aira.Contract.BuilderTokenEmission
-  build-depends:       base >4.8 && <4.10
-                     , data-default-class
+  build-depends:       base  >4.8 && <4.10
+                     , persistent-template
                      , base16-bytestring
-                     , lens-family-th
-                     , telegram-bot
-                     , telegram-api
-                     , lens-family
-                     , acid-state
-                     , containers
-                     , cryptonite
-                     , safecopy
+                     , persistent
                      , memory
-                     , random
+                     , habit
                      , aeson
-                     , pipes
-                     , time 
                      , web3
                      , text
                      , yaml

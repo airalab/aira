@@ -25,23 +25,33 @@ import Control.Exception (throwIO)
 import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
 import Control.Monad (when)
-import Web.Telegram.Bot
+import Web.Bot.Persist
+import Web.Bot.User
+import Web.Bot
 
 import qualified Aira.Contract.TokenSelling as TokenSelling
 import qualified Aira.Contract.Token        as ERC20
 import qualified Data.Text                  as T
 import Aira.Bot.Common
+import Aira.Bot.Proxy
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
 
-transfer :: AiraStory
+ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
+ethBalance address = do
+    res <- eth_getBalance address Latest
+    case hexadecimal res of
+        Right (x, _) -> return (fromWei x)
+        Left e       -> liftIO $ throwIO (ParserFail e)
+
+transfer :: Persist a => AiraStory a
 transfer = selectToken transferAIRA transferERC20
 
-balance :: AiraStory
+balance :: AiraStory a
 balance = selectToken balanceAIRA balanceERC20
 
-selectToken :: AiraStory -> AiraStory -> AiraStory
+selectToken :: AiraStory a -> AiraStory a -> AiraStory a
 selectToken f1 f2 a = do
     tokenType <- select "Token to use:" [["Ether"], ["ERC20"]]
     case tokenType :: Text of
@@ -49,11 +59,23 @@ selectToken f1 f2 a = do
         "ERC20" -> f2 a
         x -> return $ toMessage ("Unknown option `" <> x <> "`!")
 
-transferERC20 :: AiraStory
-transferERC20 (_, _, px : _) = do
-    token               <- question "Token address:"
-    AccountAddress dest <- question "Recipient username:"
-    amount              <- question "Value in tokens:"
+requestProxy :: Persist a => StoryT (Bot a) Address
+requestProxy = do
+    ident <- question "Recipient user identity:"
+    mbUser <- lift $ runDB $ getBy (UserIdentity ident)
+    case fmap entityVal mbUser of
+        Just user -> do
+            yield $ toMessage $ "Identity found, recipient is " <> userName user
+            head <$> userProxies user
+        Nothing -> do
+            yield $ toMessage ("Unknown identity, please check and try again." :: Text)
+            requestProxy
+
+transferERC20 :: Persist a => AiraStory a
+transferERC20 (_, px : _) = do
+    token <- question "Token address:"
+    dest  <- requestProxy
+    amount <- question "Value in tokens:"
     res <- airaWeb3 $ do
         value <- ERC20.toDecimals token amount
         bal   <- ERC20.balanceOf token px
@@ -72,10 +94,10 @@ transferERC20 _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
 
-transferAIRA :: AiraStory
-transferAIRA (_, _, px : _) = do
-    AccountAddress dest <- question "Recipient username:"
-    amount              <- question "Value in ethers:"
+transferAIRA :: Persist a => AiraStory a
+transferAIRA (_, px : _) = do
+    dest   <- requestProxy
+    amount <- question "Value in ethers:"
     res <- airaWeb3 $ do
         bal <- ethBalance px
 
@@ -93,15 +115,8 @@ transferAIRA _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
 
-ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
-ethBalance address = do
-    res <- eth_getBalance address Latest
-    case hexadecimal res of
-        Right (x, _) -> return (fromWei x)
-        Left e       -> liftIO $ throwIO (ParserFail e)
-
-balanceAIRA :: AiraStory
-balanceAIRA (_, _, pxs) = do
+balanceAIRA :: AiraStory a
+balanceAIRA (_, pxs) = do
     res <- airaWeb3 $ mapM ethBalance pxs
     return $ toMessage $ case res of
         Left e -> T.pack (show e)
@@ -110,26 +125,21 @@ balanceAIRA (_, _, pxs) = do
   where pxBalance :: (Address, Ether) -> Text
         pxBalance (p, b) = "- " <> uri_address p <> ": " <> T.pack (show b)
 
-balanceAIRA _ = return $ toMessage $ T.unlines
-    [ "Your account isn't work correctly!"
-    , "Please wait on initiation step or call Airalab support." ]
-
-balanceERC20 :: AiraStory
-balanceERC20 (_, _, px : _) = do
+balanceERC20 :: AiraStory a
+balanceERC20 (_, pxs) = do
     token <- question "Token address:"
     res <- airaWeb3 $ do
-        b <- ERC20.balanceOf token px
-        ERC20.fromDecimals token b
+        bs <- mapM (ERC20.balanceOf token) pxs
+        mapM (ERC20.fromDecimals token) bs
     return $ toMessage $ case res of
-        Right x -> "Balance: " <> T.pack (show x) <> " tokens"
         Left e -> T.pack (show e)
+        Right balances -> T.unlines $
+            "Account balances: " : fmap pxBalance (zip pxs balances)
+  where pxBalance :: (Address, Double) -> Text
+        pxBalance (p, b) = "- " <> uri_address p <> ": " <> T.pack (show b)
 
-balanceERC20 _ = return $ toMessage $ T.unlines
-    [ "Your account isn't work correctly!"
-    , "Please wait on initiation step or call Airalab support." ]
-
-send :: AiraStory
-send (_, _, px : _) = do
+send :: AiraStory a
+send (_, px : _) = do
     dest   <- question "Recipient Ethereum address:"
     amount <- question "Amount of `ether` you want to send:"
     res <- airaWeb3 $ proxy px dest (amount :: Ether) NoMethod
@@ -141,8 +151,8 @@ send _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
 
-refill :: AiraStory
-refill (_, _, px : _) = do
+refill :: AiraStory a
+refill (_, px : _) = do
     amount <- question "Amount of `Air` to buy:"
     res <- airaWeb3 $ do
         airSale <- getAddress "TokenAirSelling.contract"

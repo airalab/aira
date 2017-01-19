@@ -5,13 +5,17 @@ resolver: lts-7.13
 packages:
 - '.'
 - '../aira-bot-platform'
-- '../telegram-bot'
+- '../habit'
 - '../web3'
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
+- fbmessenger-api-0.1.2.1
 - telegram-api-0.5.0.1
+- persistent-mysql-2.6
+- mysql-simple-0.4.0.0
+- mysql-0.1.4
 - aeson-1.0.2.1
 
 # Override default flag values for local packages and extra-deps

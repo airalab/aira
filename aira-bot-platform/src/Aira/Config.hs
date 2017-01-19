@@ -14,40 +14,34 @@ module Aira.Config (
     AiraConfig
   , readConfig
   , airaWeb3
-  , airaBot
   ) where
 
-import Web.Telegram.API.Bot (Token(..))
+import Web.Bot.Platform.Telegram
+import Web.Bot.Platform (APIToken(..))
+import Web.Bot.Persist
 import Control.Monad.IO.Class
-import Web.Telegram.Bot.Types
 import Network.Ethereum.Web3
 
 import Data.Aeson (FromJSON(..), ToJSON(..))
 import Data.Yaml (decodeFileEither)
 import Control.Exception (throwIO)
 import GHC.Generics (Generic)
+import Data.Text (Text)
 
 data AiraConfig = MkConfig
-  { web3uri :: String
-  , token   :: Token
+  { web3uri       :: String
+  , database      :: Text
+  , telegramToken :: Text
   } deriving (Show, Eq, Generic)
 
 instance FromJSON AiraConfig
 instance ToJSON AiraConfig
 
-instance FromJSON Token where
-    parseJSON = fmap Token . parseJSON
-
-instance ToJSON Token where
-    toJSON (Token t) = toJSON t
-
 readConfig :: MonadIO m => m AiraConfig
 readConfig = liftIO $ do
     -- Load config
     res <- decodeFileEither "aira_config.yaml"
-    case res of
-        Left e  -> throwIO e
-        Right c -> return c
+    either throwIO return res
 
 airaWeb3 :: MonadIO m => Web3 AiraConfig a -> m (Either Web3Error a)
 {-# INLINE airaWeb3 #-}
@@ -56,9 +50,8 @@ airaWeb3 = runWeb3'
 instance Provider AiraConfig where
     rpcUri = web3uri <$> readConfig
 
-airaBot :: Bot AiraConfig a -> IO a
-{-# INLINE airaBot #-}
-airaBot = runBot
+instance APIToken Telegram where
+    apiToken = telegramToken <$> readConfig
 
-instance BotConfig AiraConfig where
-    authToken = token <$> readConfig
+instance Persist Telegram where
+    persist = (Sqlite . database) <$> readConfig

@@ -16,42 +16,49 @@ module Aira.Bot.Common (
     secure
   , about
   , start
+  , ident
   ) where
 
-import Web.Telegram.API.Bot.Data (User(user_first_name), Message(text))
 import Control.Monad.Error.Class (throwError)
 import Network.Ethereum.Web3.Address
 import Network.Ethereum.Web3
-import Text.Read (readMaybe)
-import Web.Telegram.Bot
 import Data.Text as T
+
+import Web.Bot.Message
+import Web.Bot.User
+import Web.Bot
 
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
 
 instance Answer Address where
-    parse msg = case text msg of
-        Nothing -> throwError "Please send me Ethereum address."
-        Just addr -> case fromText addr of
+    parse (MsgText addr) =
+        case fromText addr of
             Left e -> throwError (T.pack e)
             Right a -> return a
+    parse _ = throwError "Please send me Ethereum address."
 
 instance Answer Ether where
-    parse msg = case (readMaybe . (++ " ether") . T.unpack) =<< text msg of
-        Nothing -> throwError "Please send me a value in ether."
-        Just x -> if x > 0 then return x
-                           else throwError "Please send me a positive value."
+    parse msg = do
+        val <- parse msg
+        if val > 0 then return $ realToFrac (val :: Double)
+                   else throwError "Please send me positive value."
 
-secure :: AiraStory
+secure :: AiraStory a
 secure _ = return . toMessage $ T.unlines
 -- TODO: Fill text description
     [ "@AiraSecureBot" ]
 
-about :: AiraStory
-about (u, _, px : _) = return $ toMessage $ T.unlines $
-    [ "Hello, " <> user_first_name u <> "!"
+about :: AiraStory a
+about (u, px : _) = return $ toMessage $ T.unlines $
+    [ "Hello, " <> userName u <> "!"
     , "Your account is " <> uri_address px ]
 
-start :: AiraStory
+ident :: AiraStory a
+ident (u, _) = return $ toMessage $ T.unlines $
+    [ "Your personal identity:"
+    , userIdent u ]
+
+start :: AiraStory a
 start = about

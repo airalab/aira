@@ -14,40 +14,38 @@ module Aira.Bot.Secure (
   , watch
   ) where
 
-import Web.Telegram.API.Bot.Data (Chat(chat_id))
 import Control.Monad.IO.Class (liftIO)
 import Network.Ethereum.Web3.Address
 import Aira.Bot.Common ()
-import Web.Telegram.Bot
 import Aira.TextFormat
 import Aira.Bot.Watch
 import Aira.Account
-import Data.Acid
+import Web.Bot
 
-watch :: AcidState WatchTx -> AiraStory
-watch db (_, c, px : _) = do
+watch :: Persist a => AiraStory a
+watch (user, px : _) = do
     res <- select "Do you want to watch incoming transactions of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
-            liftIO $ update db $ WatchRecipient px (chat_id c)
+            lift $ addWatch user px
             return $ toMessage ("Your account added to watch list." :: Text)
         _ -> do
             recipient <- question "Recipient address for watching:"
-            liftIO $ update db (WatchRecipient recipient (chat_id c))
+            lift $ addWatch user recipient
             return $ toMessage $ "Address " <> toText recipient
                               <> " added to watch list."
 
-unwatch :: AcidState WatchTx -> AiraStory
-unwatch db (_, _, px : _) = do
+unwatch :: Persist a => AiraStory a
+unwatch (user, px : _) = do
     res <- select "Do you want to drop watcher of"
            [["self", "another"]]
     case res :: Text of
         "self" -> do
-            liftIO $ update db (UnwatchRecipient px)
+            lift $ removeWatch user px
             return $ toMessage ("Your account deleted from watch list." :: Text)
         _ -> do
             recipient <- question "Drop listener for address:"
-            liftIO $ update db (UnwatchRecipient recipient)
+            lift $ removeWatch user recipient
             return $ toMessage $ "Address " <> toText recipient
                                <> " deleted from watch list."

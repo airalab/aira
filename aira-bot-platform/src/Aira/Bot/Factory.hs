@@ -21,16 +21,15 @@ import qualified Aira.Contract.BuilderTokenEmission as BTokenEmission
 import Control.Concurrent.Chan
 import Control.Monad.IO.Class
 import Network.Ethereum.Web3
-import Web.Telegram.Bot
 import Aira.Bot.Common
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
-import Pipes (yield)
+import Web.Bot
 
 -- | Create token by Factory
-createToken :: AiraStory
-createToken (_, _, px : _) = do
+createToken :: AiraStory a
+createToken (_, px : _) = do
     target <- select "What do you want to create?"
             [ ["ERC20 token"]
             , ["ERC20 token with emission"]

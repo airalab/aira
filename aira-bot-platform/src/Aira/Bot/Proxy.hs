@@ -14,7 +14,6 @@
 --
 module Aira.Bot.Proxy (
     Proxy
-  , UserIdent
   , createProxy
   , userProxies
   , proxyNotifyBot
@@ -31,57 +30,29 @@ import qualified Data.Text                  as T
 
 import Control.Concurrent.Chan (newChan, writeChan, readChan)
 import Control.Monad (filterM, when, forever)
-import Crypto.Hash (hash, Digest, Keccak_256)
-import Control.Monad.Reader.Class (ask)
-import Data.Default.Class (Default(..))
 import Data.Text.Encoding (encodeUtf8)
 import Control.Exception (throwIO)
 import Control.Monad.IO.Class
-
-import Lens.Family2.State
-import Lens.Family2.TH
-import Lens.Family2
-
-import qualified Data.Map as M
-import Data.Map (Map)
-
-import Web.Telegram.API.Bot.Data (Chat(..), ChatType(Private), User(..))
-import Web.Telegram.Bot.Types
-import Web.Telegram.Bot
 
 import Network.Ethereum.Web3.Encoding
 import Network.Ethereum.Web3.Types
 import Network.Ethereum.Web3
 import Data.ByteArray (Bytes)
-import Data.SafeCopy
-import Data.Acid
+import Database.Persist.Class
+
+import Web.Bot.Persist
+import Web.Bot.User
+import Web.Bot.Log
+import Web.Bot
 
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Config
-import Pipes (yield)
-
-data UserIdent = UserIdent { _identMap :: Map Text Int }
-  deriving Show
-
-instance Default UserIdent where
-    def = UserIdent M.empty
-
-$(makeLenses ''UserIdent)
-$(deriveSafeCopy 0 'base ''UserIdent)
-
-setUserChatId :: Text -> Int -> Update UserIdent ()
-setUserChatId a i = identMap %= M.insert a i
-
-getUserChatId :: Text -> Query UserIdent (Maybe Int)
-getUserChatId a = identMap `views` M.lookup a <$> ask
-
-mkChat :: Int -> Chat
-mkChat cid = Chat cid Private Nothing Nothing Nothing Nothing
-
-$(makeAcidic ''UserIdent ['setUserChatId, 'getUserChatId])
 
 type Proxy = Address
+
+toBytes :: Text -> Bytes
+toBytes = BA.convert . fst . B16.decode . encodeUtf8
 
 -- | Passthrough given method of target over proxy contract
 proxy' :: (Method method, Unit amount, Provider p)
@@ -95,8 +66,8 @@ proxy' :: (Method method, Unit amount, Provider p)
       -- ^ Target contract method
       -> Web3 p TxHash
       -- ^ Transaction hash
-proxy' a tgt val tx = Proxy.request a nopay tgt (toWei val) (toBytes tx)
-  where toBytes = BytesD . BA.convert . fst . B16.decode . encodeUtf8 . toData
+proxy' a tgt val tx = Proxy.request a nopay tgt (toWei val) txData
+  where txData = BytesD (toBytes (toData tx))
 
 -- | Air taxman
 feeGuard :: Provider p => Address -> Web3 p TxHash
@@ -122,7 +93,7 @@ proxy :: (Method method, Unit amount, Provider p)
       -- ^ Target contract method
       -> Web3 p TxHash
       -- ^ Transaction hash
-proxy a b c d = do --feeGuard a
+proxy a b c d = do feeGuard a
                    -- TODO: Add checks
                    proxy' a b c d
 
@@ -132,11 +103,6 @@ trySeq = go []
         go acc (x : xs) = airaWeb3 x
                       >>= either (\_ -> go acc [])
                                  (\a -> go (a : acc) xs)
-
-userIdent :: User -> BytesN 32
-userIdent = BytesN . BA.convert . sha3
-  where sha3 :: User -> Digest Keccak_256
-        sha3 = hash . encodeUtf8 . T.pack . show
 
 botProxies :: MonadIO m => m [Proxy]
 botProxies = do
@@ -153,15 +119,15 @@ userProxies :: MonadIO m => User -> m [Proxy]
 userProxies u = do
     proxies <- botProxies
     res <- airaWeb3 $
-        filterM (fmap (== userIdent u) . Proxy.getIdent) proxies
+        filterM (fmap ((== userIdent u) . T.pack . show) . Proxy.getIdent) proxies
     case res of
         Left e -> liftIO (throwIO e)
         Right upx -> return upx
 
 -- | Create first proxy for given user
-createProxy :: AcidState UserIdent -> User -> Chat -> StoryT (Bot AiraConfig) Proxy
-createProxy db u c = do
-    yield $ toMessage $ "Hello, " <> user_first_name u <> "!"
+createProxy :: APIToken a => User -> StoryT (Bot a) Proxy
+createProxy user = do
+    yield $ toMessage $ "Hello, " <> userName user <> "!"
     notify <- liftIO newChan
 
     res <- airaWeb3 $ do
@@ -170,14 +136,14 @@ createProxy db u c = do
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
         event builder $ \(BuilderProxy.Builded sender inst) -> do
-            res <- airaWeb3 $ Proxy.getIdent inst
+            res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent inst)
             case res of
-                Right ident -> if ident == userIdent u && sender == bot
+                Right ident -> if ident == userIdent user && sender == bot
                                then writeChan notify inst >> return TerminateEvent
                                else return ContinueEvent
                 Left e -> print e >> return TerminateEvent
 
-        BuilderProxy.create builder (cost :: Wei) (userIdent u) bot
+        BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
 
     case res of
         Right tx -> do
@@ -185,9 +151,6 @@ createProxy db u c = do
                              <> ", waiting for confirmation..."
             inst <- liftIO (readChan notify)
             yield $ toMessage $ "Account instantiated as " <> uri_address inst <> "!"
-
-            -- Store user id
-            liftIO $ update db $ SetUserChatId (T.pack $ show $ userIdent u) (chat_id c)
 
             -- Greeting proxy balance
             res <- airaWeb3 $ do
@@ -206,15 +169,15 @@ createProxy db u c = do
 
         Left e -> liftIO (throwIO e)
 
-proxyNotifyBot :: AcidState UserIdent -> Bot AiraConfig ()
-proxyNotifyBot db = do
+proxyNotifyBot :: (APIToken a, Persist a) => Bot a ()
+proxyNotifyBot = do
     proxies <- liftIO newChan
 
     -- Proxy listener spawner
     forkBot $
         forever $ do
             p <- liftIO (readChan proxies)
-            proxyListener db p
+            proxyListener p
 
     -- Spawn listener for builded proxies
     airaWeb3 $ do
@@ -236,8 +199,8 @@ txInfo px index tgt value dat =
   , "- value   : " <> T.pack (show value)
   , "- size    : " <> T.pack (show $ BA.length $ unBytesD dat) <> " bytes" ]
 
-proxyListener :: AcidState UserIdent -> Address -> Bot AiraConfig ()
-proxyListener db px = withUserChat $ \chat -> do
+proxyListener :: (APIToken a, Persist a) => Address -> Bot a ()
+proxyListener px = withUser $ \user -> do
     msgQueue <- liftIO newChan
 
     airaWeb3 $ do
@@ -300,19 +263,17 @@ proxyListener db px = withUserChat $ \chat -> do
                 either (T.pack . show) id res
             return ContinueEvent
 
-    forkBot $
-        forever $ do
-            msg <- liftIO (readChan msgQueue)
-            sendMessageBot chat msg
-    return ()
+    forever $ do
+        msg <- liftIO (readChan msgQueue)
+        sendMessage user msg
   where
-    withUserChat f = do
-        res <- airaWeb3 (Proxy.getIdent px)
+    withUser f = do
+        res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent px)
         case res of
-            Left e -> liftIO (print e)
+            Left e -> $logErrorS "Proxy" (T.pack $ show e)
             Right ident -> do
-                mbChatId <- liftIO $ query db (GetUserChatId (T.pack $ show ident))
-                case mbChatId of
-                    Just cid -> f (mkChat cid)
+                mbUser <- runDB $ getBy (UserIdentity ident)
+                case mbUser of
+                    Just user -> f (entityVal user)
                     Nothing ->
-                        liftIO (print $ "Unknown user with ident: " ++ show ident)
+                        $logErrorS "Proxy" ("Unknown user with ident: " <> ident)
