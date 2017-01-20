@@ -35,6 +35,7 @@ import Control.Exception (throwIO)
 import Control.Monad.IO.Class
 
 import Network.Ethereum.Web3.Encoding
+import Network.Ethereum.Web3.Address
 import Network.Ethereum.Web3.Types
 import Network.Ethereum.Web3
 import Data.ByteArray (Bytes)
@@ -135,13 +136,18 @@ createProxy user = do
         bot     <- getAddress "AiraEth.bot"
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
-        event builder $ \(BuilderProxy.Builded sender inst) -> do
-            res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent inst)
-            case res of
-                Right ident -> if ident == userIdent user && sender == bot
-                               then writeChan notify inst >> return TerminateEvent
-                               else return ContinueEvent
-                Left e -> print e >> return TerminateEvent
+        event builder $ \(BuilderProxy.Builded sender inst) ->
+            if sender == bot then do
+                res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent inst)
+                case res of
+                    Left _ -> return ContinueEvent
+                    Right ident -> do
+                        print ident
+                        if ident == userIdent user then do
+                            writeChan notify inst
+                            return TerminateEvent
+                        else return ContinueEvent
+            else return ContinueEvent
 
         BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
 
@@ -200,7 +206,7 @@ txInfo px index tgt value dat =
   , "- size    : " <> T.pack (show $ BA.length $ unBytesD dat) <> " bytes" ]
 
 proxyListener :: (APIToken a, Persist a) => Address -> Bot a ()
-proxyListener px = withUser $ \user -> do
+proxyListener px = do
     msgQueue <- liftIO newChan
 
     airaWeb3 $ do
@@ -226,8 +232,9 @@ proxyListener px = withUser $ \user -> do
                     return $ T.unlines $
                         msg ++ [ "- status  : authorized, pending"
                                , "- hash    : " <> uri_tx tx ]
-            liftIO $ writeChan msgQueue $ toMessage $
-                either (T.pack . show) id res
+            case res of
+                Left e -> print e
+                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
         event px $ \(Proxy.CallAuthorized index authNode) -> do
@@ -247,8 +254,9 @@ proxyListener px = withUser $ \user -> do
                         [ msg
                         , "Transaction unlocked!"
                         , "Is pending in " <> uri_tx tx ]
-            liftIO $ writeChan msgQueue $ toMessage $
-                either (T.pack . show) id res
+            case res of
+                Left e -> print e
+                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
         event px $ \(Proxy.CallExecuted index block) -> do
@@ -259,13 +267,14 @@ proxyListener px = withUser $ \user -> do
                     : txInfo px index tgt (fromWei val) dat)
                     ++ [ "- status  : executed"
                        , "- block   : " <> uri_block block ]
-            liftIO $ writeChan msgQueue $ toMessage $
-                either (T.pack . show) id res
+            case res of
+                Left e -> print e
+                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
     forever $ do
         msg <- liftIO (readChan msgQueue)
-        sendMessage user msg
+        withUser $ flip sendMessage msg
   where
     withUser f = do
         res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent px)
