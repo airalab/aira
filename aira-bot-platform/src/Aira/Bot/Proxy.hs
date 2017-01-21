@@ -128,7 +128,9 @@ userProxies u = do
 -- | Create first proxy for given user
 createProxy :: APIToken a => User -> StoryT (Bot a) Proxy
 createProxy user = do
-    yield $ toMessage $ "Hello, " <> userName user <> "!"
+    yield $ toMessage $ T.unlines
+      [ "Hello, " <> userName user <> "!"
+      , "Your identity: " <> userIdent user ]
     notify <- liftIO newChan
 
     res <- airaWeb3 $ do
@@ -136,18 +138,15 @@ createProxy user = do
         bot     <- getAddress "AiraEth.bot"
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
-        event builder $ \(BuilderProxy.Builded sender inst) ->
-            if sender == bot then do
-                res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent inst)
-                case res of
-                    Left _ -> return ContinueEvent
-                    Right ident -> do
-                        print ident
-                        if ident == userIdent user then do
-                            writeChan notify inst
+        event builder $ \(BuilderProxy.Builded _ inst) -> do
+            res <- airaWeb3 (Proxy.getIdent inst)
+            case fmap (T.pack . show) res of
+                Left _ -> return ContinueEvent
+                Right ident -> do
+                    if ident == userIdent user
+                    then do writeChan notify inst
                             return TerminateEvent
-                        else return ContinueEvent
-            else return ContinueEvent
+                    else do return ContinueEvent
 
         BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
 
