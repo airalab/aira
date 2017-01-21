@@ -1,5 +1,5 @@
 name:                aira-bot-platform
-version:             0.6.1.0
+version:             0.6.2.0
 synopsis:            Aira helper bot platform 
 description:         This is a library for autonomous agent creation
 homepage:            https://github.com/airalab/aira#readme

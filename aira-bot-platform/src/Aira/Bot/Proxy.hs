@@ -138,15 +138,19 @@ createProxy user = do
         bot     <- getAddress "AiraEth.bot"
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
-        event builder $ \(BuilderProxy.Builded _ inst) -> do
-            res <- airaWeb3 (Proxy.getIdent inst)
-            case fmap (T.pack . show) res of
-                Left _ -> return ContinueEvent
-                Right ident -> do
-                    if ident == userIdent user
-                    then do writeChan notify inst
-                            return TerminateEvent
-                    else do return ContinueEvent
+        event builder $ \(BuilderProxy.Builded sender inst) ->
+            if sender /= bot
+            then return ContinueEvent
+            else do
+                res <- airaWeb3 (Proxy.getIdent inst)
+                case toData <$> res of
+                    Left e -> do print e
+                                 return ContinueEvent
+                    Right ident ->
+                        if ident /= userIdent user
+                        then return ContinueEvent
+                        else do writeChan notify inst
+                                return TerminateEvent
 
         BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
 
