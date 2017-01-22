@@ -120,7 +120,7 @@ userProxies :: MonadIO m => User -> m [Proxy]
 userProxies u = do
     proxies <- botProxies
     res <- airaWeb3 $
-        filterM (fmap ((== userIdent u) . T.pack . show) . Proxy.getIdent) proxies
+        filterM (fmap ((== userIdent u) . toData) . Proxy.getIdent) proxies
     case res of
         Left e -> liftIO (throwIO e)
         Right upx -> return upx
