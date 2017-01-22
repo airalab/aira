@@ -166,7 +166,7 @@ createProxy user = do
                 bot <- getAddress "AiraEth.bot"
                 air <- getAddress "TokenAir.contract"
                 airtx <- ERC20.transfer air nopay inst 50
-                proxy inst air nopay (ERC20.ApproveData bot 50)
+                proxy' inst air nopay (ERC20.ApproveData bot 50)
                 return airtx
 
             case res of

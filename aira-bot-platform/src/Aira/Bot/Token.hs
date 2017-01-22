@@ -182,7 +182,7 @@ refill (_, px : _) = do
                         air <- getAddress "TokenAir.contract"
                         bot <- getAddress "AiraEth.bot"
                         -- Approve tokens
-                        ERC20.approve air nopay bot amount
+                        proxy' px air nopay $ ERC20.ApproveData bot amount
 
                         return tx
                     return $ toMessage $ case res of
