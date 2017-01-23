@@ -186,7 +186,8 @@ proxyNotifyBot = do
     forkBot $
         forever $ do
             p <- liftIO (readChan proxies)
-            proxyListener p
+            forkBot $
+                proxyListener p
 
     -- Spawn listener for builded proxies
     airaWeb3 $ do
