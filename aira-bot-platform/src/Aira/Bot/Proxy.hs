@@ -1,6 +1,10 @@
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies    #-}
-{-# LANGUAGE DataKinds       #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE TemplateHaskell            #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE GADTs                      #-}
 -- |
 -- Module      :  Aira.Bot.Proxy
 -- Copyright   :  Alexander Krupenkin 2016
@@ -39,18 +43,28 @@ import Network.Ethereum.Web3.Address
 import Network.Ethereum.Web3.Types
 import Network.Ethereum.Web3
 import Data.ByteArray (Bytes)
-import Database.Persist.Class
 
 import Web.Bot.Persist
 import Web.Bot.User
 import Web.Bot.Log
 import Web.Bot
 
+import Database.Persist.Class
+import Database.Persist.Sql
+import Database.Persist.TH
+import Database.Persist
+
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Config
 
 type Proxy = Address
+
+share [mkPersist sqlSettings, mkMigrate "migrateUserProxy"] [persistLowerCase|
+UserProxy
+    ident Text
+    proxy Text
+|]
 
 toBytes :: Text -> Bytes
 toBytes = BA.convert . fst . B16.decode . encodeUtf8
@@ -116,14 +130,14 @@ botProxies = do
         Right list -> trySeq list
 
 -- | Load proxies by user tag
-userProxies :: MonadIO m => User -> m [Proxy]
+userProxies :: Persist a => User -> Bot a [Proxy]
 userProxies u = do
-    proxies <- botProxies
-    res <- airaWeb3 $
-        filterM (fmap ((== userIdent u) . toData) . Proxy.getIdent) proxies
-    case res of
-        Left e -> liftIO (throwIO e)
-        Right upx -> return upx
+    list <- runDB $ selectList [UserProxyIdent ==. userIdent u] []
+    let parseVal = fromText . userProxyProxy . entityVal
+    case mapM parseVal list of
+        Left e -> do $logErrorS "Proxy" (T.pack $ show e)
+                     return []
+        Right r -> return r
 
 -- | Create first proxy for given user
 createProxy :: APIToken a => User -> StoryT (Bot a) Proxy
@@ -180,14 +194,18 @@ createProxy user = do
 
 proxyNotifyBot :: (APIToken a, Persist a) => Bot a ()
 proxyNotifyBot = do
+    -- Clear DB
+    runDB $ do
+        runMigration migrateUserProxy
+        deleteWhere [UserProxyIdent !=. "magic"]
+
+    -- Builded proxy event queue
     proxies <- liftIO newChan
 
     -- Proxy listener spawner
     forkBot $
-        forever $ do
-            p <- liftIO (readChan proxies)
-            forkBot $
-                proxyListener p
+        forever $
+            liftIO (readChan proxies) >>= proxyListener
 
     -- Spawn listener for builded proxies
     airaWeb3 $ do
@@ -211,9 +229,10 @@ txInfo px index tgt value dat =
 
 proxyListener :: (APIToken a, Persist a) => Address -> Bot a ()
 proxyListener px = do
+    -- Make proxy event queue
     msgQueue <- liftIO newChan
 
-    airaWeb3 $ do
+    res <- airaWeb3 $ do
         event px $ \(Proxy.PaymentReceived sender value) -> do
             liftIO $ writeChan msgQueue $ toMessage $ T.unlines
                 [ "Incoming payment:"
@@ -276,17 +295,20 @@ proxyListener px = do
                 Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
-    forever $ do
-        msg <- liftIO (readChan msgQueue)
-        withUser $ flip sendMessage msg
+        Proxy.getIdent px
+
+    case toData <$> res of
+      Left e -> $logErrorS "Proxy" (T.pack $ show e)
+      Right ident -> do
+          runDB $ insert_ $ UserProxy ident (toText px)
+          forkBot $
+              forever $ do
+                  msg <- liftIO (readChan msgQueue)
+                  withUser ident $ flip sendMessage msg
+          return ()
   where
-    withUser f = do
-        res <- fmap (T.pack . show) <$> airaWeb3 (Proxy.getIdent px)
-        case res of
-            Left e -> $logErrorS "Proxy" (T.pack $ show e)
-            Right ident -> do
-                mbUser <- runDB $ getBy (UserIdentity ident)
-                case mbUser of
-                    Just user -> f (entityVal user)
-                    Nothing ->
-                        $logErrorS "Proxy" ("Unknown user with ident: " <> ident)
+    withUser ident f = do
+        mbUser <- runDB $ getBy (UserIdentity ident)
+        case mbUser of
+            Just user -> f (entityVal user)
+            Nothing -> $logErrorS "Proxy" ("Unknown user with ident: " <> ident)

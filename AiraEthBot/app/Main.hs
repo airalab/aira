@@ -27,7 +27,7 @@ helpMessage = T.unlines
 
 telegramBot :: Bot Telegram ()
 telegramBot = do
-    forkBot Proxy.proxyNotifyBot
+    Proxy.proxyNotifyBot
     storyBot helpMessage $ fmap accounting
         [ ("/me",       Common.about)
         , ("/send",     Token.send)

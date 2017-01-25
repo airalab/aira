@@ -66,7 +66,7 @@ requestProxy = do
     case fmap entityVal mbUser of
         Just user -> do
             yield $ toMessage $ "Identity found, recipient is " <> userName user
-            head <$> userProxies user
+            head <$> lift (userProxies user)
         Nothing -> do
             yield $ toMessage ("Unknown identity, please check and try again." :: Text)
             requestProxy

@@ -22,17 +22,29 @@ import Web.Bot.Persist
 import Control.Monad.IO.Class
 import Network.Ethereum.Web3
 
-import Data.Aeson (FromJSON(..), ToJSON(..))
+import Data.Aeson (FromJSON(..), ToJSON(..), Value(..))
 import Data.Yaml (decodeFileEither)
 import Control.Exception (throwIO)
-import GHC.Generics (Generic)
+import qualified Data.Text as T
 import Data.Text (Text)
+import GHC.Generics (Generic)
+import Text.Read (readMaybe)
 
 data AiraConfig = MkConfig
   { web3uri       :: String
-  , database      :: Text
+  , database      :: Connection
   , telegramToken :: Text
   } deriving (Show, Eq, Generic)
+
+instance FromJSON Connection where
+    parseJSON (String s) =
+        case readMaybe (T.unpack s) of
+            Just c -> return c
+            Nothing -> fail "Broken connection string!"
+    parseJSON _ = fail "Connection string should be a string!"
+
+instance ToJSON Connection where
+    toJSON = toJSON . show
 
 instance FromJSON AiraConfig
 instance ToJSON AiraConfig
@@ -54,4 +66,4 @@ instance APIToken Telegram where
     apiToken = telegramToken <$> readConfig
 
 instance Persist Telegram where
-    persist = (Sqlite . database) <$> readConfig
+    persist = database <$> readConfig

@@ -29,7 +29,7 @@ type AiraStory a = Account -> StoryT (Bot a) Message
 -- | User accounting combinator
 accounting :: (APIToken a, Persist a) => AiraStory a -> Story a
 accounting story user = do
-    pxs <- userProxies user
+    pxs <- lift $ userProxies user
     case pxs of
         [] -> do px <- createProxy user
                  story (user, [px])
