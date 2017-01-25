@@ -229,6 +229,8 @@ txInfo px index tgt value dat =
 
 proxyListener :: (APIToken a, Persist a) => Address -> Bot a ()
 proxyListener px = do
+    $logDebugS "ProxyListener" (toText px <> " starting...")
+
     -- Make proxy event queue
     msgQueue <- liftIO newChan
 
@@ -298,17 +300,18 @@ proxyListener px = do
         Proxy.getIdent px
 
     case toData <$> res of
-      Left e -> $logErrorS "Proxy" (T.pack $ show e)
+      Left e -> $logErrorS "ProxyListener" (T.pack $ show e)
       Right ident -> do
           runDB $ insert_ $ UserProxy ident (toText px)
           forkBot $
               forever $ do
                   msg <- liftIO (readChan msgQueue)
                   withUser ident $ flip sendMessage msg
-          return ()
+          $logDebugS "ProxyListener" (toText px <> " started.")
   where
     withUser ident f = do
         mbUser <- runDB $ getBy (UserIdentity ident)
         case mbUser of
             Just user -> f (entityVal user)
-            Nothing -> $logErrorS "Proxy" ("Unknown user with ident: " <> ident)
+            Nothing -> $logErrorS "ProxyListener"
+                                  ("Unknown user with ident: " <> ident)
