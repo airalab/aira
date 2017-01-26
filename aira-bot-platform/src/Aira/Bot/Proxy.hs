@@ -151,6 +151,7 @@ createProxy user = do
     res <- airaWeb3 $ do
         builder <- getAddress "BuilderProxy.contract"
         bot     <- getAddress "AiraEth.bot"
+        safe    <- getAddress "AiraSafe.bot"
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
         event builder $ \(BuilderProxy.Builded sender inst) -> do
@@ -161,7 +162,8 @@ createProxy user = do
                 liftIO $ writeChan notify inst
                 return TerminateEvent
 
-        BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot bot
+        BuilderProxy.create builder (cost :: Wei)
+                                    (BytesN $ toBytes $ userIdent user) bot safe
 
     case res of
         Right tx -> do
