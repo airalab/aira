@@ -152,19 +152,13 @@ createProxy user = do
         bot     <- getAddress "AiraEth.bot"
         cost    <- fromWei <$> BuilderProxy.buildingCostWei builder
 
-        event builder $ \(BuilderProxy.Builded sender inst) ->
-            if sender /= bot
+        event builder $ \(BuilderProxy.Builded sender inst) -> do
+            ident <- Proxy.getIdent inst
+            if (sender /= bot) || (toData ident /= userIdent user)
             then return ContinueEvent
             else do
-                res <- airaWeb3 (Proxy.getIdent inst)
-                case toData <$> res of
-                    Left e -> do print e
-                                 return ContinueEvent
-                    Right ident ->
-                        if ident /= userIdent user
-                        then return ContinueEvent
-                        else do writeChan notify inst
-                                return TerminateEvent
+                liftIO $ writeChan notify inst
+                return TerminateEvent
 
         BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
 
@@ -213,7 +207,7 @@ proxyNotifyBot = do
         bot     <- getAddress "AiraEth.bot"
         event builder $ \(BuilderProxy.Builded sender inst) -> do
             when (sender == bot) $
-                writeChan proxies inst
+                liftIO $ writeChan proxies inst
             return ContinueEvent
 
     -- Read exist proxies
@@ -236,7 +230,7 @@ proxyListener px = do
 
     res <- airaWeb3 $ do
         event px $ \(Proxy.PaymentReceived sender value) -> do
-            liftIO $ writeChan msgQueue $ toMessage $ T.unlines
+            liftIO $ writeChan msgQueue $ T.unlines
                 [ "Incoming payment:"
                 , "- from    : " <> uri_address sender
                 , "- value   : " <> T.pack (show (fromWei value :: Ether))
@@ -244,57 +238,45 @@ proxyListener px = do
             return ContinueEvent
 
         event px $ \(Proxy.CallRequest index) -> do
-            res <- airaWeb3 $ do
-                (tgt, val, dat, _) <- Proxy.callAt px index
-                let msg = "New transaction:"
-                        : txInfo px index tgt (fromWei val) dat
-                ready <- Proxy.isAuthorized px index
-                if not ready
-                then return $ T.unlines $
+            (tgt, val, dat, _) <- Proxy.callAt px index
+            let msg = "New transaction:"
+                    : txInfo px index tgt (fromWei val) dat
+            ready <- Proxy.isAuthorized px index
+            if not ready
+            then liftIO $ writeChan msgQueue $ T.unlines $
                         msg ++ ["- status  : waiting for authorization"]
-                else do
-                    tx <- Proxy.run px nopay index
-                    return $ T.unlines $
+            else do
+                tx <- Proxy.run px nopay index
+                liftIO $ writeChan msgQueue $ T.unlines $
                         msg ++ [ "- status  : authorized, pending"
                                , "- hash    : " <> uri_tx tx ]
-            case res of
-                Left e -> print e
-                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
         event px $ \(Proxy.CallAuthorized index authNode) -> do
-            res <- airaWeb3 $ do
-                let msg = "Transaction #" <> T.pack (show index)
-                        <> " is authorized by " <> uri_address authNode <> "."
-                (_, _, _, blk) <- Proxy.callAt px index
-                ready <- (blk == 0 &&) <$> Proxy.isAuthorized px index
-                if not ready
-                then return $ T.unlines
+            let msg = "Transaction #" <> T.pack (show index)
+                    <> " is authorized by " <> uri_address authNode <> "."
+            (_, _, _, blk) <- Proxy.callAt px index
+            ready <- (blk == 0 &&) <$> Proxy.isAuthorized px index
+            if not ready
+            then liftIO $ writeChan msgQueue $ T.unlines
                         [ msg
                         , "Transaction is not ready for run, "
                         , "may be additional authorization is needed." ]
-                else do
-                    tx <- Proxy.run px nopay index
-                    return $ T.unlines
+            else do
+                tx <- Proxy.run px nopay index
+                liftIO $ writeChan msgQueue $ T.unlines
                         [ msg
                         , "Transaction unlocked!"
                         , "Is pending in " <> uri_tx tx ]
-            case res of
-                Left e -> print e
-                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
         event px $ \(Proxy.CallExecuted index block) -> do
-            res <- airaWeb3 $ do
-                (tgt, val, dat, _) <- Proxy.callAt px index
-                return $ T.unlines $
+            (tgt, val, dat, _) <- Proxy.callAt px index
+            liftIO $ writeChan msgQueue $ T.unlines $
                     ("Transaction executed:"
                     : txInfo px index tgt (fromWei val) dat)
                     ++ [ "- status  : executed"
                        , "- block   : " <> uri_block block ]
-            case res of
-                Left e -> print e
-                Right r -> writeChan msgQueue (toMessage r)
             return ContinueEvent
 
         Proxy.getIdent px

@@ -53,10 +53,10 @@ createToken (_, px : _) = do
                 tx <- proxy px builder (cost :: Wei) $
                     BToken.CreateData name symbol decimal total px
 
-                event builder $ \(BToken.Builded client inst) ->
-                    if client == px
-                    then writeChan notify inst >> return TerminateEvent
-                    else return ContinueEvent
+                event builder $ \(BToken.Builded sender inst) ->
+                    if sender /= px then return ContinueEvent
+                                    else do liftIO $ writeChan notify inst
+                                            return TerminateEvent
 
                 return tx
 
@@ -80,10 +80,10 @@ createToken (_, px : _) = do
                 tx <- proxy px builder (cost :: Wei) $
                     BTokenEmission.CreateData name symbol decimal total px
 
-                event builder (\(BTokenEmission.Builded client inst) ->
-                    if client == px
-                    then writeChan notify inst >> return TerminateEvent
-                    else return ContinueEvent)
+                event builder $ \(BTokenEmission.Builded sender inst) ->
+                    if sender /= px then return ContinueEvent
+                                    else do liftIO $ writeChan notify inst
+                                            return TerminateEvent
 
                 return tx
 
@@ -105,10 +105,10 @@ createToken (_, px : _) = do
                 tx <- proxy px builder (cost :: Wei) $
                     BTokenEther.CreateData name symbol px
 
-                event builder $ \(BTokenEther.Builded client inst) ->
-                    if client == px
-                    then writeChan notify inst >> return TerminateEvent
-                    else return ContinueEvent
+                event builder $ \(BTokenEther.Builded sender inst) ->
+                    if sender /= px then return ContinueEvent
+                                    else do liftIO $ writeChan notify inst
+                                            return TerminateEvent
 
                 return tx
 
