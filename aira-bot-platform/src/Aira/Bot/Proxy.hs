@@ -161,7 +161,7 @@ createProxy user = do
                 liftIO $ writeChan notify inst
                 return TerminateEvent
 
-        BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot
+        BuilderProxy.create builder (cost :: Wei) (BytesN $ toBytes $ userIdent user) bot bot
 
     case res of
         Right tx -> do
