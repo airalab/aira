@@ -145,6 +145,7 @@ createProxy user = do
     yield $ toMessage $ T.unlines
       [ "Hello, " <> userName user <> "!"
       , "Your identity: " <> userIdent user ]
+
     notify <- liftIO newChan
 
     res <- airaWeb3 $ do
@@ -178,13 +179,15 @@ createProxy user = do
                 return airtx
 
             case res of
-                Left e -> liftIO (throwIO e)
+                Left e -> do lift $ $logErrorS "Proxy" (T.pack $ show e)
+                             liftIO (throwIO e)
                 Right tx -> yield $ toMessage $
                     "Free Air tokens credited at " <> uri_tx tx
 
             return inst
 
-        Left e -> liftIO (throwIO e)
+        Left e -> do lift $ $logErrorS "Proxy" (T.pack $ show e)
+                     liftIO (throwIO e)
 
 proxyNotifyBot :: (APIToken a, Persist a) => Bot a ()
 proxyNotifyBot = do
