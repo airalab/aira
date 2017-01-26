@@ -163,7 +163,7 @@ createProxy user = do
                 return TerminateEvent
 
         BuilderProxy.create builder (cost :: Wei)
-                                    (BytesN $ toBytes $ userIdent user) bot safe
+                                    (BytesN $ toBytes $ userIdent user) safe bot
 
     case res of
         Right tx -> do
