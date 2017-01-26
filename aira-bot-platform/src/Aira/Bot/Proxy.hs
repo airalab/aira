@@ -82,7 +82,7 @@ proxy' :: (Method method, Unit amount, Provider p)
       -> Web3 p TxHash
       -- ^ Transaction hash
 proxy' a tgt val tx = Proxy.request a nopay tgt (toWei val) txData
-  where txData = BytesD (toBytes (toData tx))
+  where txData = BytesD $ toBytes $ T.drop 2 (toData tx)
 
 -- | Air taxman
 feeGuard :: Provider p => Address -> Web3 p TxHash
