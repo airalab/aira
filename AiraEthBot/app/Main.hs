@@ -35,6 +35,7 @@ telegramBot = do
         , ("/ident",    Common.ident)
         , ("/refill",   Token.refill)
         , ("/secure",   Common.secure)
+        , ("/approve",  Token.approve)
         , ("/newtoken", Factory.createToken)
         , ("/balance",  Token.balance)
         , ("/transfer", Token.transfer)

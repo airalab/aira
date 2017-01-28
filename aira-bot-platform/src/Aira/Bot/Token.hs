@@ -13,6 +13,7 @@
 module Aira.Bot.Token (
     transfer
   , balance
+  , approve
   , refill
   , send
   , ethBalance
@@ -78,6 +79,18 @@ requestProxy = do
         Nothing -> do
             yield $ toMessage ("Unknown identity, please check and try again." :: Text)
             requestProxy
+
+approve :: AiraStory a
+approve (_, px : _) = do
+    token  <- question "Token address:"
+    dest   <- question "Spender address:"
+    amount <- question "Approved value:"
+    res <- airaWeb3 $ do
+        value <- ERC20.toDecimals token amount
+        proxy px token nopay (ERC20.ApproveData dest value)
+    return $ toMessage $ case res of
+        Right tx -> "Success " <> uri_tx tx
+        Left e   -> "Error " <> T.pack (show e)
 
 transferAir :: Persist a => AiraStory a
 transferAir (_, px : _) = do
