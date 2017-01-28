@@ -46,17 +46,25 @@ ethBalance address = do
         Left e       -> liftIO $ throwIO (ParserFail e)
 
 transfer :: Persist a => AiraStory a
-transfer = selectToken transferAIRA transferERC20
+transfer = selectToken transferAir
+                       transferEther
+                       transferERC20
 
 balance :: AiraStory a
-balance = selectToken balanceAIRA balanceERC20
+balance = selectToken balanceAir
+                      balanceEther
+                      balanceERC20
 
-selectToken :: AiraStory a -> AiraStory a -> AiraStory a
-selectToken f1 f2 a = do
-    tokenType <- select "Token to use:" [["Ether"], ["ERC20"]]
+selectToken :: AiraStory a
+            -> AiraStory a
+            -> AiraStory a
+            -> AiraStory a
+selectToken f1 f2 f3 a = do
+    tokenType <- select "Token to use:" [["Air"], ["Ether"], ["ERC20"]]
     case tokenType :: Text of
-        "Ether" -> f1 a
-        "ERC20" -> f2 a
+        "Air"   -> f1 a
+        "Ether" -> f2 a
+        "ERC20" -> f3 a
         x -> return $ toMessage ("Unknown option `" <> x <> "`!")
 
 requestProxy :: Persist a => StoryT (Bot a) Address
@@ -70,6 +78,29 @@ requestProxy = do
         Nothing -> do
             yield $ toMessage ("Unknown identity, please check and try again." :: Text)
             requestProxy
+
+transferAir :: Persist a => AiraStory a
+transferAir (_, px : _) = do
+    dest  <- requestProxy
+    amount <- question "Value in airs:"
+    res <- airaWeb3 $ do
+        token <- getAddress "TokenAir.contract"
+        value <- ERC20.toDecimals token amount
+        bal   <- ERC20.balanceOf token px
+
+        if value > bal
+        then liftIO $ throwIO $ UserFail $
+                "Balance is too low: " ++ show bal
+                                       ++ " requested: " ++ show value
+        else proxy px token nopay (ERC20.TransferData dest value)
+
+    return $ toMessage $ case res of
+        Right tx -> "Success " <> uri_tx tx
+        Left e   -> "Error " <> T.pack (show e)
+
+transferAir _ = return $ toMessage $ T.unlines
+    [ "Your account isn't work correctly!"
+    , "Please wait on initiation step or call Airalab support." ]
 
 transferERC20 :: Persist a => AiraStory a
 transferERC20 (_, px : _) = do
@@ -94,8 +125,8 @@ transferERC20 _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
 
-transferAIRA :: Persist a => AiraStory a
-transferAIRA (_, px : _) = do
+transferEther :: Persist a => AiraStory a
+transferEther (_, px : _) = do
     dest   <- requestProxy
     amount <- question "Value in ethers:"
     res <- airaWeb3 $ do
@@ -111,12 +142,12 @@ transferAIRA (_, px : _) = do
         Right tx -> "Success " <> uri_tx tx
         Left e   -> T.pack (show e)
 
-transferAIRA _ = return $ toMessage $ T.unlines
+transferEther _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
 
-balanceAIRA :: AiraStory a
-balanceAIRA (_, pxs) = do
+balanceEther :: AiraStory a
+balanceEther (_, pxs) = do
     res <- airaWeb3 $ mapM ethBalance pxs
     return $ toMessage $ case res of
         Left e -> T.pack (show e)
@@ -124,6 +155,20 @@ balanceAIRA (_, pxs) = do
             "Account balances:" : fmap pxBalance (zip pxs balances)
   where pxBalance :: (Address, Ether) -> Text
         pxBalance (p, b) = "- " <> uri_address p <> ": " <> T.pack (show b)
+
+balanceAir :: AiraStory a
+balanceAir (_, pxs) = do
+    res <- airaWeb3 $ do
+        air <- getAddress "TokenAir.contract"
+        bs  <- mapM (ERC20.balanceOf air) pxs
+        mapM (ERC20.fromDecimals air) bs
+    return $ toMessage $ case res of
+        Left e -> T.pack (show e)
+        Right balances -> T.unlines $
+            "Account balances: " : fmap pxBalance (zip pxs balances)
+  where pxBalance :: (Address, Double) -> Text
+        pxBalance (p, b) = "- " <> uri_address p <> ": "
+                                <> T.pack (show b) <> " air"
 
 balanceERC20 :: AiraStory a
 balanceERC20 (_, pxs) = do
