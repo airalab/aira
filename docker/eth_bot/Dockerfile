@@ -8,7 +8,7 @@ RUN apt-get update \
 RUN wget -qO- https://get.haskellstack.org/ | sh
 RUN apt-get autoclean
 
-RUN git clone --recursive https://github.com/airalab/aira -b ${GIT_BRANCH:-develop}
+RUN git clone --recursive https://github.com/airalab/aira -b ${GIT_BRANCH:-master}
 RUN cd /aira/AiraEthBot && stack setup
 RUN cd /aira/AiraEthBot && stack install
 RUN mv /root/.local/bin/AiraEthBot /usr/local/bin
