@@ -213,12 +213,14 @@ refill :: AiraStory a
 refill (_, px : _) = do
     amount <- question "Amount of `Air` to buy:"
     res <- airaWeb3 $ do
-        airSale <- getAddress "TokenAirSelling.contract"
-        price <- TokenSelling.price_wei airSale
-        return (fromWei (amount * price) :: Ether)
+        air     <- getAddress "TokenAir.contract"
+        selling <- getAddress "TokenSelling.contract"
+        price   <- TokenSelling.priceWei selling air
+        return (fromWei (amount * price) :: Ether, air, selling)
+
     case res of
         Left e -> return $ toMessage $ T.pack (show e)
-        Right amount_ether -> do
+        Right (amount_ether, air, selling) -> do
             res <- select ("Do you want to pay "
                             <> T.pack (show amount_ether)
                             <> " for " <> T.pack (show amount) <> " Air?")
@@ -227,22 +229,22 @@ refill (_, px : _) = do
                 "Yes" -> do
                     res <- airaWeb3 $ do
                         avail <- ethBalance px
-                        airSale <- getAddress "TokenAirSelling.contract"
                         when (avail < amount_ether) $
                             liftIO $ throwIO $ UserFail $
                                 "To low account balance: "
                                     ++ show avail
                                     ++ " requested: "
                                     ++ show amount_ether
+
                         -- Buy tokens
-                        tx <- proxy px airSale amount_ether TokenSelling.BuyData
+                        tx <- proxy' px selling amount_ether $
+                            TokenSelling.BuyData air
 
-                        air <- getAddress "TokenAir.contract"
-                        bot <- getAddress "AiraEth.bot"
                         -- Approve tokens
+                        bot <- getAddress "AiraEth.bot"
                         proxy' px air nopay $ ERC20.ApproveData bot amount
-
                         return tx
+
                     return $ toMessage $ case res of
                         Left e -> T.pack (show e)
                         Right _ -> "Buy transaction sended."
