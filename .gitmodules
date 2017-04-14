@@ -7,3 +7,6 @@
 [submodule "habit"]
 	path = habit
 	url = https://github.com/airalab/habit.git
+[submodule "aira-IoT"]
+	path = aira-IoT
+	url = https://github.com/airalab/aira-IoT
