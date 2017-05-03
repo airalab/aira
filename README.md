@@ -9,11 +9,11 @@ Please, start here: https://github.com/airalab/aira/releases
 **Stable** by IPFS:
 
 ```bash
-curl -s http://ipfs.io/ipfs/QmVwuVpi9k97s8XK3uzdCDq6fhrqamT3SzoE4BfoqKbh1u | sudo bash
+curl -s http://ipfs.io/ipfs/QmagagQAJmFXU2twpJ12pnorg7oubypvt44UexYwPvaLmt | bash
 ```
 
 Or **latest** by GitHub:
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/start.sh | sudo bash
+curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/start.sh | bash
 ```
