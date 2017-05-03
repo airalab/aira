@@ -1,5 +1,7 @@
 # Aira
 
+Autonomous intelligent robot agent (AIRA) project which implements the standard of economic interaction between human-robot and robot-robot via liability smart contract. Aira makes it possible to connect a variety of different robots to the market of robot's liabilities which existing in Ethereum for the direct sale of data from robot sensors, ordering of unmanned land, sea and air freight / passenger logistics services and organization ordering of personalized products at fully automated enterprises.
+
 Please, start here: https://github.com/airalab/aira/releases
 
 ### Installation
