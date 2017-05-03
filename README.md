@@ -17,3 +17,8 @@ Or **latest** by GitHub:
 ```bash
 curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/start.sh | bash
 ```
+### DApp Aira network market for buying robot liability
+
+https://airalab.github.io/DApp-Aira-market 
+
+**On Release 0.8 working only with smart contract on KOVAN network**
