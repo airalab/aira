@@ -7,7 +7,7 @@ Please, start here: https://github.com/airalab/aira/releases
 **Stable** by IPFS:
 
 ```bash
-curl -s http://ipfs.io/ipfs/QmUWi93qFRN6f35NQkDKaWJnokKCcrMYmtL9bponMNaBwm | bash
+curl -s http://ipfs.io/ipfs/QmVwuVpi9k97s8XK3uzdCDq6fhrqamT3SzoE4BfoqKbh1u | bash
 ```
 
 Or **latest** by GitHub:

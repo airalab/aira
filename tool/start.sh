@@ -17,7 +17,7 @@ chmod +x /usr/local/bin/docker-compose
 
 echo "AIRA :: Building image..."
 git clone --recursive https://github.com/airalab/aira
-cd aira/aira-IoT/docker/shared-state-liability
+cd aira-IoT/docker/share-state-liability 
 docker-compose build
 
 echo "AIRA :: Running..."
