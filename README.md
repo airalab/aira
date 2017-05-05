@@ -9,7 +9,7 @@ Please, start here: https://github.com/airalab/aira/releases
 **Stable** by IPFS:
 
 ```bash
-curl -s http://ipfs.io/ipfs/QmTuAzCBYkT6Ys7eusv1rDZv7CwJG2LCiQk9SMCwh5rNek | bash
+curl -s http://ipfs.io/ipfs/QmWhmBBHvmVdR7bf3yb8sc94caNxWHKxi7bR4fNTXGUARP | bash
 ```
 
 Or **latest** by GitHub:
@@ -17,6 +17,11 @@ Or **latest** by GitHub:
 ```bash
 curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/start.sh | bash
 ```
+
+#### Troubleshooting
+
+1. `curl` not found - apt install curl
+
 ### DApp Aira network market for buying robot liability
 
 https://airalab.github.io/DApp-Aira-market 
