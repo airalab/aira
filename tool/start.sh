@@ -10,8 +10,8 @@ echo "AIRA :: Append user to docker group..."
 sudo gpasswd -a `whoami` docker
 
 echo "AIRA :: Install Docker Compose..."
-curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
+curl -L https://bootstrap.pypa.io/get-pip.py | sudo python
+sudo pip install docker-compose
 
 echo "AIRA :: Building image..."
 git clone --recursive https://github.com/airalab/aira
@@ -20,3 +20,5 @@ docker-compose build
 
 echo "AIRA :: Running..."
 docker-compose up -d
+
+echo "AIRA :: DONE"
