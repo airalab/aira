@@ -6,8 +6,11 @@
 echo "AIRA :: Install Docker..."
 curl -sSL https://get.docker.com | sudo sh
 
+echo "AIRA :: Append user to docker group..."
+sudo gpasswd -a `whoami` docker
+
 echo "AIRA :: Install Docker Compose..."
-curl -L --fail https://github.com/docker/compose/releases/download/1.12.0/run.sh | sudo tee /usr/local/bin/docker-compose
+curl -L https://github.com/docker/compose/releases/download/1.12.0/docker-compose-`uname -s`-`uname -m` | sudo tee /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
 echo "AIRA :: Building image..."
