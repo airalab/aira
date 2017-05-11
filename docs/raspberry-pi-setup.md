@@ -38,9 +38,10 @@ Login `pi`, password `raspberry`.
 3. sed -i 's/node/armhf\/node/' ../market/Dockerfile
 4. sed -i 's/ubuntu/armhf\/ubuntu/' ../agent/Dockerfile
 5. sed -i 's/FROM ros/FROM droneemployee\/ros-base-armhf/' Dockerfile
-6. sed -i 's/ipfs-cloud/ipfs-cloud:armhf/' docker-compose.yaml
-7. sed -i 's/parity-cloud:unstable/parity-cloud:armhf/' docker-compose.yaml
-8. docker-compose build
+6. sed -i 's/amd64/arm/' Dockerfile
+7. sed -i 's/ipfs-cloud/ipfs-cloud:armhf/' docker-compose.yaml
+8. sed -i 's/parity-cloud:unstable/parity-cloud:armhf/' docker-compose.yaml
+9. docker-compose build
 
 #### Start
 
