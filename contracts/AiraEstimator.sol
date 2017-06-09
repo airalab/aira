@@ -1,7 +1,8 @@
 pragma solidity ^0.4.9;
 
+import 'token/TokenEmission.sol';
 import 'market/Market.sol';
-import 'market/LiabilityMarket.sol';
+import './AiraMarket.sol';
 
 contract AiraEstimator is Object {
     enum Mode { Estimation, Trading }
@@ -29,7 +30,7 @@ contract AiraEstimator is Object {
     /**
      * @dev Market metrics token address
      */
-    ERC20 public metrics;
+    TokenEmission public metrics;
 
     /**
      * @dev AIR token address
@@ -44,12 +45,12 @@ contract AiraEstimator is Object {
     /**
      * @dev Robot liabilities trading
      */
-    LiabilityMarket public liabilityMarket;
+    AiraMarket public airaMarket;
 
     /**
-     * @dev Visior fee in 1/10 percents
+     * @dev Visionary fee in 1/10 percents
      */
-    uint256 public visiorFee;
+    uint256 public visionaryFee;
 
     /**
      * @dev Total market estimation in AIR tokens
@@ -70,21 +71,21 @@ contract AiraEstimator is Object {
      * @dev Aira market estimator contract
      */
     function AiraEstimator(
-        uint256 _visiorFee,
+        uint256 _visionaryFee,
         uint256 _investorsFee,
         uint256 _metricsPrice,
         address _metrics,
         address _air,
         address _metricsMarket,
-        address _liabilityMarket
+        address _airaMarket
     ) {
-        visiorFee       = _visiorFee;
-        investorsFee    = _investorsFee;
-        metricsPrice    = _metricsPrice;
-        metrics         = ERC20(_metrics);
-        air             = ERC20(_air);
-        tokenMarket     = Market(_metricsMarket);
-        liabilityMarket = LiabilityMarket(_liabilityMarket);
+        visionaryFee = _visionaryFee;
+        investorsFee = _investorsFee;
+        metricsPrice = _metricsPrice;
+        metrics      = TokenEmission(_metrics);
+        air          = ERC20(_air);
+        metricsMarket= Market(_metricsMarket);
+        airaMarket   = AiraMarket(_airaMarket);
     }
 
     /**
@@ -98,5 +99,39 @@ contract AiraEstimator is Object {
             throw;
 
         totalEstimation += airValue;
+    }
+
+    /**
+     * @dev Withrawal visionary comission by self
+     */
+    function withdraw() onlyOwner {
+        if (air.balanceOf(this) > totalEstimation) {
+            var totalTax = air.balanceOf(this) - totalEstimation;
+            var visionaryTax = totalTax * visionaryFee / (visionaryFee + investorsFee);
+            air.transfer(owner, visionaryTax);
+        }
+    }
+
+    /**
+     * @dev Buy robot liability by metrics
+     */
+    function realizeMetrics(uint256 _lot) {
+        var lotPrice = airaMarket.priceOf(_lot);
+        if (lotPrice == 0) throw;
+
+        var totalTax = air.balanceOf(this) - totalEstimation;
+        var investorsTax = totalTax * investorsFee / (visionaryFee + investorsFee);
+        var investorsBalance = totalEstimation + investorsTax;
+
+        var senderBalance = investorsBalance * metrics.balanceOf(msg.sender) / metrics.totalSupply();
+        if (senderBalance < lotPrice) throw;
+
+        var metricsPrice  = investorsBalance / metrics.totalSupply();
+        var metricsToBurn = lotPrice / metricsPrice;
+        if (!metrics.transferFrom(msg.sender, this, metricsToBurn)) throw;
+        metrics.burn(metricsToBurn);
+
+        air.approve(airaMarket, lotPrice + airaMarket.taxOf(_lot));
+        airaMarket.buyAt(_lot);
     }
 }

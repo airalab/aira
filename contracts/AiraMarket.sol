@@ -25,7 +25,7 @@ contract AiraMarket is LiabilityMarket {
      * @dev Get tax value by order id
      * @param _id Order identifier
      */
-    function taxOf(uint256 _id) constant {
+    function taxOf(uint256 _id) constant returns (uint256) {
         return comission * priceOf[_id] / 100;
     }
 
@@ -67,7 +67,7 @@ contract AiraMarket is LiabilityMarket {
         getBid(orderBidOf[_id]);
         o.promisor = msg.sender;
 
-        if (!token.transferFrom(msg.sender, this, priceOf[_id])
+        if (!token.transferFrom(msg.sender, this, priceOf[_id]))
             throw;
 
         var tax = taxOf(_id);
