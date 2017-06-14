@@ -35,17 +35,23 @@ contract AiraEstimator is Object {
     /**
      * @dev AIR token address
      */
-    ERC20 public air;
+    ERC20 public air = ERC20(0);
 
     /**
      * @dev Market metrics trading 
      */
     Market public metricsMarket; 
 
+    function setMetricsMarket(Market _market) onlyOwner
+    { metricsMarket = _market; }
+
     /**
      * @dev Robot liabilities trading
      */
     AiraMarket public airaMarket;
+
+    function setAiraMarket(AiraMarket _market) onlyOwner
+    { airaMarket = _market; }
 
     /**
      * @dev Visionary fee in 1/10 percents
@@ -74,18 +80,12 @@ contract AiraEstimator is Object {
         uint256 _visionaryFee,
         uint256 _investorsFee,
         uint256 _metricsPrice,
-        address _metrics,
-        address _air,
-        address _metricsMarket,
-        address _airaMarket
+        address _metrics
     ) {
         visionaryFee = _visionaryFee;
         investorsFee = _investorsFee;
         metricsPrice = _metricsPrice;
         metrics      = TokenEmission(_metrics);
-        air          = ERC20(_air);
-        metricsMarket= Market(_metricsMarket);
-        airaMarket   = AiraMarket(_airaMarket);
     }
 
     /**
