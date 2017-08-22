@@ -1,4 +1,4 @@
-## x86-64 Installation 
+## x86-64 Linux installation 
 
 ### One-line installer
 
@@ -7,6 +7,23 @@ curl -s http://ipfs.io/ipfs/QmWhmBBHvmVdR7bf3yb8sc94caNxWHKxi7bR4fNTXGUARP | bas
 ```
 
 This should clone and build aira images and running up at all.
+
+## OS X installation
+
+If Parallels Desktop is already installed:
+```bash
+curl -s http://ipfs.io/ipfs/QmVeekk6H3bQF48moCwACXNNN25uiNr31DHchrKqUjQajn | bash
+```
+
+If Oracle VM VirtualBox is already installed:
+```bash
+curl -s http://ipfs.io/ipfs/QmQkXwVpLGBEc3v49Gdr3kBHqKKeaHcRzCYEnGjHVifjXg | bash
+```
+
+To use the xhyve hypervisor:
+```bash
+curl -s http://ipfs.io/ipfs/QmTHCeCLyEDLSBb4GWhQtR4p53CZpLGNBfsB3m3xWzKVkd | bash
+```
 
 ### After install
 
