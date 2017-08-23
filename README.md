@@ -4,7 +4,7 @@ Autonomous intelligent robot agent (AIRA) project which implements the standard 
 
 Please, start here: https://github.com/airalab/aira/releases
 
-### Installation
+### Linux installation
 
 **Stable** by IPFS:
 
@@ -21,6 +21,51 @@ curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/start.sh | 
 #### Troubleshooting
 
 1. `curl` not found - apt install curl
+
+### OS X installation
+
+If Parallels Desktop is already installed:
+
+**Stable** by IPFS:
+
+```bash
+curl -s http://ipfs.io/ipfs/QmVeekk6H3bQF48moCwACXNNN25uiNr31DHchrKqUjQajn | bash
+```
+
+Or **latest** by GitHub:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/install.osx.parallels.sh | bash
+```
+
+If Oracle VM VirtualBox is already installed:
+
+**Stable** by IPFS:
+
+```bash
+curl -s http://ipfs.io/ipfs/QmQkXwVpLGBEc3v49Gdr3kBHqKKeaHcRzCYEnGjHVifjXg | bash
+```
+
+Or **latest** by GitHub:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/install.osx.virtualbox.sh | bash
+```
+
+To use the xhyve hypervisor:
+
+**Stable** by IPFS:
+
+```bash
+curl -s http://ipfs.io/ipfs/QmTHCeCLyEDLSBb4GWhQtR4p53CZpLGNBfsB3m3xWzKVkd | bash
+```
+
+Or **latest** by GitHub:
+
+```bash
+curl -sSL https://raw.githubusercontent.com/airalab/aira/master/tool/install.osx.xhyve.sh | bash
+```
+
 
 ### DApp Aira network market for buying robot liability
 
