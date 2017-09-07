@@ -23,6 +23,7 @@ module Aira.Bot.Proxy (
   , proxyNotifyBot
   , proxy'
   , proxy
+  , ethBalance
   ) where
 
 import qualified Aira.Contract.BuilderProxy as BuilderProxy
@@ -33,8 +34,11 @@ import qualified Data.ByteArray             as BA
 import qualified Data.Text                  as T
 
 import Control.Concurrent.Chan (newChan, writeChan, readChan)
+import Network.Ethereum.Web3.Types (CallMode(Latest))
+import Network.Ethereum.Web3.Api (eth_getBalance)
 import Control.Monad (filterM, when, forever)
 import Data.Text.Encoding (encodeUtf8)
+import Data.Text.Read (hexadecimal)
 import Control.Exception (throwIO)
 import Control.Monad.IO.Class
 
@@ -69,6 +73,13 @@ UserProxy
 toBytes :: Text -> Bytes
 toBytes = BA.convert . fst . B16.decode . encodeUtf8
 
+ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
+ethBalance address = do
+    res <- eth_getBalance address Latest
+    case hexadecimal res of
+        Right (x, _) -> return (fromWei x)
+        Left e       -> liftIO $ throwIO (ParserFail e)
+
 -- | Passthrough given method of target over proxy contract
 proxy' :: (Method method, Unit amount, Provider p)
       => Proxy
@@ -90,14 +101,13 @@ feeGuard a = do
     air <- getAddress "TokenAir.contract"
     bot <- getAddress "AiraEth.bot"
     bal <- ERC20.balanceOf air a
-    alw <- ERC20.allowance air a bot
-    when (bal < fee || alw < fee) $
-        liftIO $ throwIO $ UserFail "Too low Air balance!"
-    ERC20.transferFrom air nopay a bot fee
+    when (bal < fee) $
+        liftIO $ throwIO $ UserFail "Too low Air balance! Required at least of 1!"
+    proxy' a air nopay $ ERC20.TransferData bot fee
   where fee = 1
 
 -- | Like @proxy'@ but take a fee and add some checks
-proxy :: (Method method, Unit amount, Provider p)
+proxy :: (Method method, Ord amount, Unit amount, Provider p)
       => Proxy
       -- ^ Proxy address
       -> Address
@@ -108,8 +118,11 @@ proxy :: (Method method, Unit amount, Provider p)
       -- ^ Target contract method
       -> Web3 p TxHash
       -- ^ Transaction hash
-proxy a b c d = do feeGuard a
-                   -- TODO: Add checks
+proxy a b c d = do proxyBal <- ethBalance a
+                   when (proxyBal < c) $
+                       liftIO $ throwIO $
+                           UserFail $ "Too low ETH balance! Required " ++ show (convert c :: Ether)
+                   feeGuard a -- TODO: Add checks
                    proxy' a b c d
 
 trySeq :: MonadIO m => [Web3 AiraConfig b] -> m [b]
@@ -176,15 +189,13 @@ createProxy user = do
             res <- airaWeb3 $ do
                 bot <- getAddress "AiraEth.bot"
                 air <- getAddress "TokenAir.contract"
-                airtx <- ERC20.transfer air nopay inst 50
-                proxy' inst air nopay (ERC20.ApproveData bot 50)
-                return airtx
+                ERC20.transfer air nopay inst 1 
 
             case res of
                 Left e -> do lift $ $logErrorS "Proxy" (T.pack $ show e)
                              liftIO (throwIO e)
                 Right tx -> yield $ toMessage $
-                    "Free Air tokens credited at " <> uri_tx tx
+                    "Bounty Air tokens credited at " <> uri_tx tx
 
             return inst
 

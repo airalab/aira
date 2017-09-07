@@ -14,14 +14,11 @@ module Aira.Bot.Token (
     transfer
   , balance
   , approve
-  , refill
   , send
   , ethBalance
   ) where
 
-import Network.Ethereum.Web3.Types (CallMode(Latest))
 import Control.Monad.IO.Class (liftIO)
-import Data.Text.Read (hexadecimal)
 import Control.Exception (throwIO)
 import Network.Ethereum.Web3.Api
 import Network.Ethereum.Web3
@@ -30,7 +27,6 @@ import Web.Bot.Persist
 import Web.Bot.User
 import Web.Bot
 
-import qualified Aira.Contract.TokenSelling as TokenSelling
 import qualified Aira.Contract.Token        as ERC20
 import qualified Data.Text                  as T
 import Aira.Bot.Common
@@ -38,13 +34,6 @@ import Aira.Bot.Proxy
 import Aira.TextFormat
 import Aira.Registrar
 import Aira.Account
-
-ethBalance :: (Provider a, Unit u) => Address -> Web3 a u
-ethBalance address = do
-    res <- eth_getBalance address Latest
-    case hexadecimal res of
-        Right (x, _) -> return (fromWei x)
-        Left e       -> liftIO $ throwIO (ParserFail e)
 
 transfer :: Persist a => AiraStory a
 transfer = selectToken transferAir
@@ -206,51 +195,5 @@ send (_, px : _) = do
         Left e   -> T.pack (show e)
 
 send _ = return $ toMessage $ T.unlines
-    [ "Your account isn't work correctly!"
-    , "Please wait on initiation step or call Airalab support." ]
-
-refill :: AiraStory a
-refill (_, px : _) = do
-    amount <- question "Amount of `Air` to buy:"
-    res <- airaWeb3 $ do
-        air     <- getAddress "TokenAir.contract"
-        selling <- getAddress "TokenSelling.contract"
-        price   <- TokenSelling.priceWei selling air
-        return (fromWei (amount * price) :: Ether, air, selling)
-
-    case res of
-        Left e -> return $ toMessage $ T.pack (show e)
-        Right (amount_ether, air, selling) -> do
-            res <- select ("Do you want to pay "
-                            <> T.pack (show amount_ether)
-                            <> " for " <> T.pack (show amount) <> " Air?")
-                            [["Yes"], ["No"]]
-            case res :: Text of
-                "Yes" -> do
-                    res <- airaWeb3 $ do
-                        avail <- ethBalance px
-                        when (avail < amount_ether) $
-                            liftIO $ throwIO $ UserFail $
-                                "To low account balance: "
-                                    ++ show avail
-                                    ++ " requested: "
-                                    ++ show amount_ether
-
-                        -- Buy tokens
-                        tx <- proxy' px selling amount_ether $
-                            TokenSelling.BuyData air
-
-                        -- Approve tokens
-                        bot <- getAddress "AiraEth.bot"
-                        proxy' px air nopay $ ERC20.ApproveData bot amount
-                        return tx
-
-                    return $ toMessage $ case res of
-                        Left e -> T.pack (show e)
-                        Right _ -> "Buy transaction sended."
-
-                _ -> return $ toMessage ("Request canceled." :: Text)
-
-refill _ = return $ toMessage $ T.unlines
     [ "Your account isn't work correctly!"
     , "Please wait on initiation step or call Airalab support." ]
