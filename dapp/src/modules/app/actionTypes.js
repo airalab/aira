@@ -1,3 +1,0 @@
-export const FLASH_MESSAGE = 'APP_FLASH_MESSAGE'
-export const SET_BALANCE = 'APP_SET_BALANCE'
-export const SET_APPROVED = 'APP_SET_APPROVED'

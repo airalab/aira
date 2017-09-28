@@ -1,12 +1,3 @@
-[submodule "web3"]
-	path = web3
-	url = https://github.com/airalab/hs-web3.git
-[submodule "hs-ipfs-client"]
-	path = hs-ipfs-client
-	url = https://github.com/airalab/hs-ipfs-client.git
-[submodule "habit"]
-	path = habit
-	url = https://github.com/airalab/habit.git
-[submodule "aira-IoT"]
-	path = aira-IoT
-	url = https://github.com/airalab/aira-IoT
+[submodule "nixpkgs"]
+	path = nixpkgs
+	url = https://github.com/airalab/airalab-channels
