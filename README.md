@@ -7,7 +7,7 @@
 
 ### Airalab [Nix channel](https://nixos.org/nix/manual/#sec-channels)
 
-- Channel `https://hydra.aira.life/project/aira/channel/latest
+- https://hydra.aira.life/project/aira/channel/latest
 - Binary cache `https://hydra.aira.life`
 - Public key `hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=`
 
