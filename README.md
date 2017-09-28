@@ -1,6 +1,7 @@
 # AIRA
 
-[![GitHub release](https://img.shields.io/github/release/airalab/aira.svg)](https://github.com/airalab/aira/releases)
+[![GitHub release](https://img.shields.io/github/release/airalab/aira/all.svg)](https://github.com/airalab/aira/releases)
+[![license](https://img.shields.io/github/license/airalab/aira.svg)](https://github.com/airalab/aira/blob/master/LICENSE)
 
 > Autonomous intelligent robot agent (AIRA) project which implements the standard of economic interaction between human-robot and robot-robot. Aira makes it possible to connect a variety of different robots to the market of robot's liabilities which existing in Ethereum.
 
@@ -48,9 +49,11 @@ So, if you dont want to compile the code on your local machine, you can add bina
 
 Appen the AIRA binary cache into Nix configuration:
 
-```nix 
-nix.binaryCaches = [ https://cache.nixos.org https://hydra.aira.life ];
-nix.binaryCachePublicKeys = [ "hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=" ];
+```nix
+{
+  nix.binaryCaches = [ https://cache.nixos.org https://hydra.aira.life ];
+  nix.binaryCachePublicKeys = [ "hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=" ];
+}
 ```
 
 ## AIRA configuration
