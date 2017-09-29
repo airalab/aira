@@ -10,7 +10,8 @@ matrix:
         - os: linux
           sudo: required
           script:
-              - TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}/nixpkgs ./nixpkgs/maintainers/scripts/travis-nox-review-pr.sh nixpkgs-verify nixpkgs-manual nixpkgs-tarball nixpkgs-unstable
-              - TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}/nixpkgs ./nixpkgs/maintainers/scripts/travis-nox-review-pr.sh nixos-options nixos-manual
+              - TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}/nixpkgs ./nixpkgs/maintainers/scripts/travis-nox-review-pr.sh nixpkgs-verify nixpkgs-tarball
+              - TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}/nixpkgs ./nixpkgs/maintainers/scripts/travis-nox-review-pr.sh nixpkgs-tarball
+              - TRAVIS_BUILD_DIR=${TRAVIS_BUILD_DIR}/nixpkgs ./nixpkgs/maintainers/scripts/travis-nox-review-pr.sh nixos-options
           env:
-            - BUILD_TYPE="Test Nixpkgs evaluation & NixOS manual build"
+            - BUILD_TYPE="Test Nixpkgs evaluation & NixOS options"
