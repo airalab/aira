@@ -22,7 +22,7 @@ The first, fetch installation image:
 | Type | Arch   | SHA256 | Link |
 |------|--------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
 | ISO  | x86_64 | 22a8932afa7594aae209f1c415053637135ffe2111e26703e2a94d8604b741a5 | [Download](https://hydra.aira.life/job/aira/railway-game/nixos.iso_minimal.x86_64-linux/latest/download/1) |
-| Raw  | x86_64 | 570060749c0b9445baf5dad0678c675d98feeeaccd8ac53c9a647f8bc802db48 | [Download]()
+| Raw  | x86_64 | 570060749c0b9445baf5dad0678c675d98feeeaccd8ac53c9a647f8bc802db48 | [Download](https://github.com/airalab/aira/releases/download/0.11/aira-nixos-x86_64.img.xz)
 
 #### QEMU 
 
