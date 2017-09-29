@@ -1,7 +1,7 @@
-# AIRA
+![AIRA](https://github.com/airalab/aira.life/raw/master/wordpress/aira-2.2/assets/i/aira-logo-x2.jpg)
 
+[![Build Status](https://travis-ci.org/airalab/aira.svg?branch=master)](https://travis-ci.org/airalab/aira)
 [![GitHub release](https://img.shields.io/github/release/airalab/aira/all.svg)](https://github.com/airalab/aira/releases)
-[![license](https://img.shields.io/github/license/airalab/aira.svg)](https://github.com/airalab/aira/blob/master/LICENSE)
 
 > Autonomous intelligent robot agent (AIRA) project which implements the standard of economic interaction between human-robot and robot-robot. Aira makes it possible to connect a variety of different robots to the market of robot's liabilities which existing in Ethereum.
 
