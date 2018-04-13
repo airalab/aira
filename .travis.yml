@@ -1,5 +1,7 @@
 language: nix
+
 script:
-- nix-build --option binary-caches "https://cache.nixos.org https://hydra.aira.life"
-            --option trusted-public-keys "hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak="
-            -A docker_image airapkgs/nixos/release.nix
+- nix-build
+    --option binary-caches "https://cache.nixos.org https://hydra.aira.life"
+    --option trusted-public-keys "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak="
+    -A docker_image airapkgs/nixos/release.nix
