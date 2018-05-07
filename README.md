@@ -21,7 +21,7 @@ The first, fetch installation image:
 
 | Type | Arch   | SHA256 | Link |
 |------|--------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | 04ba6ba45396fa1cff655624ccfc4e979f77e3e9b3235500891226ae734082dd | [Download](https://github.com/airalab/aira/releases/download/0.12/aira-lighthouse-x86_64.ova)
+| VirtualBox | x86_64 | a36c9416e836dac6ab60ff771dcdd65694905298e414201404199471bd71bbac | [Download](https://github.com/airalab/aira/releases/download/0.12.1/aira-lighthouse-0.12.1-x86_64.ova)
 
 ### Existing NixOS installation
 
