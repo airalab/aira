@@ -1,4 +1,4 @@
-![AIRA](https://github.com/airalab/aira.life/raw/master/wordpress/aira-2.2/assets/i/aira-logo-x2.jpg)
+![AIRA](https://github.com/airalab/aira.life/raw/1a41e20ca0eed78ba9eb5376285bbe8fe961689e/wordpress/aira-2.2/assets/i/aira-logo-x2.jpg)
 
 [![Build Status](https://travis-ci.org/airalab/aira.svg?branch=master)](https://travis-ci.org/airalab/aira)
 [![GitHub release](https://img.shields.io/github/release/airalab/aira/all.svg)](https://github.com/airalab/aira/releases)
