@@ -11,77 +11,71 @@
 - Binary cache `https://hydra.aira.life`
 - Public key `hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=`
 
-## AIRA installation
+## AIRA lighthouse installation
 
 AIRA project provide a NixOS based GNU/Linux distro which contains all set of Airalab and third-party software.
 
-### Hardware/VM installation
-
-The first, fetch installation image:
+### VirtualBox images 
 
 | Type | Arch   | SHA256 | Link |
 |------|--------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | a36c9416e836dac6ab60ff771dcdd65694905298e414201404199471bd71bbac | [Download](https://github.com/airalab/aira/releases/download/0.12.1/aira-lighthouse-0.12.1-x86_64.ova)
+| VirtualBox | x86_64 | 0e7c4df557097e22dda47754a5edd4fcc305b09f4c9c669efef7cb4fa2873e1e | [Download](https://github.com/airalab/aira/releases/download/0.13/aira-lighthouse-0.13-x86_64.ova)
 
-### Existing NixOS installation
+### NixOS installation
 
-On existing NixOS instance fortunately you can use the channels.
+1. git clone --recursive https://github.com/airalab/aira.git
+2. add `services.lighthouse.enable = true;` to `/etc/nixos/configuration.nix`
+3. nixos-rebuild switch -I nixpkgs=$(realpath aira/airapkgs)
 
-Append the AIRA channel:
+## AIRA development cheatsheet
 
-``` bash
-$ nix-channel --add https://hydra.aira.life/project/aira/channel/latest aira
-$ nix-channel --update
-```
+### Status of the system
 
-So, if you dont want to compile the code on your local machine, you can add binary cache witch contains precompiled and tested AIRA packages.
-
-Appen the AIRA binary cache into Nix configuration:
-
-```nix
-{
-  nix.binaryCaches = [ https://cache.nixos.org https://hydra.aira.life ];
-  nix.binaryCachePublicKeys = [ "hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=" ];
-}
-```
-
-## AIRA configuration
-
-The next is configure your AIRA instance.
-
-Minimal `/etc/nixos/configuration.nix` of AIRA `Game of trains` release is
-
-```nix
-{ config, ... }:
-
-{
-  boot.loader.grub.device = "/dev/sda";
-  fileSystems."/".label = "nixos";
-
-  services = {
-    parity.enable = true;
-    parity.chain = "kovan";
-
-    railway-game.enable = true;
-  };
-
-  users.extraUsers.root.initialHashedPassword = "";
-}
+#### Journals
 
 ```
-
-This starts AIRA railway Z21 controller and Parity Ethereum node on KOVAN blockchain.
-
-Configuration is will be applyed by
-
-```bash
-$ nixos-rebuild switch
+journalctl -u ipfs -f
+journalctl -u parity -f
+journalctl -u lighthouse -f
 ```
 
-Logs can be in view by 
+#### IPFS peers
 
-```bash
-$ journalctl -u railway-market-switch -u parity -f
+```
+ipfs pubsub peers airalab.lighthouse.0.robonomics.eth
+```
+
+#### Lighthouse logs
+
+```
+tail -f /var/lib/lighthouse/.ros/log/latest/lighthouse-lighthouse-6.log
+```
+
+### Lighthouse development
+
+1. Stop the service
+
+```
+systemctl stop lighthouse
+```
+
+2. Run in ROS workspace
+
+```
+cd aira/airapkgs
+nix-build -A robonomics_dev
+source result/setup.bash
+```
+
+```
+mkdir ~/ws/src -p && cd ~/ws/src && catkin_init_workspace
+git clone https://github.com/airalab/robonomics_comm
+cd ..
+nix-shell -p gcc
+catkin_make
+exit
+setup devel/setup.bash
+roslaunch robonomics_lighthouse lighthouse.launch
 ```
 
 #### Have fun and good luck!
