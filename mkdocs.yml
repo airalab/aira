@@ -1,0 +1,8 @@
+site_name: AIRA
+pages:
+        - Home: index.md
+        - AIRA by examples: aira_by_examples.md
+        - AIRA in depth: aira_in_depth.md
+        - Contributing: contributing.md
+        - Frequently asked questions: faq.md
+theme: readthedocs
