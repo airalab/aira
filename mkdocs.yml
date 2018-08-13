@@ -1,8 +1,9 @@
 site_name: AIRA
 pages:
-        - Home: index.md
-        - AIRA by examples: aira_by_examples.md
-        - AIRA in depth: aira_in_depth.md
+        - Quick Start: index.md
+        - Basic Usage: basic_usage.md
+        - AIRA in Depth: aira_in_depth.md
+        - Cheatsheet: cheats.md
+        - Frequently Asked Questions: faq.md
         - Contributing: contributing.md
-        - Frequently asked questions: faq.md
 theme: readthedocs

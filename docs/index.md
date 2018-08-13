@@ -1,6 +1,8 @@
-# Introducing AIRA
+Introducing AIRA
+================
 
-## Overview
+Overview
+--------
 
-## Quick Start
-
+Quick Start
+-----------
