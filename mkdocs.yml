@@ -1,9 +1,9 @@
 site_name: AIRA
 pages:
-        - Quick Start: index.md
+        - Getting Started: index.md
         - Basic Usage: basic_usage.md
         - AIRA in Depth: aira_in_depth.md
-        - Cheatsheet: cheats.md
+        - CheatSheet: cheats.md
         - Frequently Asked Questions: faq.md
         - Contributing: contributing.md
 theme: readthedocs
