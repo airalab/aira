@@ -1,5 +1,3 @@
-AIRA
-================
 
 Overview
 --------
@@ -30,22 +28,29 @@ It's recommended to set:
 * RAM to 2Gb at least
 * Network to Bridge
 
-When the image is imported, launch the machine. Wait some time until Ethereum node is fully syncronized and AIRA client is ready to work!
+When the image is imported, launch the machine. Wait some time until Ethereum node is fully synchronized and AIRA client is ready to work!
 AIRA creates a new address for you, it's located here:
 
 ```
 /var/lib/parity/foundation-env.sh
 ```
 
-Some helpfull commands you can find on [cheatsheet](cheats.md) page.
+Or you can call a service:
+```
+rosservice call /lighthouse/xrt/accounts
+```
 
+if you need to export an account, .json file is in `/var/lib/parity/.local/share/io.parity.ethereum/keys/` directory.
 
-For now let's check messages from IPFS channel. First of all, we need to enable ROS environment. Next step is to listen to `/lighthouse/infochan/incoming/ask`:
+Some helpful commands can be found on [cheatsheet](cheats.md) page.
+
+At this point there's not a lot we can do. For example we can listen to `/lighthouse/infochan/incoming/ask`:
 
 ```
-source `find /nix/store | grep robonomics_lighthouse | grep setup.bash`
 rostopic echo /lighthouse/infochan/incoming/ask
 ```
 
 ![Check messages](img/2.png)
+
+
 
