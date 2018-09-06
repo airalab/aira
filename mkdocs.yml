@@ -1,9 +1,15 @@
 site_name: AIRA
-pages:
+nav:
         - Getting Started: index.md
         - Basic Usage: basic_usage.md
-        - AIRA in Depth: aira_in_depth.md
+        - AIRA in Depth:
+            - Contracts deployment: aira_in_depth/lesson0.md
         - CheatSheet: cheats.md
         - Frequently Asked Questions: faq.md
         - Contributing: contributing.md
 theme: readthedocs
+extra_css:
+    - 'css/extra_css.css'
+markdown_extensions:
+        - markdown.extensions.attr_list
+
