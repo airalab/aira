@@ -27,6 +27,7 @@ It's recommended to set:
 
 * RAM to 2Gb at least
 * Network to Bridge
+* At least 40 Gb SSD
 
 When the image is imported, launch the machine. Wait some time until Ethereum node is fully synchronized and AIRA client is ready to work!
 AIRA creates a new address for you, it's located here:
