@@ -46,6 +46,6 @@ cd ..
 nix-shell -p gcc
 catkin_make
 exit
-setup devel/setup.bash
+source devel/setup.bash
 roslaunch robonomics_lighthouse lighthouse.launch
 ```
