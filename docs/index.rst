@@ -7,6 +7,7 @@ Welcome to AIRA's documentation!
    getting_started
    basic_usage
    FAQ <faq>
+   contributing
 
 .. toctree::
    :caption: Aira in Depth
