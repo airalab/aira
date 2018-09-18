@@ -5,7 +5,7 @@ In this section we will build the simplest real cyber-physical system!
 
 We will buy a "wink" from Arduino, e.g. make arduino blink with its onboard led. I work with Arduino Uno, but it should be working with any board with led.
 
-First of all, the source code of this lesson is `here <https://github.com/Vourhey/aira-lessons/tree/master/arduino_blink>`_.
+First of all, the source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
 
 Arduino 
 -------

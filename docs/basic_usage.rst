@@ -61,19 +61,11 @@ The most important topics for us are:
 * ``/lighthouse/infochan/incoming/*`` - when a CPS needs information about offer, demand or result, it subscribes on corresponding topic
 * ``/lighthouse/infochan/signing/*`` - when a CPS needs to send offer, demand or result, it publishes to corresponding topic
 
-Often introduction to a new technology begins with a greeting. Let's say hello to ARIA!
+Often introduction to a new technology begins with a greeting. Let's say hello to AIRA!
 
-First of all we need to clone a Github repo with examples::
+All you have to do is launch a preinstalled package ``hello_aira``::
 
-    $ git clone https://github.com/Vourhey/aira-lessons.git
-
-The code for this section is in `hello_aira` folder. To build and launch this package do the following::
-
-    $ mkdir -p ws/src && cd ws/src
-    $ cp -r ~/aira-lessons/hello_aira . 
-    $ catkin_init_workspace && cd .. && catkin_make 
-    $ source devel/setup.bash
     $ rosrun hello_aira hello_aira
 
-We've launched our agent. It will wait for a demand message. All we have to do is to send the message. Go to `Dapp <https://vourhey.github.io/aira-lessons/#/>`_ and press Order. 
+We've launched our agent. It will wait for a demand message. Now it's time to send the message. Go to `dapp <https://airalab.github.io/robonomics_tutorials/>`_ and press Order. 
 Now go back to the console and see the result!
