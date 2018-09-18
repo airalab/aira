@@ -12,9 +12,9 @@
 - Binary cache `https://hydra.aira.life`
 - Public key `hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=`
 
-## AIRA lighthouse image
+## Quick start image
 
 | Type | Arch   | SHA256 | Link |
 |------|--------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | 0e7c4df557097e22dda47754a5edd4fcc305b09f4c9c669efef7cb4fa2873e1e | [Download](https://github.com/airalab/aira/releases/download/0.13/aira-lighthouse-0.13-x86_64.ova)
+| VirtualBox | x86_64 | `846e8dc1600725c49d6acebea651690a1a7e2d1b18e01740713a139bd5acb21f` | [Download](https://github.com/airalab/aira/releases/download/0.14/aira-0_14.ova)
 
