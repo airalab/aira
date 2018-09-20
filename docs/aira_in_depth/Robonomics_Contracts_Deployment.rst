@@ -27,7 +27,7 @@ While the network is syncing, let's obtain a copy of robonomics contracts source
 
 A file truffle.js contains available networks for migration. We will work with development network. When you are in robonomics_contracts directory install dependencies and run a migration::
 
-    npm install // to install dependecies
+    npm install // to install dependencies
     truffle migrate --network development
 
 It's time to learn how to create a new lighthouse. For more information about Robonomics network and Lighthouse in particular read `white paper <https://robonomics.network/robonomics_white_paper_en.pdf>`_. Briefly lighthouse o distributes the running time of providers. Every lighthouse serves its own broadcast channel. Ask and Bid messages come into this channel. XRT tokens are used as a payment. 
