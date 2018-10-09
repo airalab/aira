@@ -11,7 +11,7 @@ Here and further we will work in Kovan test network and use `Parity <https://par
 
    If you have a fresh installed client, you have to create a new account::
 
-       $ parity account new
+       $ parity account new --chain kovan
 
    Also you'll need ethers for sending transactions. Choose a preferred way to get some on `this <https://github.com/kovan-testnet/faucet>`_ page or ask Airalab team in telegram `chat <https://aira.life/chat>`_ 
 
@@ -42,7 +42,7 @@ And that's how we create a lighthouse::
 
     > factory = LiabilityFactory.at(LiabilityFactory.address)
     > tx = factory.createLighthouse(1000, 10, "test")
-    > laddress = tx.then(x => x.logs[0].args.lighthouse)
+    > tx.then(x => {laddress = x.logs[0].args.lighthouse})
     > l = LighthouseLib.at(laddress)
 
 Instead of deploying a lighthouse contract every time we need a new one, we ask a factory to do this job. A ``l`` variable contains lighthouse instance. The lighthouse should be able to spend our tokens. Let's make an approve and check everything went well::
