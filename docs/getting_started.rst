@@ -44,7 +44,7 @@ Or you can call a service::
 
 if you need to export an account, .json file is in ``/var/lib/parity/.local/share/io.parity.ethereum/keys/`` directory.
 
-Some helpful commands can be found on `cheatsheet <cheats.md>`_ page.
+Some helpful commands can be found on `FAQ <faq.html>`_ page.
 
 At this point there's not a lot we can do. For example we can listen to ``/lighthouse/infochan/incoming/ask``::
 

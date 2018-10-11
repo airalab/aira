@@ -96,12 +96,12 @@ All we have to do is wait for a new liability and do the job. In case your Ardui
   if __name__ == '__main__':
       main()
 
-Where does a message in the ``/blink`` topic come from? Remember an objective field from `Basic usage <../basic_usage.md>`_? The objective hash points to rosbag file. This rosbag file will be downloaded and played after new liability is created.
+Where does a message in the ``/blink`` topic come from? Remember an objective field from `Basic usage <../basic_usage.html>`_? The objective hash points to rosbag file. This rosbag file will be downloaded and played after new liability is created.
 
 AIRA
 ----
 
-Connect to AIRA client via SSH as described `here <Connecting_via_SSH.md>`_. You can either upload code from your host OS or make a clone from Github.
+Connect to AIRA client via SSH as described `here <Connecting_via_SSH.html>`_. You can either upload code from your host OS or make a clone from Github.
 
 To build a ros package run the following commands::
 
