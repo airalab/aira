@@ -38,6 +38,7 @@ Now it's time to configure a virtual machine. Go to machine settings, network, o
 
 .. image:: ../img/4.png
    :alt: Port forwarding
+   :align: center
 
 Add a new rule:
 
