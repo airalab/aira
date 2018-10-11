@@ -1,64 +1,31 @@
 Arduino: Multiple Choice
 ===================
 
-In `previous <A_Wink_from_Arduino.html>`_ example
+In `previous <A_Wink_from_Arduino.html>`_ example we discussed how to create a simple CPS with Arduino. Our CPS is able to do only one task: to blink a led. Now let's expand the example and teach our board to blink blue or red led depending on objective parameters.
 
-In this section we will build the simplest real cyber-physical system!
-
-We will buy a "wink" from Arduino, e.g. make arduino blink with its onboard led. I work with Arduino Uno, but it should be working with any board with led.
-
-First of all, the source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
+The source code of this lesson is `here <https://github.com/Vourhey/robonomics_tutorials/tree/master/arduino_with_args>`_.
 
 Arduino 
 -------
 
-Let's write some code for the board. We're going to create a basement for our future projects, so it might look a little bit redundantly.
-
-The algorithm is following: the board reads byte by byte from serial port and appends to ``inputString``. If we have a ``\n`` byte, go to check the string. In this case we have only ``blink`` and ``reboot`` commands. In the future we will teach the board new commands.
-
-.. code-block:: c
-
-  void loop() {
-    serialEvent();
-    if (stringComplete) {
-      //Call our input handler function
-      check_input(inputString);
-    }
-  }
-
-  //This function works when we have data comming from the serial port
-  void serialEvent() {
-    while (Serial.available()) {
-      char inChar = (char)Serial.read();
-
-      if ( inChar == '\b') {
-        inputString.remove(inputString.length() - 1, inputString.length());
-      } else if ( int(inChar) == 13 ) {
-        inChar = '\n';
-      } else {
-        //add current character to input command
-        inputString += inChar;
-      }
-
-      if (inChar == '\n') {
-        stringComplete = true;
-      }
-    }
-  }
-
-
-Every iteration in the ``loop()`` function we check a new command from serial port. And ``check_input()`` function:
+The only difference in Arduino source code is in ``check_input()`` function:
 
 .. code-block:: c
 
   void check_input(String input) {
-    //Turn led on
-    if (cmd("blink")) {
+    // Turn red led on
+    if (cmd("red")) {
       blink(13, 500);
       blink(13, 500);
       blink(13, 500);
+
+    // Turn blue led on
+    } else if(cmd("blue")) {
+      blink(12, 500);
+      blink(12, 500);
+      blink(12, 500);
       
-      //Call reboot
+    // Call reboot
     } else if (cmd("reboot")) {
       Serial.println("Rebooting...");
       delay(200);
@@ -69,36 +36,42 @@ Every iteration in the ``loop()`` function we check a new command from serial po
     inputString = "";
   }
 
-The rest of the code is self-explanatory.
+We've already created a basement for multiple commands input. So all we have to do is replace ``blink`` command with ``red`` and ``blue``. 
+
+And here is the diagram of all connections:
+
+.. image:: ../img/6.png
+  :alt: Arduino schema
+  :align: center
+
 
 ROS
 ---
 
-All we have to do is wait for a new liability and do the job. In case your Arduino is connected to something different from ``/dev/ttyUSB0``, you should change it in the code.
+We can pass arguments via objective which points to rosbag file. Have a look at ``blink.py`` script. The main difference is ``blink()`` method:
 
 .. code-block:: python
 
-  #!/usr/bin/env python
-  import rospy
-  import serial
-
-  from std_msgs.msg import Empty
-
   def blink(data):
-      rospy.loginfo("Blinking...")
       ser = serial.Serial('/dev/ttyUSB0', 9600)
-      ser.write(b"blink\n")
 
-  def main():
-      rospy.init_node("blink_node")
-      rospy.loginfo("Subscribing...")
-      rospy.Subscriber("/blink", Empty, blink)
-      rospy.spin()
+      if data.data == "blue":
+          rospy.loginfo("Blinking blue...")
+          ser.write(b"blue\n")
 
-  if __name__ == '__main__':
-      main()
+      if data.data == "red":
+          rospy.loginfo("Blinking red...")
+          ser.write(b"red\n")
+      
+      ser.flush()
+      ser.close()
 
-Where does a message in the ``/blink`` topic come from? Remember an objective field from `Basic usage <../basic_usage.md>`_? The objective hash points to rosbag file. This rosbag file will be downloaded and played after new liability is created.
+      rospy.wait_for_service("liability/finish")
+      fin = rospy.ServiceProxy("liability/finish", Empty)
+      rospy.loginfo("finishing...")
+      fin()
+
+Now ``/blink`` topic has a ``String`` type. You can find prepared rosbags in ``rosbag`` folder. 
 
 AIRA
 ----
@@ -119,29 +92,28 @@ And launch
   $ rosrun arduino_blink blink.py
 
 
-Also we need to add a rosbag file to IPFS::
+Also we need to add rosbag files to IPFS::
 
-  $ ipfs add rosbag/blink.bag
+  $ ipfs add rosbag/blink_blue.bag
+  $ ipfs add rosbag/blink_red.bag
 
-In the next window we create a demand and then an offer::
+In case we want to light the blue led, create the following a demand and an offer messages::
 
-  $ rostopic pub /lighthouse/infochan/signing/ask robonomics_lighthouse/Ask "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh' \
-  objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD' \
-  token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE' \
+  $ rostopic pub /lighthouse/infochan/signing/ask robonomics_lighthouse/Ask "model: 'QmSuajKuDiL8A5vhbsQJnVVNwhhC5ni6shSZxNXVWvpikt' \
+  objective: 'QmUq7d4jATFnbDgtkv83d3VW9jRqqCRkctZdGUBZE5wGN2' \
+  token: '0xbD949595eE52346c225a19724084cE517B2cB735' \
   cost: 1 \
   validator: '0x0000000000000000000000000000000000000000' \
   validatorFee: 0 \
-  deadline: 6393332"
+  deadline: 6498193"
 
-  $ rostopic pub /lighthouse/infochan/signing/bid robonomics_lighthouse/Bid "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh'
-  objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD'
-  token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE'
+  $ rostopic pub /lighthouse/infochan/signing/bid robonomics_lighthouse/Bid "model: 'QmSuajKuDiL8A5vhbsQJnVVNwhhC5ni6shSZxNXVWvpikt'
+  objective: 'QmUq7d4jATFnbDgtkv83d3VW9jRqqCRkctZdGUBZE5wGN2'
+  token: '0xbD949595eE52346c225a19724084cE517B2cB735'
   cost: 1
   lighthouseFee: 0
-  deadline: 6393332 "
+  deadline: 6498193"
 
-Do not forget to change token address and deadline. 
+To light a red one, change ``objective`` to ``QmcoE93MrvAdC789vt6G27WypSimhZxu5ZT2aKy8uviBDM`` in the previous messages.
 
-When transaction is mined you should see Arduino's blinking. Our simple agent will finish the liability by itself. Congratulations on the first agent!
-
-
+That's it! Now you are able to pass dynamic parameters to your cyber-physical system agent!
