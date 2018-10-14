@@ -16,17 +16,17 @@ Robonomics Network uses IPFS PubSub channels for messaging. There are three type
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 | token        | string  | Operational token address                             | 0xbD949595eE52346c225a19724084cE517B2cB735     |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
-| cost         | uint32  | CPS behavioral model implementation cost              | 1                                              |
+| cost         | integer | CPS behavioral model implementation cost              | 1                                              |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 | validator    | string  | Observing network address                             | 0x0000000000000000000000000000000000000000     |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
-| validatorFee | uint32  | Observing network commission                          | 0                                              |
+| validatorFee | integer | Observing network commission                          | 0                                              |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
-| deadline     | uint32  | Deadline block number                                 | 6393332                                        |
+| deadline     | integer | Deadline block number                                 | 6393332                                        |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
-| nonce        | uint8[] | Random data                                           | 0x8e0c...55cb                                  |
+| nonce        | array   | Random data                                           | 0x8e0c...55cb                                  |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
-| signature    | uint8[] | Sender's digital signature                            | 0x23bc...c617                                  |
+| signature    | array   | Sender's digital signature                            | 0x23bc...c617                                  |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 
 An Offer message has the same fields but instead of ``validator`` and ``validatorFee`` there is a ``lighthouseFee`` field. This field determines the amount of fee for a lighthouse.
