@@ -10,21 +10,21 @@ Main Airalab repositories
 
 Please choose a corresponding repository for reporting an issue!
 
-Did you find a bug?
+Found a bug?
 ~~~~~~~~~~~~~~~~~~~
 
-* **Ensure the bug was not already reported** by searching on GitHub under `Issues <https://github.com/airalab/aira/issues>`_.
+* **Make sure the bug was not already reported** - check GitHub `Issues <https://github.com/airalab/aira/issues>`_.
 
-* If you're unable to find an open issue addressing the problem, `open a new one <https://github.com/airalab/aira/issues/new>`_. Be sure to include a **title and clear description**, as much relevant information as possible.
+* If there is no open issue addressing the problem, `open a new one <https://github.com/airalab/aira/issues/new>`_. Be sure to include a **title and clear description**, as much relevant information as possible.
 
-Also you can open an issue if you have a proposal for an improvements.
+Also, you can open an issue if you have a proposal for improvements.
 
-Did you write a patch that fixes a bug?
+Wrote a patch that fixes a bug?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * Open a new GitHub pull request with the patch.
 
-* Ensure the PR description clearly describes the problem and solution. Include the relevant issue number if applicable.
+* Make sure the PR description clearly describes the problem and the solution. Include the relevant issue number if applicable.
 
 **Please don't fix whitespace, format code, or make a purely cosmetic patch**
 
