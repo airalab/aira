@@ -4,6 +4,8 @@ Frequently Asked Questions
 How to see logs from main services? 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+.. TODO lighthouse
+
 Parity and IPFS in real time:
 
 .. code-block:: bash
