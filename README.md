@@ -16,5 +16,5 @@
 
 | Type | Arch   | SHA256 | Link |
 |------|--------|--------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | `846e8dc1600725c49d6acebea651690a1a7e2d1b18e01740713a139bd5acb21f` | [Download](https://github.com/airalab/aira/releases/download/0.14/aira-0_14.ova)
+| VirtualBox | x86_64 | `d6149e47d62446a517a18b7b00661a2ae2a6865fc448ac0fee9400204940b804` | [Download](https://github.com/airalab/aira/releases/download/0.15/aira-0.15-x86_64.ova)
 
