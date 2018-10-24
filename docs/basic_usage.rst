@@ -1,33 +1,25 @@
 Basic Usage
 ===========
 
-To get familiar with AIRA, let's see what is under hood. 
+To get familiar with AIRA, let's see what is under the hood. 
 
-When you launch the client several ros nodes are started. Here's a list of robonomics communication stack nodes::
+Once you launch the client several ros nodes will already be on the run. Here's a list of robonomics communication stack nodes::
 
     $ rosnode list
     /liability/executor
     /liability/infochan/channel
     /liability/infochan/signer
-    /liability/listener
-    /lighthouse/infochan/channel
-    /lighthouse/infochan/signer
-    /lighthouse/lighthouse
-    /lighthouse/matcher
-    /lighthouse/xrt/erc20_token
     /rosout
 
-There are two the same node under different namespaces: ``/liablity/infochan`` and ``/lighthouse/infochan``. We will describe the first one, the other one works in the same way.
-
 * ``/liability/executor`` - gets rosbag file from IPFS and plays it
-* ``/liability/infochan/channel`` - responsible for offer, demand and result messages. It retrieves messages from the channel and sends signed messages to the one
-* ``/liability/infochan/signer`` - offers services for signing our offer, demand and result messages
-* ``/liability/listener`` - watches for new liability contracts. When the event is received the node calls executor node
-* ``/lighthouse/lighthouse`` - responsible for creating new liability contract and finalizing it
-* ``/lighthouse/matcher`` - keeps track of all incoming offers and demands. If there's a match, calls lighthouse to create a liability
-* ``/lighthouse/xrt/erc20_token`` - offers several services to work with ERC-20 tokens
+* ``/liability/infochan/channel`` - is responsible for offer, demand and result messages. It catches messages from the channel and sends signed messages back
+* ``/liability/infochan/signer`` - offers services for signing offer, demand and result messages
+.. * ``/liability/listener`` - watches for new liability contracts. When the event is received the node calls executor node
+.. * ``/lighthouse/lighthouse`` - responsible for creating new liability contract and finalizing it
+   * ``/lighthouse/matcher`` - keeps track of all incoming offers and demands. If there's a match, calls lighthouse to create a liability
+   * ``/lighthouse/xrt/erc20_token`` - offers several services to work with ERC-20 tokens
 
-And here's a list of robonomics stack topics. We skipped repetitive topics in ``/liability/infochan`` part.
+And here's a list of robonomics stack topics.
 
 .. code-block:: bash
 
@@ -36,34 +28,28 @@ And here's a list of robonomics stack topics. We skipped repetitive topics in ``
     /liability/current
     /liability/incoming
     /liability/infochan/incoming/ask
-    ...
+    /liability/infochan/incoming/bid
+    /liability/infochan/incoming/result
+    /liability/infochan/sending/ask
+    /liability/infochan/sending/bid
+    /liability/infochan/sending/result
+    /liability/infochan/signing/ask
+    /liability/infochan/signing/bid
     /liability/infochan/signing/result
     /liability/result
-    /lighthouse/deal
-    /lighthouse/infochan/incoming/ask
-    /lighthouse/infochan/incoming/bid
-    /lighthouse/infochan/incoming/result
-    /lighthouse/infochan/sending/ask
-    /lighthouse/infochan/sending/bid
-    /lighthouse/infochan/sending/result
-    /lighthouse/infochan/signing/ask
-    /lighthouse/infochan/signing/bid
-    /lighthouse/infochan/signing/result
-    /lighthouse/xrt/event/approval
-    /lighthouse/xrt/event/transfer
     /rosout
     /rosout_agg
 
 The most important topics for us are:
 
 * ``/liability/incoming`` - when a new liability is created, this topic publishes Ethereum address of the contract
-* ``/liability/result`` - when a cyber-physical system finishes its job it has to publish a log file to IPFS. But don't publish a result directly to this topic! Use a service instead
-* ``/lighthouse/infochan/incoming/*`` - when a CPS needs information about offer, demand or result, it subscribes on corresponding topic
-* ``/lighthouse/infochan/signing/*`` - when a CPS needs to send offer, demand or result, it publishes to corresponding topic
+* ``/liability/result`` - this topic is for publishing results. But don't publish a result directly to this topic! Use a service instead
+* ``/liability/infochan/incoming/*`` - a CPS gets information about offer, demand or result from corresponding topics
+* ``/liability/infochan/signing/*`` - a CPS sends offer, demand or result messages to corresponding topics
 
-Often introduction to a new technology begins with a greeting. Let's say hello to AIRA!
+Let's start with greetings - say hello to AIRA!
 
-All you have to do is launch a preinstalled package ``hello_aira``::
+You should just launch a preinstalled package ``hello_aira``::
 
     $ rosrun hello_aira hello_aira
 
