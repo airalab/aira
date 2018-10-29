@@ -1,11 +1,13 @@
-A Wink from Arduino
-===================
+Connect the Simplest CPS
+========================
 
 In this section we will build the simplest real cyber-physical system!
 
-We will buy a "wink" from Arduino, e.g. make arduino blink with its onboard led. I work with Arduino Uno, but it should be working with any board with led.
+We will buy a "wink" from Arduino, e.g. make Arduino blink with its onboard led. The lesson is tested on Arduino Uno, but any other board with a led will do the job.
 
-First of all, the source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
+.. note::
+
+  First of all, the source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
 
 Arduino 
 -------
@@ -121,9 +123,13 @@ Also we need to add a rosbag file to IPFS::
 
   $ ipfs add rosbag/blink.bag
 
+.. note::
+
+  Before the next step you should approve XRT tokens on the Factory.
+
 In the next window we create a demand and then an offer::
 
-  $ rostopic pub /lighthouse/infochan/signing/ask robonomics_lighthouse/Ask "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh' \
+  $ rostopic pub /liability/infochan/signing/demand robonomics_msgs/Demand "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh' \
   objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD' \
   token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE' \
   cost: 1 \
@@ -131,7 +137,7 @@ In the next window we create a demand and then an offer::
   validatorFee: 0 \
   deadline: 6393332"
 
-  $ rostopic pub /lighthouse/infochan/signing/bid robonomics_lighthouse/Bid "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh'
+  $ rostopic pub /liability/infochan/signing/offer robonomics_msgs/Offer "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh'
   objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD'
   token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE'
   cost: 1

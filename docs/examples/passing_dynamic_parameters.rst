@@ -1,9 +1,11 @@
-Arduino: Multiple Choice
-===================
+Passing Dynamic Parameters
+==========================
 
 In `previous <A_Wink_from_Arduino.html>`_ example we discussed how to create a simple CPS with Arduino. Our CPS is able to do only one task: to blink a led. Now let's expand the example and teach our board to blink blue or red led depending on objective parameters.
 
-The source code of this lesson is `here <https://github.com/Vourhey/robonomics_tutorials/tree/master/arduino_with_args>`_.
+.. note::
+
+  The source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_with_args>`_.
 
 Arduino 
 -------

@@ -1,4 +1,4 @@
-Robonomics messages
+Robonomics Messages
 ===================
 
 .. note::

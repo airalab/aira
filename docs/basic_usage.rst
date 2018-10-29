@@ -9,15 +9,13 @@ Once you launch the client several ros nodes will already be on the run. Here's 
     /liability/executor
     /liability/infochan/channel
     /liability/infochan/signer
+    /liability/listener
     /rosout
 
 * ``/liability/executor`` - gets rosbag file from IPFS and plays it
 * ``/liability/infochan/channel`` - is responsible for offer, demand and result messages. It catches messages from the channel and sends signed messages back
 * ``/liability/infochan/signer`` - offers services for signing offer, demand and result messages
-.. * ``/liability/listener`` - watches for new liability contracts. When the event is received the node calls executor node
-.. * ``/lighthouse/lighthouse`` - responsible for creating new liability contract and finalizing it
-   * ``/lighthouse/matcher`` - keeps track of all incoming offers and demands. If there's a match, calls lighthouse to create a liability
-   * ``/lighthouse/xrt/erc20_token`` - offers several services to work with ERC-20 tokens
+* ``/liability/listener`` - watches for a new liability contracts. When the event is received the node calls executor node
 
 And here's a list of robonomics stack topics.
 
@@ -26,15 +24,16 @@ And here's a list of robonomics stack topics.
     $ rostopic list
     /liability/complete
     /liability/current
+    /liability/finalized
     /liability/incoming
-    /liability/infochan/incoming/ask
-    /liability/infochan/incoming/bid
+    /liability/infochan/incoming/demand
+    /liability/infochan/incoming/offer
     /liability/infochan/incoming/result
-    /liability/infochan/sending/ask
-    /liability/infochan/sending/bid
+    /liability/infochan/sending/demand
+    /liability/infochan/sending/offer
     /liability/infochan/sending/result
-    /liability/infochan/signing/ask
-    /liability/infochan/signing/bid
+    /liability/infochan/signing/demand
+    /liability/infochan/signing/offer
     /liability/infochan/signing/result
     /liability/result
     /rosout

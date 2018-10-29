@@ -1,4 +1,4 @@
-Robonomics Network: How it works
+Robonomics Network: How It Works
 ================================
 
 In this section we will discuss the Robonomics Network scenario. 
@@ -18,6 +18,8 @@ Robonomics Network uses IPFS PubSub channels for messaging. There are three type
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 | cost         | integer | CPS behavioral model implementation cost              | 1                                              |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
+| lighthouse   | string  | Lighthouse address                                    | 0xa1b60ED40E5A68184b3ce4f7bEf31521A57eD2dB1    |
++--------------+---------+-------------------------------------------------------+------------------------------------------------+
 | validator    | string  | Observing network address                             | 0x0000000000000000000000000000000000000000     |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 | validatorFee | integer | Observing network commission                          | 0                                              |
@@ -29,7 +31,7 @@ Robonomics Network uses IPFS PubSub channels for messaging. There are three type
 | signature    | array   | Sender's digital signature                            | 0x23bc...c617                                  |
 +--------------+---------+-------------------------------------------------------+------------------------------------------------+
 
-An Offer message has the same fields but instead of ``validator`` and ``validatorFee`` there is a ``lighthouseFee`` field. This field determines the amount of fee for a lighthouse.
+An Offer message has the same fields but instead of ``validatorFee`` there is a ``lighthouseFee`` field. This field determines the amount of fee for a lighthouse.
 
 Now let's have a look at the following diagram and walk step by step from the moment of publishing messages to a liability finalization.
 

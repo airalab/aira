@@ -1,6 +1,5 @@
-
-Overview
-========
+Getting Started
+===============
 
 .. image:: img/3.png
    :alt: AIRA logo
@@ -29,21 +28,13 @@ AIRA is distributed as virtual machine image. To launch the client you need to i
 It's recommended to set:
 
 * RAM to 2Gb at least
-* Network to Bridge
 * At least 40 Gb SSD
 
-When the image is imported, launch the machine. Wait until Ethereum node is fully synchronized and then AIRA client is ready to work!
-AIRA creates a new address for you, it's located here::
-
-    /var/lib/parity/foundation-env.sh
-
-If you need to export an account, .json file is in ``/var/lib/parity/.local/share/io.parity.ethereum/keys/`` directory.
-
-There are some helpful commands on `FAQ <faq.html>`_ page.
-
-To become familiar with AIRA distributive we can, for example we can listen to ``/liability/infochan/incoming/ask``::
-
-    rostopic echo /liability/infochan/incoming/ask
+When the image is imported, launch the machine. 
 
 .. image:: img/2.png
    :alt: Check messages
+
+To make your work with the machine easier, try to `connect via SSH <aira_in_depth/Connecting_via_SSh.html>`_.
+
+There are some helpful commands on `FAQ <faq.html>`_ page.
