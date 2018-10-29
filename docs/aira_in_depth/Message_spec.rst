@@ -1,5 +1,9 @@
-Robonomics messages 
+Robonomics messages
 ===================
+
+.. note::
+
+   This is Robonomics network ``Generation 3`` message specification.
 
 * Currently for message delivery is used IPFS PubSub_ broadcaster.
 * IPFS PubSub **topic** is set according to *Lighthouse* ENS_ name.
@@ -21,6 +25,7 @@ Specification
   objective        string     CPS behavioral model parameters in rosbag file
   token            string     Operational token address
   cost             ineger     CPS behavioral model implementation cost
+  lighthouse       string     Lighthouse address
   validator        string     Observing network address
   validatorFee     integer    Observing network comission
   deadline         integer    Deadline block number
@@ -38,6 +43,7 @@ Specification
   token            string     Operational token address
   cost             ineger     CPS behavioral model implementation cost
   validator        string     Observing network address
+  lighthouse       string     Lighthouse address 
   lighthouseFee    integer    Liability creation commission
   deadline         integer    Deadline block number
   nonce            array      Random uniq data
