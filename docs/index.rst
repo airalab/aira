@@ -10,6 +10,7 @@ Welcome to AIRA's documentation!
    contributing
 
 .. toctree::
+   :maxdepth: 1
    :caption: Aira in Depth
 
    aira_in_depth/Connecting_via_SSH
@@ -18,6 +19,16 @@ Welcome to AIRA's documentation!
    aira_in_depth/Robonomics_Contracts_Deployment
 
 .. toctree::
+   :maxdepth: 1
+   :caption: API Reference
+
+   api/robonomics_liability.rst
+   api/robonomics_liability_msgs.rst
+   api/ethereum_common.rst
+   api/ethereum_common_msg.rst
+
+.. toctree::
+   :maxdepth: 1
    :caption: Examples
 
    examples/connect_simple_cps.rst

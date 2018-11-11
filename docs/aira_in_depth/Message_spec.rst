@@ -27,7 +27,7 @@ Specification
   cost             ineger     CPS behavioral model implementation cost
   lighthouse       string     Lighthouse address
   validator        string     Observing network address
-  validatorFee     integer    Observing network comission
+  validatorFee     integer    Observing network commission
   deadline         integer    Deadline block number
   nonce            array      Random uniq data
   signature        array      Sender's digital signature
@@ -43,7 +43,7 @@ Specification
   token            string     Operational token address
   cost             ineger     CPS behavioral model implementation cost
   validator        string     Observing network address
-  lighthouse       string     Lighthouse address 
+  lighthouse       string     Lighthouse address
   lighthouseFee    integer    Liability creation commission
   deadline         integer    Deadline block number
   nonce            array      Random uniq data
