@@ -42,6 +42,8 @@ args_spender    Address     Spender address
 args_value      UInt256     Amount of tokens
 =============== =========== ================
 
+.. _Ethereum-common-AccountBalance.srv:
+
 AccountBalance.srv
 ------------------
 
@@ -60,6 +62,8 @@ Field       Type    Description
 =========== ======= ===================================================
 balance     UInt256 Balance in Wei
 =========== ======= ===================================================
+
+.. _Ethereum-common-AccountToAddressAllowance.srv:
 
 AccountToAddressAllowance.srv
 ------------------
@@ -81,6 +85,8 @@ Field       Type    Description
 amount      UInt256 Balance in Wn
 =========== ======= ===================================================
 
+.. _Ethereum-common-Accounts.srv:
+
 Accounts.srv
 ------------------
 
@@ -96,6 +102,8 @@ Field       Type        Description
 accounts    Address[]   List of available accounts
 =========== =========== ===================================================
 
+.. _Ethereum-common-Allowance.srv:
+
 Allowance.srv
 ------------------
 
@@ -110,6 +118,8 @@ Field       Type        Description
 =========== =========== ===================================================
 amount      UInt256     Amount of XRT the Factory is allowed to spend
 =========== =========== ===================================================
+
+.. _Ethereum-common-Approve.srv:
 
 Approve.srv
 -----------
@@ -131,6 +141,8 @@ Field       Type        Description
 txhash      uint8[32]   Transaction hash
 =========== =========== ===================================================
 
+.. _Ethereum-common-Balance.srv:
+
 Balance.srv
 -----------
 
@@ -146,6 +158,8 @@ Field       Type        Description
 balance     UInt256     The balance of default account
 =========== =========== ===================================================
 
+.. _Ethereum-common-BlockNumber.srv:
+
 BlockNumber.srv
 ---------------
 
@@ -160,6 +174,8 @@ Field       Type        Description
 =========== =========== ===================================================
 number      uint64      Current block number
 =========== =========== ===================================================
+
+.. _Ethereum-common-Transfer.srv:
 
 Transfer.srv
 ------------
@@ -180,6 +196,8 @@ Field       Type        Description
 =========== =========== ===================================================
 txhash      uint8[32]   Transaction hash
 =========== =========== ===================================================
+
+.. _Ethereum-common-TransferFrom.srv:
 
 TransferFrom.srv
 ----------------

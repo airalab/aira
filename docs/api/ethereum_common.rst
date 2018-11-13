@@ -51,22 +51,44 @@ Services
 
 .. py:method:: /eth/accounts (ethereum_common/Accounts)
 
+    List of available Ethereum accounts. See :ref:`Ethereum-common-Accounts.srv`
+
 .. py:method:: /eth/account_eth_balance (ethereum_common/AccountBalance)
+
+    Returns the balance of the given address in Wei. See :ref:`Ethereum-common-AccountBalance.srv`
 
 .. py:method:: /eth/eth_balance (ethereum_common/Balance)
 
+    Returns the balance of the default address. See :ref:`Ethereum-common-Balance.srv`
+
 .. py:method:: /eth/current_block (ethereum_common/BlockNumber)
+
+    Returns current block number. See :ref:`Ethereum-common-BlockNumber.srv`
 
 .. py:method:: /eth/transfer (ethereum_common/Transfer)
 
+    Transfers tokens from the default account to a given one. See :ref:`Ethereum-common-Transfer.srv`
+
 .. py:method:: /eth/transfer_from (ethereum_common/TransferFrom)
+
+    Transfers tokens from a given account to another one. See :ref:`Ethereum-common-TransferFrom.srv`
 
 .. py:method:: /eth/approve (ethereum_common/Approve)
 
+    Approves tokens from the default account to a given one. See :ref:`Ethereum-common-Approve.srv`
+
 .. py:method:: /eth/account_xrt_balance (ethereum_common/AccountBalance)
+
+    Returns the XRT balance of a given account. See :ref:`Ethereum-common-AccountBalance.srv`
 
 .. py:method:: /eth/xrt_balance (ethereum_common/Balance)
 
+    Return the XRT balance of the default account. See :ref:`Ethereum-common-Balance.srv`
+
 .. py:method:: /eth/account_xrt_allowance (ethereum_common/AccountToAddressAllowance)
 
+    Returns how much one account is allowed to spend from another account. See :ref:`Ethereum-common-AccountToAddressAllowance.srv`
+
 .. py:method:: /eth/xrt_allowance (ethereum_common/Allowance)
+
+    Returns how much the Factory is allowed to spend from the default account. See :ref:`Ethereum-common-Allowance.srv`
