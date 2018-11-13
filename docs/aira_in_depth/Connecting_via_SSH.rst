@@ -3,38 +3,17 @@ Connecting via SSH
 
 It is more convenient to work with virtual machine via ssh connection. In this section we will configure VM.
 
-First, launch AIRA client and run a command::
+.. attention::
 
-    $ git clone https://github.com/airalab/airapkgs -b nixos-unstable
+    It's required to have your ssh public key on Github.com
+    In case you don't have one, please follow the `link <https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/>`_
 
-Also we will need a tool to grab ssh key from Github::
+First, launch AIRA client and run a command replacing <username> with your own::
 
-    $ git clone https://github.com/vourhey/github_authorized_key
+    $ mkdir .ssh
+    $ curl -sSL https://github.com/<username>.keys >> .ssh/authorized_keys
 
-Then edit ``/etc/nixos/configuration.nix`` and add following lines::
-
-    {
-        ...
-
-        services.openssh.enable = true;
-        services.openssh.permitRootLogin = "without-password";
-        services.openssh.authorizedKeysFiles = [ "/root/.ssh/github_authorized" ];
-
-        ...
-    }
-
-Make a rebuild replacing ``/path/to/airapkgs`` with real path::
-
-    $ nixos-rebuild switch -I nixpkgs=/path/to/airapkgs
-
-Let's fetch a ssh key from Github, assuming you have at least one listed in your profile::
-
-    $ cd ~/github_authorized_key
-    $ ./main.py <github_login>
-
-After this a ``/root/.ssh/github_authorized`` file will be created with your ssh public key.
-
-Now it's time to configure a virtual machine. Go to machine settings, network, open Advanced and then Port Forwarding
+Now go to machine settings, network, open Advanced and then Port Forwarding
 
 .. image:: ../img/4.png
    :alt: Port forwarding
@@ -48,6 +27,6 @@ Add a new rule:
 | 127.0.1.1 | 2202      | 10.0.2.15 | 22         |
 +-----------+-----------+-----------+------------+
 
-Now we are able to connect to AIRA client via ssh::
+Reboot the machine and you are able to connect to AIRA client via ssh::
 
     $ ssh -p 2202 root@127.0.1.1

@@ -4,20 +4,15 @@ Frequently Asked Questions
 How to see logs from main services? 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-.. TODO lighthouse
-
-Parity and IPFS in real time:
+IPFS in real time:
 
 .. code-block:: bash
 
     journalctl -u ipfs -f
-    journalctl -u parity -f
 
-and Lighthouse::
+and Liability::
 
-    journalctl -u lighthouse -f
-    # or
-    tail -f /var/lib/lighthouse/.ros/log/latest/lighthouse-lighthouse-6.log
+    journalctl -u liability -f
 
 How to check the quantity of IPFS peers?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -26,4 +21,12 @@ How to check the quantity of IPFS peers?
 
     ipfs pubsub peers airalab.lighthouse.0.robonomics.eth
 
+IPFS can't connect to the daemon, what should I do? 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Try to specify ``--api`` option
+
+.. code-block:: bash
+
+    ipfs swarm peers --api=/ip4/127.0.0.1/tcp/5001/
 

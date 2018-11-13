@@ -5,27 +5,17 @@ Robonomics network works on top of the existing Ethereum network. The protocol i
 
 In this lesson we are going to learn more about these contracts. To do this we will deploy our test copy. Also we are going to use these contracts in the future lessons. 
 
-Here and further we will work in Kovan test network and use `Parity <https://paritytech.io/>`_ client.
-
-.. note::
-
-   If you have a fresh installed client, you have to create a new account::
-
-       $ parity account new --chain kovan
-
-   Also you'll need ethers for sending transactions. Choose a preferred way to get some on `this <https://github.com/kovan-testnet/faucet>`_ page or ask Airalab team in telegram `chat <https://aira.life/chat>`_ 
-
-Launch the client. In arguments we say which network to work with, allow to use JSONRPC API, choose a port for API and unlock the account. A file pass contains password.
+You need a client running Ethereum node. You can use either one of existing network (e.g. Mainnet, Ropsten, Kovan) or your local one. For testing purpose we suggest to use this `docker container <https://github.com/f-o-a-m/cliquebait>`_ 
 
 .. code-block:: bash
 
-    $ parity --chain kovan --jsonrpc-hosts all --jsonrpc-interface all --jsonrpc-cors '*' --jsonrpc-apis 'web3,eth,net,parity,traces,rpc,parity_set,personal' --jsonrpc-port 9545 --unlock <account> --password ./pass
+    $ docker run --rm -d -p 9545:8545 -p 9546:8546 foamspace/cliquebait:latest
 
-While the network is syncing, let's obtain a copy of robonomics contracts source code::
+Next step is obtain a copy of robonomics contracts source code::
 
     $ git clone --recursive https://github.com/airalab/robonomics_contracts
 
-A file truffle.js contains available networks for migration. We will work with development network. When you are in robonomics_contracts directory install dependencies and run a migration::
+A file truffle.js contains available networks for migration. We will work with development network. When you are in ``robonomics_contracts`` directory install dependencies and run a migration::
 
     npm install // to install dependencies
     truffle migrate --network development
@@ -61,11 +51,11 @@ Below is a table of our addresses:
 +------------------+--------------------------------------------+----------------------------------+
 | Contract         | Address                                    | ENS name                         |
 +==================+============================================+==================================+
-| ENSRegistry      | 0x9bCF5Ec30461f153B11a70e9f978b05B866870a9 |                                  |
+| ENSRegistry      | 0x80c77a7de64a15450bb8cf45ece4fbb7bae6fb49 |                                  |
 +------------------+--------------------------------------------+----------------------------------+
-| XRT              | 0x9f0851E09d42685d6536f44Bf181D2D596bAF7e6 | xrt.1.robonomics.eth             |
+| XRT              | 0x673583a369eb3a830a5571208cf6eb7ce83987f8 | xrt.3.robonomics.eth             |
 +------------------+--------------------------------------------+----------------------------------+
-| LiabilityFactory | 0xe57c6c673aa27EE4f0C471b8D8161dB8d733A92b | factory.1.robonomics.eth         |
+| LiabilityFactory | 0x1b3190e00c1903266862af1f31714d4b81ef59b2 | factory.3.robonomics.eth         |
 +------------------+--------------------------------------------+----------------------------------+
-| Lighthouse       | 0xED571F3e58197B0E58AAeB935A70B58Bd2e89BAB | test.lighthouse.1.robonomics.eth |
+| Lighthouse       | 0xd2b78c032b6c8851a8b6cbf950caa02a77618d8e | test.lighthouse.3.robonomics.eth |
 +------------------+--------------------------------------------+----------------------------------+
