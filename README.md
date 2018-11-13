@@ -1,4 +1,14 @@
-![AIRA](https://github.com/airalab/aira.life/raw/1a41e20ca0eed78ba9eb5376285bbe8fe961689e/wordpress/aira-2.2/assets/i/aira-logo-x2.jpg)
+
+            *
+           /|
+          / |
+         /  |
+        *   *       _    ___ ____      _    
+       /|  /|      / \  |_ _|  _ \    / \   
+      / | / |     / _ \  | || |_) |  / _ \  
+     /  |/  |    / ___ \ | ||  _ <  / ___ \ 
+    *---*---*   /_/   \_\___|_| \_\/_/   \_\
+
 
 [![Documentation Status](https://readthedocs.org/projects/aira/badge/?version=latest)](https://aira.readthedocs.io/en/latest/?badge=latest)
 [![Build Status](https://travis-ci.org/airalab/aira.svg?branch=master)](https://travis-ci.org/airalab/aira)
@@ -46,7 +56,7 @@ AIRA distribution is builded on stable snapshot of `airapkgs`.
 
 | Type       | Arch   | SHA256                                                             | Link |
 |------------|--------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | `d6149e47d62446a517a18b7b00661a2ae2a6865fc448ac0fee9400204940b804` | [Download](https://github.com/airalab/aira/releases/download/0.15/aira-0.15-x86_64.ova)
+| VirtualBox | x86_64 | `b63bedde7c56b1cd174a027746a255b31761d67c8ce54cd3afd33f67a0fefd5e` | [Download](https://github.com/airalab/aira/releases/download/0.16/aira-0.16-x86_64.ova)
 
 ### Building from source
 
