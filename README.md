@@ -56,7 +56,7 @@ AIRA distribution is builded on stable snapshot of `airapkgs`.
 
 | Type       | Arch   | SHA256                                                             | Link |
 |------------|--------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | `b63bedde7c56b1cd174a027746a255b31761d67c8ce54cd3afd33f67a0fefd5e` | [Download](https://github.com/airalab/aira/releases/download/0.16/aira-0.16-x86_64.ova)
+| VirtualBox | x86_64 | `5a57bc164070ac7123d023e3d14d8c728ba812b18a2204e00f350b852bd8d7ef` | [Download](https://github.com/airalab/aira/releases/download/0.16.1/aira-0.16.1-x86_64.ova)
 
 ### Building from source
 
