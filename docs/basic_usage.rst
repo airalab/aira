@@ -1,7 +1,7 @@
 Basic Usage
 ===========
 
-To get familiar with AIRA, let's see what is under the hood. 
+To get familiar with AIRA, let's see what is under the hood.
 
 Once you launch the client several ros nodes will already be on the run. Here's a list of robonomics communication stack nodes::
 
@@ -23,18 +23,18 @@ And here's a list of robonomics stack topics.
 
     $ rostopic list
     /liability/complete
-    /liability/current
     /liability/finalized
     /liability/incoming
+    /liability/infochan/eth/sending/demand
+    /liability/infochan/eth/sending/offer
+    /liability/infochan/eth/sending/result
+    /liability/infochan/eth/signing/demand
+    /liability/infochan/eth/signing/offer
+    /liability/infochan/eth/signing/result
     /liability/infochan/incoming/demand
     /liability/infochan/incoming/offer
     /liability/infochan/incoming/result
-    /liability/infochan/sending/demand
-    /liability/infochan/sending/offer
-    /liability/infochan/sending/result
-    /liability/infochan/signing/demand
-    /liability/infochan/signing/offer
-    /liability/infochan/signing/result
+    /liability/ready
     /liability/result
     /rosout
     /rosout_agg
@@ -44,7 +44,7 @@ The most important topics for us are:
 * ``/liability/incoming`` - when a new liability is created, this topic publishes Ethereum address of the contract
 * ``/liability/result`` - this topic is for publishing results. But don't publish a result directly to this topic! Use a service instead
 * ``/liability/infochan/incoming/*`` - a CPS gets information about offer, demand or result from corresponding topics
-* ``/liability/infochan/signing/*`` - a CPS sends offer, demand or result messages to corresponding topics
+* ``/liability/infochan/eth/signing/*`` - a CPS sends offer, demand or result messages to corresponding topics
 
 Let's start with greetings - say hello to AIRA!
 
@@ -52,5 +52,5 @@ You should just launch a preinstalled package ``hello_aira``::
 
     $ rosrun hello_aira hello_aira
 
-We've launched our agent. It will wait for a demand message. Now it's time to send the message. Go to `dapp <https://airalab.github.io/robonomics_tutorials/>`_ and press Order. 
+We've launched our agent. It will wait for a demand message. Now it's time to send the message. Go to `dapp <https://airalab.github.io/robonomics_tutorials/>`_ and press Order.
 Now go back to the console and see the result!
