@@ -96,12 +96,8 @@ Now ``/blink`` topic has a ``String`` type. You can find prepared rosbags in ``r
 AIRA
 ----
 
-Connect to AIRA client via SSH as described `here <Connecting_via_SSH.md>`_. You can either upload code from your host OS or make a clone from Github. Do not forget to add ``COM1`` port in settings
+Connect to AIRA client via SSH as described `here <Connecting_via_SSH.md>`_. Do not forget to add ``COM1`` port in settings. Run the following command::
 
-To build a ros package run the following commands::
-
-  $ nix build -f release.nix
-  $ . result/setup.zsh
   $ rosrun arduino_with_args blink.py
 
 Also we need to add rosbag files to IPFS::

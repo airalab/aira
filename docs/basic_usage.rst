@@ -48,7 +48,7 @@ The most important topics for us are:
 
 Let's start with greetings - say hello to AIRA!
 
-You should just launch a preinstalled package ``hello_aira``::
+You should just launch a pre-installed package ``hello_aira``::
 
     $ rosrun hello_aira hello_aira
 
