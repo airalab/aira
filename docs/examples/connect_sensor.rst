@@ -49,14 +49,8 @@ You should check `Enable Serial Port` and assign ``/dev/ttyACM0`` in `Path/Addre
    :alt: Set a port
    :align: center
 
-Finally launch the image and run these commands:
+Finally launch the image and run these command::
 
-.. code:: bash
-
-    $ git clone https://github.com/airalab/robonomics_tutorials
-    $ cd robonomics_tutorials/sensor_city
-    $ nix build -f release.nix
-    $ . result/setup.zsh
     $ roslaunch sensor_city publish_data.launch
 
 .. hint::

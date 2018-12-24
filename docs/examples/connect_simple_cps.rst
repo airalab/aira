@@ -85,12 +85,8 @@ A message in the ``/blink`` topic come from the objective field. Have a look at 
 AIRA
 ----
 
-Connect to AIRA client via SSH as described `here <Connecting_via_SSH.html>`_. You can either upload code from your host OS or make a clone from Github.
+Connect to AIRA client via SSH as described `here <Connecting_via_SSH.html>`_. All tutorials are pre-installed. To launch the ros package run the following command::
 
-To build and launch the ros package run the following commands::
-
-  $ nix build -f release.nix
-  $ . result/setup.zsh
   $ rosrun arduino_blink blink.py
 
 
