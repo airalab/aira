@@ -1,64 +1,69 @@
-Robonomics Liability Messages
-=============================
+ROS Robonomics Liability Messages
+=================================
 
-Liability.msg
--------------
+.. _Robonomics-Liability-Liability.msg:
 
-============== =========================== ==================================================
- Field                 Type                                Description
-============== =========================== ==================================================
-address        std_msgs/String               The Liability's address
-model          robonomics_msgs/Multihash     CPS behavioral model Identifier
-objective      robonomics_msgs/Multihash     CPS behavioral model parameters in rosbag file
-result         std_msgs/String               Liability result hash
-promisee       std_msgs/String               The promisee address
-promisor       std_msgs/String               The promisor address (usually CPS)
-token          std_msgs/String               Operational token address
-cost           std_msgs/Uint64               CPS behavioral model implementation cost
-validator      std_msgs/String               Observing network address
-validatorFee   std_msgs/Uint64               Observing network commission
-============== =========================== ==================================================
+robonomics_liability/Liability.msg
+----------------------------------
 
-Multihash.msg
--------------
+============== ============================================================ ==================================================
+ Field                 Type                                                 Description
+============== ============================================================ ==================================================
+address        :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` The Liability's address
+model          :ref:`ipfs_common/Multihash <IPFS-Common-Multihash.msg>`     CPS behavioral model Identifier
+objective      :ref:`ipfs_common/Multihash <IPFS-Common-Multihash.msg>`     CPS behavioral model parameters in rosbag file
+result         :ref:`ipfs_common/Multihash <IPFS-Common-Multihash.msg>`     Liability result hash
+promisee       :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` The promisee address
+promisor       :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` The promisor address (usually CPS)
+lighthouse     :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` The address of lighthouse your CPS works on
+token          :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` Operational token address
+cost           :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>` CPS behavioral model implementation cost
+validator      :ref:`ethereum_common/Address <Ethereum-common-Address.msg>` Observing network address
+validatorFee   :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>` Observing network commission
+============== ============================================================ ==================================================
 
-============== =========================== ==========================================
- Field                 Type                                Description
-============== =========================== ==========================================
-multihash      std_msgs/String              A wrapper for model and objective fields
-============== =========================== ==========================================
+.. _IPFS-Common-Multihash.msg:
 
-StartLiability.srv
-------------------
+ipfs_common/Multihash.msg
+-------------------------
+
+============== ============================================================ ==================================================
+ Field                 Type                                                 Description
+============== ============================================================ ==================================================
+multihash      std_msgs/String                                              A wrapper for model and objective fields
+============== ============================================================ ==================================================
+
+robonomics_liability/StartLiability.srv
+---------------------------------------
 
 **Request**
 
-=========== =============== ===================================================
-Field       Type            Description
-=========== =============== ===================================================
-address     std_msgs/String The address of Liability you are willing to execute
-=========== =============== ===================================================
+============== ========================================================== ====================================================
+Field               Type                                                    Description
+============== ========================================================== ====================================================
+address             std_msgs/String                                       The address of Liability you are willing to execute
+============== ========================================================== ====================================================
 
 **Response**
 
-=========== =============== ===================================================
-Field       Type            Description
-=========== =============== ===================================================
-success     std_msgs/Bool    Weather or not the Liability was started
-msg         std_msgs/String  Status of launch
-=========== =============== ===================================================
+============== ============================================================ ==================================================
+Field               Type                                                       Description
+============== ============================================================ ==================================================
+success         std_msgs/Bool                                                Weather or not the Liability was started
+msg             std_msgs/String                                              Status of launch
+============== ============================================================ ==================================================
 
-FinishLiability.srv
--------------------
+robonomics_liability/FinishLiability.srv
+----------------------------------------
 
 **Request**
 
-=========== =============== ===================================================
-Field       Type            Description
-=========== =============== ===================================================
-address     std_msgs/String  The address of Liability to finish
-success     std_msgs/Bool    The status of execution
-=========== =============== ===================================================
+============== ============================================================ ==================================================
+Field           Type                                                         Description
+============== ============================================================ ==================================================
+address         std_msgs/String                                              The address of Liability to finish
+success         std_msgs/Bool                                                The status of execution
+============== ============================================================ ==================================================
 
 **Response**
 
