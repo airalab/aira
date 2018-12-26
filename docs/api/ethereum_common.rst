@@ -37,14 +37,11 @@ Published topics
 
 .. py:method:: /eth/event/transfer (ethereum_common/TransferEvent)
 
-    The event `ethereum_common/TransferEvent`_ is emitted after the transfer of tokens was made
+    The event :ref:`ethereum_common/TransferEvent <Ethereum-common-TransferEvent.msg>` is emitted after the transfer of tokens was made
 
 .. py:method:: /eth/event/approval (ethereum_common/ApprovalEvent)
 
-    The event `ethereum_common/ApprovalEvent`_ is emitted after the approval of tokens was made
-
-.. _ethereum_common/TransferEvent: ethereum_common_msg.rst
-.. _ethereum_common/ApprovalEvent: ethereum_common_msg.rst
+    The event :ref:`ethereum_common/ApprovalEvent <Ethereum-common-ApprovalEvent.msg>` is emitted after the approval of tokens was made
 
 Services
 --------
