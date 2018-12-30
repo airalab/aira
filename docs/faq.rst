@@ -1,7 +1,7 @@
 Frequently Asked Questions
 ==========================
 
-How to see logs from main services? 
+How to see logs from main services?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 IPFS in real time:
@@ -19,9 +19,9 @@ How to check the quantity of IPFS peers?
 
 .. code-block:: bash
 
-    ipfs pubsub peers airalab.lighthouse.0.robonomics.eth
+    ipfs pubsub peers airalab.lighthouse.3.robonomics.eth
 
-IPFS can't connect to the daemon, what should I do? 
+IPFS can't connect to the daemon, what should I do?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Try to specify ``--api`` option

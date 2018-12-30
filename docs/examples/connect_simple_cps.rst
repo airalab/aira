@@ -7,115 +7,86 @@ We will buy a "wink" from Arduino, e.g. make Arduino blink with its onboard led.
 
 .. note::
 
-  First of all, the source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
+  The source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_blink>`_.
 
-Arduino 
+Arduino
 -------
 
-Let's write some code for the board. We're going to create a basement for our future projects, so it might look a little bit redundantly.
+The firmware for the board is located in `arduino_blink/misc/arduino/arduino.ino <https://github.com/airalab/robonomics_tutorials/blob/master/arduino_blink/misc/arduino/arduino.ino>`_. Use `Arduino IDE <https://www.arduino.cc/en/Main/Software>`_ to load the code to your Arduino board.
 
-The algorithm is following: the board reads byte by byte from serial port and appends to ``inputString``. If we have a ``\n`` byte, go to check the string. In this case we have only ``blink`` and ``reboot`` commands. In the future we will teach the board new commands.
-
-.. code-block:: c
-
-  void loop() {
-    serialEvent();
-    if (stringComplete) {
-      //Call our input handler function
-      check_input(inputString);
-    }
-  }
-
-  //This function works when we have data comming from the serial port
-  void serialEvent() {
-    while (Serial.available()) {
-      char inChar = (char)Serial.read();
-
-      if ( inChar == '\b') {
-        inputString.remove(inputString.length() - 1, inputString.length());
-      } else if ( int(inChar) == 13 ) {
-        inChar = '\n';
-      } else {
-        //add current character to input command
-        inputString += inChar;
-      }
-
-      if (inChar == '\n') {
-        stringComplete = true;
-      }
-    }
-  }
-
-
-Every iteration in the ``loop()`` function we check a new command from serial port. And ``check_input()`` function:
+In the code we subscribe for the ``/blink_led`` topic and set a callback. The type of the topic is ``Empty``, so the board waits until someone publishes to the topic and performs the LED blinking.
 
 .. code-block:: c
 
-  void check_input(String input) {
-    //Turn led on
-    if (cmd("blink")) {
-      blink(13, 500);
-      blink(13, 500);
-      blink(13, 500);
-      
-      //Call reboot
-    } else if (cmd("reboot")) {
-      Serial.println("Rebooting...");
-      delay(200);
-      reboot();
-    } 
+  #include <ros.h>
+  #include <std_msgs/Empty.h>
 
-    stringComplete = false;
-    inputString = "";
+  ros::NodeHandle  nh;
+
+  void blink(int led, int mil) {
+
+    digitalWrite(led, HIGH);
+    delay(mil);
+    digitalWrite(led, LOW);
+    delay(mil);
+
   }
 
-The rest of the code is self-explanatory.
+  void messageCb( const std_msgs::Empty& toggle_msg){
+    blink(LED_BUILTIN, 500);
+    blink(LED_BUILTIN, 500);
+    blink(LED_BUILTIN, 500);
+  }
+
+  ros::Subscriber<std_msgs::Empty> sub("blink_led", &messageCb );
+
+  void setup()
+  {
+    pinMode(LED_BUILTIN, OUTPUT);
+    nh.initNode();
+    nh.subscribe(sub);
+  }
+
+  void loop()
+  {
+    nh.spinOnce();
+    delay(1);
+  }
+
+AIRA client
+-----------
+
+.. note::
+
+  You can download the latest release from `here <https://github.com/airalab/aira/releases>`_
+
+Set up the COM port forwarding as described in `this lesson <connect_sensor.html>`_. You should forward your ``/dev/ttyUSB0`` or ``/dev/ttyACM0`` port (depending on the system) to ``COM1``. In the client ``/dev/ttyS0`` will represent the board. After this launch the virtual machine.
 
 ROS
 ---
 
-All we have to do is wait for a new liability and do the job. In case your Arduino is connected to something different from ``/dev/ttyUSB0``, you should change it in the code.
+When new liability is created it goes to ``/liability/ready`` topic. We have to remember the address and call ``/liability/start`` service to get the data from objective.
 
 .. code-block:: python
 
-  #!/usr/bin/env python
-  import rospy
-  import serial
+  def newliability(l):
+    self.liability = l.address
+    rospy.loginfo("Got new liability {}".format(self.liability))
 
-  from std_msgs.msg import Empty
+    prefix = "/liability/eth_" + self.liability
+    rospy.Subscriber(prefix + '/blink', Empty, self.blink)
 
-  def blink(data):
-      rospy.loginfo("Blinking...")
-      ser = serial.Serial('/dev/ttyUSB0', 9600)
-      ser.write(b"blink\n")
+    rospy.wait_for_service("/liability/start")
+    rospy.ServiceProxy('/liability/start', StartLiability)(StartLiabilityRequest(address=self.liability))
+  rospy.Subscriber("/liability/ready", Liability, newliability)
 
-  def main():
-      rospy.init_node("blink_node")
-      rospy.loginfo("Subscribing...")
-      rospy.Subscriber("/blink", Empty, blink)
-      rospy.spin()
-
-  if __name__ == '__main__':
-      main()
-
-Where does a message in the ``/blink`` topic come from? Remember an objective field from `Basic usage <../basic_usage.html>`_? The objective hash points to rosbag file. This rosbag file will be downloaded and played after new liability is created.
+A message in the ``/blink`` topic come from the objective field. Have a look at `Basic usage <../basic_usage.html>`_ page.
 
 AIRA
 ----
 
-Connect to AIRA client via SSH as described `here <Connecting_via_SSH.html>`_. You can either upload code from your host OS or make a clone from Github.
+Connect to AIRA client via SSH as described `here <Connecting_via_SSH.html>`_. All tutorials are pre-installed. To launch the ros package run the following command::
 
-To build a ros package run the following commands::
-
-  $ mkdir -p ws/src && cd ws/src
-  $ cp -r path/to/arduino_blink . 
-  $ catkin_init_workspace && cd .. && catkin_make 
-
-And launch
-
-.. code-block:: bash
-
-  $ source devel/setup.bash
   $ rosrun arduino_blink blink.py
 
 
@@ -127,25 +98,10 @@ Also we need to add a rosbag file to IPFS::
 
   Before the next step you should approve XRT tokens on the Factory.
 
-In the next window we create a demand and then an offer::
+On your host system build and launch an Dapp for the lesson::
 
-  $ rostopic pub /liability/infochan/signing/demand robonomics_msgs/Demand "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh' \
-  objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD' \
-  token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE' \
-  cost: 1 \
-  validator: '0x0000000000000000000000000000000000000000' \
-  validatorFee: 0 \
-  deadline: 6393332"
+  $ git clone https://github.com/airalab/robonomics_tutorials/
+  $ cd robonomics_tutorials/arduino_blink_dapp
+  $ npm i && npm run dev
 
-  $ rostopic pub /liability/infochan/signing/offer robonomics_msgs/Offer "model: 'QmdVAKj4y91Q4ddMUf96AHonrTszMjKFoziZd7V5enonFh'
-  objective: 'QmYYZWNd9esP3YBuuyUBVMH3ymaLDbQFB35S79duYiobcD'
-  token: '0x3cBAF1d511Adf5098511B5c5B39e1F1b506C1AFE'
-  cost: 1
-  lighthouseFee: 0
-  deadline: 6393332 "
-
-Do not forget to change token address and deadline. 
-
-When transaction is mined you should see Arduino's blinking. Our simple agent will finish the liability by itself. Congratulations on the first agent!
-
-
+Open the `link <http://localhost:8000/>`_ and press Demand then Offer buttons. Wait until a new liability is created and you should see the board blinking. Congratulations on the first agent!

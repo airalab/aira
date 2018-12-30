@@ -1,13 +1,13 @@
 Connect an Air Pollution Sensor
 ===============================
 
-In this lesson you are going to learn how to connect your sensor to the network and make it publish data. You will see how it is easy to become a member of global sensor network!
+In this lesson you are going to learn how to connect your sensor to the network and make it publish data. You will see how it is easy to become a member of a global sensor network!
 
 .. note::
 
-    Source is located here https://github.com/airalab/robonomics_tutorials, ``sensor_city`` folder
+    Source code is located `here <https://github.com/airalab/robonomics_tutorials/tree/master/sensor_city>`_
 
-In this section we are not going to create a liability contract. Instead we will teach Arduino with sensors publish the data by a request. All the measurements will be published as a Result message
+In this section we are not going to create a liability contract. Instead we will teach Arduino with sensors to publish the data by a request. All measurements will be published as a Result message
 
 Arduino
 -------
@@ -49,14 +49,8 @@ You should check `Enable Serial Port` and assign ``/dev/ttyACM0`` in `Path/Addre
    :alt: Set a port
    :align: center
 
-Finally launch the image and run these commands:
+Finally launch the image and run these command::
 
-.. code:: bash
-
-    $ git clone https://github.com/airalab/robonomics_tutorials
-    $ cd robonomics_tutorials/sensor_city
-    $ ./builder.sh
-    $ source ws/install/setup.zsh
     $ roslaunch sensor_city publish_data.launch
 
 .. hint::

@@ -1,46 +1,65 @@
 Passing Dynamic Parameters
 ==========================
 
-In `previous <A_Wink_from_Arduino.html>`_ example we discussed how to create a simple CPS with Arduino. Our CPS is able to do only one task: to blink a led. Now let's expand the example and teach our board to blink blue or red led depending on objective parameters.
+In `previous <connect_simple_cps.html>`_ example we discussed how to create a simple CPS with Arduino. Our first CPS is able to do only one task: to blink a led. We suggest you to get through the first lesson. Now let's expand the example and teach our board to blink blue or red led depending on objective parameter.
 
 .. note::
 
   The source code of this lesson is `here <https://github.com/airalab/robonomics_tutorials/tree/master/arduino_with_args>`_.
 
-Arduino 
+Arduino
 -------
 
-The only difference in Arduino source code is in ``check_input()`` function:
+The only difference in Arduino source code is instead of subscribing to one topic now we subscribe to ``/blink_red`` and ``/blink_blue`` topics
 
 .. code-block:: c
 
-  void check_input(String input) {
-    // Turn red led on
-    if (cmd("red")) {
-      blink(13, 500);
-      blink(13, 500);
-      blink(13, 500);
+  #include <ros.h>
+  #include <std_msgs/Empty.h>
 
-    // Turn blue led on
-    } else if(cmd("blue")) {
-      blink(12, 500);
-      blink(12, 500);
-      blink(12, 500);
-      
-    // Call reboot
-    } else if (cmd("reboot")) {
-      Serial.println("Rebooting...");
-      delay(200);
-      reboot();
-    } 
+  ros::NodeHandle nh;
 
-    stringComplete = false;
-    inputString = "";
+  void blink(int led, int mil) {
+
+    digitalWrite(led, HIGH);
+    delay(mil);
+    digitalWrite(led, LOW);
+    delay(mil);
+
   }
 
-We've already created a basement for multiple commands input. So all we have to do is replace ``blink`` command with ``red`` and ``blue``. 
+  void blinkRedCb(const std_msgs::Empty& msg) {
+    blink(13, 500);
+    blink(13, 500);
+    blink(13, 500);
+  }
 
-And here is the diagram of all connections:
+  void blinkBlueCb(const std_msgs::Empty& msg) {
+    blink(12, 500);
+    blink(12, 500);
+    blink(12, 500);
+  }
+
+  ros::Subscriber<std_msgs::Empty> subRed("blink_red", &blinkRedCb);
+  ros::Subscriber<std_msgs::Empty> subBlue("blink_blue", &blinkBlueCb);
+
+  void setup()
+  {
+    pinMode(13, OUTPUT);
+    pinMode(12, OUTPUT);
+
+    nh.initNode();
+    nh.subscribe(subRed);
+    nh.subscribe(subBlue);
+  }
+
+  void loop()
+  {
+    nh.spinOnce();
+    delay(1);
+  }
+
+Here is the diagram of all connections:
 
 .. image:: ../img/6.png
   :alt: Arduino schema
@@ -54,68 +73,42 @@ We can pass arguments via objective which points to rosbag file. Have a look at 
 
 .. code-block:: python
 
-  def blink(data):
-      ser = serial.Serial('/dev/ttyUSB0', 9600)
+  ...
 
+  def blink(self, data):
       if data.data == "blue":
           rospy.loginfo("Blinking blue...")
-          ser.write(b"blue\n")
+          self.blink_blue.publish(Empty())
 
       if data.data == "red":
           rospy.loginfo("Blinking red...")
-          ser.write(b"red\n")
-      
-      ser.flush()
-      ser.close()
+          self.blink_red.publish(Empty())
 
-      rospy.wait_for_service("liability/finish")
-      fin = rospy.ServiceProxy("liability/finish", Empty)
-      rospy.loginfo("finishing...")
-      fin()
+      rospy.wait_for_service('/liability/finish')
+      fin = rospy.ServiceProxy('/liability/finish', FinishLiability)
+      fin(FinishLiabilityRequest(address=self.liability, success=True))
+      rospy.loginfo("Finished")
 
-Now ``/blink`` topic has a ``String`` type. You can find prepared rosbags in ``rosbag`` folder. 
+  ...
+
+Now ``/blink`` topic has a ``String`` type. You can find prepared rosbags in ``rosbag`` folder.
 
 AIRA
 ----
 
-Connect to AIRA client via SSH as described `here <Connecting_via_SSH.md>`_. You can either upload code from your host OS or make a clone from Github.
+Connect to AIRA client via SSH as described `here <Connecting_via_SSH.md>`_. Do not forget to add ``COM1`` port in settings. Run the following command::
 
-To build a ros package run the following commands::
-
-  $ mkdir -p ws/src && cd ws/src
-  $ cp -r path/to/arduino_blink . 
-  $ catkin_init_workspace && cd .. && catkin_make 
-
-And launch
-
-.. code-block:: bash
-
-  $ source devel/setup.bash
-  $ rosrun arduino_blink blink.py
-
+  $ rosrun arduino_with_args blink.py
 
 Also we need to add rosbag files to IPFS::
 
   $ ipfs add rosbag/blink_blue.bag
   $ ipfs add rosbag/blink_red.bag
 
-In case we want to light the blue led, create the following a demand and an offer messages::
+.. note::
 
-  $ rostopic pub /lighthouse/infochan/signing/ask robonomics_lighthouse/Ask "model: 'QmSuajKuDiL8A5vhbsQJnVVNwhhC5ni6shSZxNXVWvpikt' \
-  objective: 'QmUq7d4jATFnbDgtkv83d3VW9jRqqCRkctZdGUBZE5wGN2' \
-  token: '0xbD949595eE52346c225a19724084cE517B2cB735' \
-  cost: 1 \
-  validator: '0x0000000000000000000000000000000000000000' \
-  validatorFee: 0 \
-  deadline: 6498193"
+  Before the next step you should approve XRT tokens on the Factory.
 
-  $ rostopic pub /lighthouse/infochan/signing/bid robonomics_lighthouse/Bid "model: 'QmSuajKuDiL8A5vhbsQJnVVNwhhC5ni6shSZxNXVWvpikt'
-  objective: 'QmUq7d4jATFnbDgtkv83d3VW9jRqqCRkctZdGUBZE5wGN2'
-  token: '0xbD949595eE52346c225a19724084cE517B2cB735'
-  cost: 1
-  lighthouseFee: 0
-  deadline: 6498193"
-
-To light a red one, change ``objective`` to ``QmcoE93MrvAdC789vt6G27WypSimhZxu5ZT2aKy8uviBDM`` in the previous messages.
+The last step is to build Dapp and launch. Take a look at the previous `lesson <connect_simple_cps.html>`_. To make Arduino blink the blue led send blue demand and blue offer messages. For the red one send corresponding messages.
 
 That's it! Now you are able to pass dynamic parameters to your cyber-physical system agent!
