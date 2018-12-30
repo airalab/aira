@@ -1,4 +1,4 @@
-all: ova_minimal
+all: ova_image
 
-ova_minimal: airapkgs/nixos/release.nix
+ova_image: airapkgs/nixos/release-aira.nix
 	nix build -f $^ -o $@ $@

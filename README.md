@@ -16,20 +16,26 @@
 
 > Autonomous intelligent robot agent (AIRA) project which implements the standard of economic interaction between human-robot and robot-robot. Aira makes it possible to connect a variety of different robots to the market of robot's liabilities which existing in Ethereum.
 
-Airalab [channel](https://hydra.aira.life/project/aira/channel/latest) 
-=============================================================
+Airalab Nix channel
+===================
 
 > [Nix channel](https://nixos.org/nix/manual/#sec-channels) of Airalab community is placed on [airapkgs](https://github.com/airalab/airapkgs). Currently supported `nixos-unstable` branch only.
 
-- Binary cache `https://hydra.aira.life`
-- Public key `hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak=`
+- Binary cache: `https://aira.cachix.org`
+- Public key: `aira.cachix.org-1:/5nHPqhVrtvt7KCk04I8cH/jETANk8BtPHWsEtcwU/M=`
 
 ### Setup
 
 The first, add channel to nix channel registry.
 
 ```bash
-$ nix-channel --add https://hydra.aira.life/project/aira/channel/latest aira
+$ nix-channel --add https://aira.life/channels/aira-stable aira
+```
+
+OR using [IPFS](https://ipfs.io)
+
+```bash
+$ nix-channel --add http://localhost:8080/ipns/stable.releases.aira.life aira
 ```
 
 To speed up package install - add airalab nix package cache to `/etc/nixos/configuration.nix`.
@@ -38,11 +44,11 @@ To speed up package install - add airalab nix package cache to `/etc/nixos/confi
 {
   nix.binaryCaches = [
     https://cache.nixos.org
-    https://hydra.aira.life
+    https://aira.cachix.org
   ];
 
   nix.binaryCachePublicKeys = [
-    "hydra.aira.life-1:StgkxSYBh18tccd4KUVmxHQZEUF7ad8m10Iw4jNt5ak="
+    "aira.cachix.org-1:/5nHPqhVrtvt7KCk04I8cH/jETANk8BtPHWsEtcwU/M="
   ];
 }
 ```
@@ -56,7 +62,8 @@ AIRA distribution is builded on stable snapshot of `airapkgs`.
 
 | Type       | Arch   | SHA256                                                             | Link |
 |------------|--------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | `5a57bc164070ac7123d023e3d14d8c728ba812b18a2204e00f350b852bd8d7ef` | [Download](https://github.com/airalab/aira/releases/download/0.16.1/aira-0.16.1-x86_64.ova)
+| VirtualBox | x86_64 | `1c5f2e503402fc01635ef1e563f6aae7fa61ba85afba309c0774703ed77f6fd4` | [Download](https://releases.aira.life/channels/aira/unstable/610-aira-unstable/nixos-19.03pre-git-x86_64-linux.ova) |
+| SD Image   | AArch64 | `2b3ca9fb1b439eaf3005919d3c73cb377653649948b048c9ed37f184607c9c52` | [Download](https://releases.aira.life/channels/aira/unstable/610-aira-unstable/nixos-sd-image-19.03pre-git-aarch64-linux.img) |
 
 ### Building from source
 
