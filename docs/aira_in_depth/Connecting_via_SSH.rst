@@ -11,6 +11,7 @@ It is more convenient to work with virtual machine via ssh connection. In this s
 First, launch AIRA client and run a command replacing <username> with your own::
 
     $ mkdir .ssh
+    $ chmod 700 .ssh
     $ curl -sSL https://github.com/<username>.keys >> .ssh/authorized_keys
 
 Now go to machine settings, network, open Advanced and then Port Forwarding
