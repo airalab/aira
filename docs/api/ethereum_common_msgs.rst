@@ -1,5 +1,5 @@
-ROS Ethereum Common Messages
-============================
+Ethereum Common Messages
+========================
 
 .. _Ethereum-common-Address.msg:
 

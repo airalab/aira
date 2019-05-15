@@ -21,7 +21,7 @@ Welcome to AIRA's documentation!
    :maxdepth: 1
    :caption: Robonomics Specification
 
-   specs/message_spec
+   specs/market_messages
 
 .. toctree::
    :maxdepth: 1

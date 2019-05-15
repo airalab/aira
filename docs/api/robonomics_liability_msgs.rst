@@ -1,5 +1,5 @@
-ROS Robonomics Liability Messages
-=================================
+Robonomics Liability Messages
+=============================
 
 .. _Robonomics-Liability-Liability.msg:
 
