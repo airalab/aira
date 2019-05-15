@@ -2,42 +2,48 @@ Welcome to AIRA's documentation!
 ================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    getting_started
    basic_usage
+   connecting_via_ssh
    FAQ <faq>
    contributing
 
 .. toctree::
    :maxdepth: 1
-   :caption: Aira in Depth
+   :caption: Robonomics Network
 
-   aira_in_depth/Connecting_via_SSH
-   aira_in_depth/Robonomics_How_It_Works.rst
-   aira_in_depth/Message_spec.rst
-   aira_in_depth/Robonomics_Contracts_Deployment
+   robonomics_network/how_it_works
+   robonomics_network/contracts_deployment
 
 .. toctree::
    :maxdepth: 1
-   :caption: API Reference
+   :caption: Robonomics Specification
 
-   api/robonomics_liability.rst
-   api/robonomics_liability_msgs.rst
-   api/ethereum_common.rst
-   api/ethereum_common_msg.rst
+   specs/message_spec
+
+.. toctree::
+   :maxdepth: 1
+   :caption: ROS API Reference
+
+   api/robonomics_liability
+   api/robonomics_liability_msgs
+   api/ethereum_common
+   api/ethereum_common_msgs
 
 .. toctree::
    :maxdepth: 1
    :caption: Examples
 
-   examples/connect_simple_cps.rst
-   examples/passing_dynamic_parameters.rst
-   examples/connect_sensor.rst
+   examples/connect_simple_cps
+   examples/passing_dynamic_parameters
+   examples/connect_sensor
 
 .. toctree::
-   :caption: Robonomics-js
+   :maxdepth: 1
+   :caption: robonomics-js
 
-   robonomics-js/beginning.rst
-   robonomics-js/howtos.rst
-   robonomics-js/creating_dapp.rst
+   robonomics-js/beginning
+   robonomics-js/howto
+   robonomics-js/creating_dapp

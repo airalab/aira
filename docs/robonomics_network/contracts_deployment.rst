@@ -1,5 +1,5 @@
-Robonomics Contracts Deployment
-===============================
+Contracts Deployment
+====================
 
 Robonomics network works on top of the existing Ethereum network. The protocol is implemented by smart contracts. A source code is on `Github <https://github.com/airalab/robonomics_contracts>`_. Airalab team deploys new version of contracts and supports a current one. 
 

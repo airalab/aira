@@ -1,5 +1,5 @@
-Robonomics Network: How It Works
-================================
+How It Works
+============
 
 In this section we will discuss the Robonomics Network scenario.
 
