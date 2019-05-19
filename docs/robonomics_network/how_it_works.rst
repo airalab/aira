@@ -18,7 +18,7 @@ Robonomics Network uses IPFS PubSub channels for messaging. There are three type
   validator      :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Observing network address                        0x0000000000000000000000000000000000000000
   validatorFee   :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Observing network commission                     0
   deadline       :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Deadline block number                            6393332
-  nonce          std_msgs/UInt8[]                                               Random data                                      0x8e0c...55cb
+  sender         :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Message sender address  0x0000000000000000000000000000000000000000
   signature      std_msgs/UInt8[]                                               Sender's digital signature                       0x23bc...c617
 =============== ============================================================== ================================================ ================================================
 
