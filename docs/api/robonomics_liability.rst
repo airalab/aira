@@ -112,7 +112,15 @@ Services
 
 .. py:method:: /liability/finish (robonomics_liability/FinishLiability)
 
-    a CPS should call the service after performing the task. Input is `robonomics_liability/FinishLiability`_
+    a CPS should call the service after performing the task. The input is `robonomics_liability/FinishLiability`_
+
+.. py:method:: /liability/restart (robonomics_liability/StartLiability)
+
+    The service allows to restart a liability after the system shutdown. The input is `robonomics_liability/StartLiability`_
+
+.. py:method:: /liability/resume (robonomics_liability/StartLiability)
+
+    The service allows to resume a liability from the last timestamp available in the persistence store. The input is `robonomics_liability/StartLiability`_
 
 .. _robonomics_liability/StartLiability: robonomics_liability_msgs.html
 .. _robonomics_liability/FinishLiability: robonomics_liability_msgs.html

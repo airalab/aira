@@ -19,7 +19,7 @@ How to check the quantity of IPFS peers?
 
 .. code-block:: bash
 
-    ipfs pubsub peers airalab.lighthouse.3.robonomics.eth
+    ipfs pubsub peers airalab.lighthouse.5.robonomics.eth
 
 IPFS can't connect to the daemon, what should I do?
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

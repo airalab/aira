@@ -18,7 +18,7 @@ Robonomics Network uses IPFS PubSub channels for messaging. There are three type
   validator      :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Observing network address                        0x0000000000000000000000000000000000000000
   validatorFee   :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Observing network commission                     0
   deadline       :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Deadline block number                            6393332
-  sender         :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Message sender address  0x0000000000000000000000000000000000000000
+  sender         :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Message sender address                           0x0000000000000000000000000000000000000000
   signature      std_msgs/UInt8[]                                               Sender's digital signature                       0x23bc...c617
 =============== ============================================================== ================================================ ================================================
 
@@ -32,6 +32,12 @@ Now let's have a look at the following diagram and walk step by step from the mo
 
 A liability contract is created only if the following fields match: ``model``, ``objective``, ``token``, ``cost``. A provider of Robonomics Network watches every message and finds those ones that have a match.
 After the match is found the provider calls ``createLiability(demand, offer)`` method from the contract factory where ``demand`` and ``offer`` are serialized.
+
+Below is the package diagram for the Robonomics communication stack:
+
+.. image:: ../img/robonomics_comm_pkg.png
+   :alt: Scenario
+   :align: center
 
 The factory deserializes arguments and recovers *promisee* and *promisor* addresses from signatures.
 
