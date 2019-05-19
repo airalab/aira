@@ -16,7 +16,7 @@ First, launch AIRA client and run a command replacing <username> with your own::
 
 Now go to machine settings, network, open Advanced and then Port Forwarding
 
-.. image:: ../img/4.png
+.. image:: img/4.png
    :alt: Port forwarding
    :align: center
 
