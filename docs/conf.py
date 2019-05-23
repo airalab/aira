@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'AIRA'
-copyright = '2018, Airalab'
+copyright = '2019, Airalab'
 author = 'Airalab'
 
 # The short X.Y version
