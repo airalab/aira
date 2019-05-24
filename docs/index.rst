@@ -16,6 +16,7 @@ Welcome to AIRA's documentation!
 
    robonomics_network/how_it_works
    robonomics_network/contracts_deployment
+   robonomics_network/become_a_provider
 
 .. toctree::
    :maxdepth: 1
