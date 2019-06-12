@@ -3,7 +3,20 @@ How It Works
 
 In this section we will discuss the Robonomics Network scenario.
 
-Robonomics Network uses IPFS PubSub channels for messaging. There are three types of messages: Demand, Offer, Result.
+There are few main parts in the Robonomics network:
+
+- IPFS for the messages exchanging
+- the Ethereum blockchain for storing new liability contracts
+- a provider that is responsible for matching messages
+- an agent
+
+Let's have a look at the following diagram that describes the scenario without any additional details:
+
+.. image:: ../img/Robonomics_Scheme.png
+   :alt: The main scenario
+   :align: center
+
+There are three types of `messages <../specs/market_messages.html>`_ in IPFS: Demand, Offer, Result.
 
 **Below there is the specification for a Demand message:**
 
@@ -27,7 +40,7 @@ An Offer message has the same fields but instead of ``validatorFee`` there is a 
 Now let's have a look at the following diagram and walk step by step from the moment of publishing messages to a liability finalization.
 
 .. image:: ../img/5.png
-   :alt: Scenario
+   :alt: Detailed scenario
    :align: center
 
 A liability contract is created only if the following fields match: ``model``, ``objective``, ``token``, ``cost``. A provider of Robonomics Network watches every message and finds those ones that have a match.
