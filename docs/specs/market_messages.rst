@@ -33,6 +33,7 @@ Robonomics market message use JSON_ data format.
   validator      :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Observing network address
   validatorFee   :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Observing network fee 
   deadline       :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Deadline block number
+  nonce          :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Robonomics message counter
   sender         :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Message sender address
   signature      std_msgs/UInt8[]                                               Sender's Ethereum signature
  ============== ============================================================== ================================================
@@ -50,6 +51,7 @@ Robonomics market message use JSON_ data format.
   lighthouse      :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Lighthouse contract address
   lighthouseFee   :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Liability creation fee 
   deadline        :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Deadline block number
+  nonce           :ref:`ethereum_common/UInt256 <Ethereum-common-UInt256.msg>`   Robonomics message counter
   sender          :ref:`ethereum_common/Address <Ethereum-common-Address.msg>`   Message sender address
   signature       std_msgs/UInt8[]                                               Sender's Ethereum signature
  =============== ============================================================== ================================================
