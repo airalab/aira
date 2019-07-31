@@ -84,3 +84,24 @@ You must install `robonomics-tools <https://github.com/airalab/robonomics-tools>
 .. hint::
 
     Get familiar with the `xrtd` options via ``xrtd --help``
+
+Test the provider
+-----------------
+
+To test your provider go again to the lighthouse `dapp <https://dapp.robonomics.network/#/lighthouse/>`_ and connect to the just created lighthouse.
+
+At the bottom you should see the `TEST LIGHTHOUSE` section.
+
+Click on the `Demand` button and then on the `Offer` one. You should see something similar to:
+
+.. image:: ../img/provider-mobilerobotics-demand-offer.png
+  :alt: Demand and Offer messages
+  :align: center
+
+Don't forget to sign every message with the MetaMask extension.
+
+Finally you should see a new liability contract created:
+
+.. image:: ../img/provider-mobilerobotics-liability.png
+  :alt: Liability is created
+  :align: center
