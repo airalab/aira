@@ -62,8 +62,8 @@ AIRA distribution is builded on stable snapshot of `airapkgs`.
 
 | Type       | Arch   | SHA256                                                             | Link |
 |------------|--------|--------------------------------------------------------------------|-----------------------------------------------------------------------------------------|
-| VirtualBox | x86_64 | `70c4fdc79ef9c94fb70a679f5487e0f387bc6e7597e941be047bd9e271f06896` | [Download](https://releases.aira.life/channels/aira/unstable/823-aira-unstable/nixos-19.09pre-git-x86_64-linux.ova) |
-| SD Image   | AArch64 | `2d30e5718b0610f73febbcc22c72c78afc90b91bee16284f91281de43d9af01f` | [Download](https://releases.aira.life/channels/aira/unstable/823-aira-unstable/nixos-sd-image-19.09pre-git-aarch64-linux.img) |
+| VirtualBox | x86_64 | `e936c31a5e20d1e4b2aa7f3c03eb69c3fc60a4e80d3de3772badbd5f612c647e` | [Download](https://releases.aira.life/channels/aira/unstable/862-aira-unstable/nixos-20.03pre-git-x86_64-linux.ova) |
+| SD Image   | AArch64 | `35f580bed14b49f115ad4ec798d7f26c69eaef05a7371f5bd7ec323452ce549b` | [Download](https://releases.aira.life/channels/aira/unstable/862-aira-unstable/nixos-sd-image-20.03pre-git-aarch64-linux.img) |
 
 ### Building from source
 
