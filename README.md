@@ -72,3 +72,7 @@ $ curl https://nixos.org/nix/install | sh
 $ git clone --recursive https://github.com/airalab/aira && cd aira
 $ make
 ```
+
+Minimum Aira system requirements
+------------------
+x86_64 / aarch64 1.4 GHz dual-core processor; Memory: 4Gb ; Disk Space: 32 Gb; 
